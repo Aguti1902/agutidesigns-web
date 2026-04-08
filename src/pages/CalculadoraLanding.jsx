@@ -290,37 +290,49 @@ export default function CalculadoraLanding() {
                 </ul>
               </div>
 
-              {/* ── Reseñas de clientes ── */}
-              <div className="calc-reviews">
-                <p className="calc-reviews__title">Lo que dicen nuestros clientes</p>
-                <div className="calc-reviews__grid">
+              {/* ── Qué incluye tu web ── */}
+              <div className="calc-includes">
+                <h3 className="calc-includes__title">Todo lo que incluye tu web</h3>
+                <div className="calc-includes__grid">
                   {[
-                    { name: 'Ana M.', role: 'Hello Nails · Franquicia', text: 'Guti nos entregó la web en tiempo récord. Las reservas online aumentaron un 60% el primer mes. Totalmente recomendable.', stars: 5 },
-                    { name: 'Carlos R.', role: 'Stay4Days · Alquiler vacacional', text: 'Profesional, rápido y con mucho criterio de diseño. Nuestra web convierte muchísimo mejor que la anterior.', stars: 5 },
-                    { name: 'Laura V.', role: 'Spa Organic · Bienestar', text: 'El diseño superó todas mis expectativas. Los clientes nos dicen constantemente que la web es preciosa.', stars: 5 },
-                  ].map((r, i) => (
-                    <div className="calc-review-card" key={i} style={{ animationDelay: `${i * 0.15}s` }}>
-                      <div className="calc-review-card__stars">{'★'.repeat(r.stars)}</div>
-                      <p className="calc-review-card__text">"{r.text}"</p>
-                      <div className="calc-review-card__author">
-                        <div className="calc-review-card__avatar">{r.name[0]}</div>
-                        <div>
-                          <strong className="calc-review-card__name">{r.name}</strong>
-                          <span className="calc-review-card__role">{r.role}</span>
-                        </div>
+                    { icon: '🎨', label: 'Diseño 100% a medida', desc: 'Único para tu marca, sin plantillas genéricas' },
+                    { icon: '📱', label: 'Adaptado a móvil', desc: 'Perfecto en cualquier dispositivo' },
+                    { icon: '⚡', label: 'Velocidad de carga', desc: 'Optimizado para cargar en menos de 2 segundos' },
+                    { icon: '🔍', label: 'SEO básico', desc: 'Estructura preparada para posicionar en Google' },
+                    { icon: '🔒', label: 'SSL + Seguridad', desc: 'Certificado de seguridad incluido' },
+                    { icon: '✏️', label: 'Revisiones ilimitadas', desc: 'Hasta que quede exactamente como lo imaginas' },
+                    { icon: '🚀', label: 'Entrega en ~2 semanas', desc: 'Sin esperas interminables' },
+                    { icon: '🤝', label: 'Soporte post-lanzamiento', desc: 'Estoy aquí después del lanzamiento' },
+                  ].map((item, i) => (
+                    <div className="calc-includes__item" key={i} style={{ animationDelay: `${i * 0.07}s` }}>
+                      <span className="calc-includes__icon">{item.icon}</span>
+                      <div>
+                        <strong className="calc-includes__label">{item.label}</strong>
+                        <span className="calc-includes__desc">{item.desc}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ── Trust badges ── */}
-              <div className="calc-trust">
-                <div className="calc-trust__item"><span className="calc-trust__icon">⚡</span> Entrega en 2 semanas</div>
-                <div className="calc-trust__sep" />
-                <div className="calc-trust__item"><span className="calc-trust__icon">🔒</span> Pago tras aprobación</div>
-                <div className="calc-trust__sep" />
-                <div className="calc-trust__item"><span className="calc-trust__icon">♾️</span> Revisiones incluidas</div>
+              {/* ── Qué mejorará en tu negocio ── */}
+              <div className="calc-benefits">
+                <h3 className="calc-benefits__title">Qué cambiará en tu negocio</h3>
+                <div className="calc-benefits__list">
+                  {[
+                    { stat: '+60%', label: 'más consultas desde la web', sub: 'Media de clientes en el primer mes' },
+                    { stat: '24/7', label: 'tu negocio visible online', sub: 'Tu web trabaja mientras tú descansas' },
+                    { stat: '×3', label: 'más credibilidad ante clientes', sub: 'Una web profesional genera confianza inmediata' },
+                  ].map((b, i) => (
+                    <div className="calc-benefits__item" key={i}>
+                      <span className="calc-benefits__stat">{b.stat}</span>
+                      <div>
+                        <strong className="calc-benefits__label">{b.label}</strong>
+                        <span className="calc-benefits__sub">{b.sub}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="calc-result__email-note">
@@ -339,6 +351,45 @@ export default function CalculadoraLanding() {
                 <button className="calc-btn calc-btn--primary" onClick={() => window.location.href = '/'}>
                   <Zap size={18} /> Empezar mi proyecto
                 </button>
+              </div>
+
+              {/* ── Reseñas con Trustpilot ── */}
+              <div className="calc-reviews">
+                <div className="calc-reviews__header">
+                  <div className="calc-reviews__tp-logo">
+                    <svg viewBox="0 0 126 34" fill="none" xmlns="http://www.w3.org/2000/svg" className="calc-reviews__tp-svg">
+                      <path d="M17 0L20.9 11.8H33.9L23.5 19.1L27.4 31L17 23.7L6.6 31L10.5 19.1L0.1 11.8H13.1L17 0Z" fill="#00B67A"/>
+                      <path d="M24.4 21.7L23.5 19.1L17 23.7L24.4 21.7Z" fill="#005128"/>
+                      <text x="42" y="24" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="20" fill="#191919">Trustpilot</text>
+                    </svg>
+                  </div>
+                  <div className="calc-reviews__tp-rating">
+                    <span className="calc-reviews__tp-stars">★★★★★</span>
+                    <span className="calc-reviews__tp-score">5.0 · Excelente</span>
+                  </div>
+                </div>
+                <div className="calc-reviews__grid">
+                  {[
+                    { name: 'Ana M.', role: 'Hello Nails · Franquicia', text: 'Guti nos entregó la web en tiempo récord. Las reservas online aumentaron un 60% el primer mes. Totalmente recomendable.', stars: 5 },
+                    { name: 'Carlos R.', role: 'Stay4Days · Alquiler vacacional', text: 'Profesional, rápido y con mucho criterio de diseño. Nuestra web convierte muchísimo mejor que la anterior.', stars: 5 },
+                    { name: 'Laura V.', role: 'Spa Organic · Bienestar', text: 'El diseño superó todas mis expectativas. Los clientes nos dicen constantemente que la web es preciosa.', stars: 5 },
+                  ].map((r, i) => (
+                    <div className="calc-review-card" key={i} style={{ animationDelay: `${i * 0.15}s` }}>
+                      <div className="calc-review-card__top">
+                        <div className="calc-review-card__stars">{'★'.repeat(r.stars)}</div>
+                        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M10 0L12.2 6.8H19.5L13.6 11L15.9 17.7L10 13.5L4.1 17.7L6.4 11L0.5 6.8H7.8L10 0Z" fill="#00B67A"/></svg>
+                      </div>
+                      <p className="calc-review-card__text">"{r.text}"</p>
+                      <div className="calc-review-card__author">
+                        <div className="calc-review-card__avatar">{r.name[0]}</div>
+                        <div>
+                          <strong className="calc-review-card__name">{r.name}</strong>
+                          <span className="calc-review-card__role">{r.role}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <button className="calc-btn calc-btn--ghost calc-result__reset" onClick={reset}>
