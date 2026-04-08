@@ -512,6 +512,49 @@
 .adm-contact__link:hover { text-decoration: underline; }
 .adm-contact__link--wa { color: #25D366; }
 
+/* ── Secciones del briefing ── */
+.adm-card__title-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(16,185,129,.1);
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.adm-briefing-section {
+  border-top: 1px solid var(--adm-border);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.adm-briefing-section:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.adm-briefing-section__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--adm-primary);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin: 0 0 14px;
+}
+.adm-briefing-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adm-bv-link {
+  font-size: 14px;
+  color: var(--adm-primary);
+  word-break: break-all;
+  text-decoration: none;
+}
+.adm-bv-link:hover { text-decoration: underline; }
+
 /* ── Galería de imágenes del briefing ── */
 .adm-image-gallery {
   display: grid;

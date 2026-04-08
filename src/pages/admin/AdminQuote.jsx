@@ -141,23 +141,87 @@ export default function AdminQuote() {
                 <h3 className="adm-card__title">
                   <CheckCircle2 size={16} className="adm-card__title-icon adm-card__title-icon--green" />
                   Briefing recibido
+                  <span className="adm-card__title-badge">
+                    {briefing.status === 'submitted' ? 'Enviado' : 'Borrador'}
+                  </span>
                 </h3>
                 <div className="adm-briefing-view">
-                  {briefing.company_name && <div className="adm-bv-item"><span>Empresa</span><strong>{briefing.company_name}</strong></div>}
-                  {briefing.company_description && <div className="adm-bv-item"><span>Descripción</span><p>{briefing.company_description}</p></div>}
-                  {briefing.target_audience && <div className="adm-bv-item"><span>Público objetivo</span><p>{briefing.target_audience}</p></div>}
-                  {briefing.brand_colors && <div className="adm-bv-item"><span>Colores de marca</span><p>{briefing.brand_colors}</p></div>}
-                  {briefing.typography && <div className="adm-bv-item"><span>Tipografía</span><p>{briefing.typography}</p></div>}
-                  {briefing.competitors && <div className="adm-bv-item"><span>Competidores</span><p>{briefing.competitors}</p></div>}
-                  {briefing.reference_sites && <div className="adm-bv-item"><span>Webs de referencia</span><p>{briefing.reference_sites}</p></div>}
-                  {briefing.social_links && <div className="adm-bv-item"><span>Redes sociales</span><p>{briefing.social_links}</p></div>}
-                  {briefing.pages_content && <div className="adm-bv-item"><span>Contenido de páginas</span><p>{briefing.pages_content}</p></div>}
-                  {briefing.additional_notes && <div className="adm-bv-item"><span>Notas adicionales</span><p>{briefing.additional_notes}</p></div>}
+
+                  <BriefingSection title="🏢 Empresa">
+                    <BV label="Nombre"             value={briefing.company_name} />
+                    <BV label="Descripción"        value={briefing.company_description} />
+                    <BV label="Sector"             value={briefing.sector} />
+                    <BV label="Año fundación"      value={briefing.founded_year} />
+                    <BV label="Tamaño del equipo"  value={briefing.team_size} />
+                    <BV label="Logo (link)"        value={briefing.logo_url} isLink />
+                  </BriefingSection>
+
+                  <BriefingSection title="🎯 Público y propuesta de valor">
+                    <BV label="Público objetivo"   value={briefing.target_audience} />
+                    <BV label="Problema que resuelve" value={briefing.customer_pain} />
+                    <BV label="Propuesta de valor" value={briefing.unique_value} />
+                    <BV label="CTA principal"      value={briefing.main_cta} />
+                  </BriefingSection>
+
+                  <BriefingSection title="⚙️ Servicios y contenido">
+                    <BV label="Servicios"          value={briefing.services_list} />
+                    <BV label="Equipo a mostrar"   value={briefing.team_members} />
+                    <BV label="Premios / hitos"    value={briefing.awards} />
+                    <BV label="Proyectos portfolio" value={briefing.projects_list} />
+                    <BV label="Categorías trabajo" value={briefing.project_categories} />
+                    <BV label="Proceso de trabajo" value={briefing.process_info} />
+                    <BV label="Páginas y contenido" value={briefing.pages_content} />
+                    <BV label="Mensajes clave"     value={briefing.key_messages} />
+                    <BV label="Testimonios"        value={briefing.testimonials} />
+                  </BriefingSection>
+
+                  <BriefingSection title="🛒 Tienda (si aplica)">
+                    <BV label="Categorías productos" value={briefing.product_categories} />
+                    <BV label="Rango de precios"   value={briefing.price_range} />
+                    <BV label="Variaciones"        value={briefing.product_variations} />
+                    <BV label="Gestión de stock"   value={briefing.stock_info} />
+                    <BV label="Política de envíos" value={briefing.shipping_info} />
+                    <BV label="Devoluciones"       value={briefing.return_policy} />
+                    <BV label="Métodos de pago"    value={briefing.payment_methods} />
+                    <BV label="Pasarela de pago"   value={briefing.payment_gateway} />
+                  </BriefingSection>
+
+                  <BriefingSection title="💻 App/SaaS (si aplica)">
+                    <BV label="Funcionalidades"    value={briefing.features_list} />
+                    <BV label="Modelo de precios"  value={briefing.pricing_model} />
+                    <BV label="Integraciones"      value={briefing.integrations} />
+                    <BV label="Tech stack"         value={briefing.tech_stack} />
+                    <BV label="Extras técnicos"    value={briefing.extra_features} />
+                  </BriefingSection>
+
+                  <BriefingSection title="🎨 Marca y estilo">
+                    <BV label="Colores"            value={briefing.brand_colors} />
+                    <BV label="Tipografía"         value={briefing.typography} />
+                    <BV label="Tono de comunicación" value={briefing.tone} />
+                  </BriefingSection>
+
+                  <BriefingSection title="🔗 Referencias">
+                    <BV label="Webs de referencia" value={briefing.reference_sites} />
+                    <BV label="Qué le gusta"       value={briefing.style_likes} />
+                    <BV label="Qué NO quiere"      value={briefing.style_dislikes} />
+                    <BV label="Competidores"       value={briefing.competitors} />
+                  </BriefingSection>
+
+                  <BriefingSection title="📱 Contacto y redes">
+                    <BV label="Teléfono"           value={briefing.phone} />
+                    <BV label="Dirección"          value={briefing.address} />
+                    <BV label="Redes sociales"     value={briefing.social_links} />
+                  </BriefingSection>
+
+                  {briefing.additional_notes && (
+                    <BriefingSection title="📝 Notas adicionales">
+                      <BV label="Notas" value={briefing.additional_notes} />
+                    </BriefingSection>
+                  )}
 
                   {/* Galería de imágenes */}
                   {briefing.image_urls?.length > 0 && (
-                    <div className="adm-bv-item">
-                      <span>Imágenes subidas por el cliente ({briefing.image_urls.length})</span>
+                    <BriefingSection title={`📸 Imágenes del cliente (${briefing.image_urls.length})`}>
                       <div className="adm-image-gallery">
                         {briefing.image_urls.map((url, i) => (
                           <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="adm-image-thumb">
@@ -165,7 +229,7 @@ export default function AdminQuote() {
                           </a>
                         ))}
                       </div>
-                    </div>
+                    </BriefingSection>
                   )}
                 </div>
               </div>
@@ -231,6 +295,39 @@ export default function AdminQuote() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+/* ── Helpers de briefing ── */
+function BriefingSection({ title, children }) {
+  // Solo renderiza si algún hijo tiene valor
+  const hasContent = Array.isArray(children)
+    ? children.some(c => c?.props?.value)
+    : children?.props?.value;
+
+  if (!hasContent && !children?.props?.children) return null;
+
+  return (
+    <div className="adm-briefing-section">
+      <h4 className="adm-briefing-section__title">{title}</h4>
+      <div className="adm-briefing-section__body">{children}</div>
+    </div>
+  );
+}
+
+function BV({ label, value, isLink }) {
+  if (!value) return null;
+  return (
+    <div className="adm-bv-item">
+      <span>{label}</span>
+      {isLink ? (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="adm-bv-link">
+          {value}
+        </a>
+      ) : (
+        <p>{value}</p>
+      )}
     </div>
   );
 }
