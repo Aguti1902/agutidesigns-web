@@ -12,14 +12,23 @@ const WEB_BASE_PRICES = {
   otra: 997,
 };
 
-const PAGE_EXTRA = {
-  '1': 0,
-  '1-3': 150,
-  '3-5': 400,
-  '5-10': 800,
-  '10+': 1200,
-  'no-se': 300,
+// Páginas incluidas por tipo de web:
+//   landing     → 1 página (fijo)
+//   corporativa → hasta 10 páginas incluidas → sólo cobra 10+
+//   portfolio   → hasta 5 páginas incluidas
+//   blog/otra   → hasta 5 páginas incluidas
+//   webapp      → no aplica igual
+const PAGE_EXTRA_BY_TYPE = {
+  landing:     { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 0,    'no-se': 0   },
+  corporativa: { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 350,  'no-se': 0   },
+  portfolio:   { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 150, '10+': 350,  'no-se': 0   },
+  blog:        { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 150, '10+': 350,  'no-se': 0   },
+  ecommerce:   { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 0,    'no-se': 0   },
+  webapp:      { '1': 0, '1-3': 0,   '3-5': 150, '5-10': 300, '10+': 600,  'no-se': 150 },
+  otra:        { '1': 0, '1-3': 0,   '3-5': 150, '5-10': 300, '10+': 550,  'no-se': 150 },
 };
+// Fallback legacy (no debería usarse)
+const PAGE_EXTRA = { '1': 0, '1-3': 0, '3-5': 150, '5-10': 300, '10+': 550, 'no-se': 150 };
 
 // Extra por número de productos en tienda online
 const PRODUCT_COUNT_EXTRA = {
@@ -66,7 +75,8 @@ const AI_MONTHLY_EXTRA = 15;
 
 export function calculatePrice(formData) {
   const webBase = WEB_BASE_PRICES[formData.webType] || 997;
-  const pagesExtra = PAGE_EXTRA[formData.pages] || 0;
+  const pageTable = PAGE_EXTRA_BY_TYPE[formData.webType] || PAGE_EXTRA;
+  const pagesExtra = pageTable[formData.pages] ?? 0;
 
   // Extra por productos (solo ecommerce)
   const productExtra = formData.webType === 'ecommerce'
@@ -90,7 +100,7 @@ export function calculatePrice(formData) {
 
   const breakdown = [];
   breakdown.push({ label: `Diseño web (${formData.webType || 'estándar'})`, price: webBase });
-  if (pagesExtra > 0) breakdown.push({ label: `Páginas adicionales (${formData.pages})`, price: pagesExtra });
+  if (pagesExtra > 0) breakdown.push({ label: `Páginas extra (${formData.pages} págs.)`, price: pagesExtra });
   if (productExtra > 0) {
     const productLabels = {
       '50-200': '50–200 productos',

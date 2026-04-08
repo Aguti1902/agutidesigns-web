@@ -1,0 +1,49 @@
+.wa-wrap {
+  position: fixed;
+  bottom: 88px; /* encima del chat bot */
+  right: var(--space-6);
+  z-index: 295;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: none;
+}
+
+.wa-tooltip {
+  pointer-events: none;
+  background: #1B1B1B;
+  color: #ffffff;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+.wa-btn {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(37,211,102,.4), 0 2px 6px rgba(0,0,0,.15);
+  text-decoration: none;
+  transition: box-shadow var(--transition-fast);
+}
+
+.wa-btn:hover {
+  box-shadow: 0 8px 24px rgba(37,211,102,.5), 0 4px 10px rgba(0,0,0,.2);
+}
+
+@media (max-width: 768px) {
+  .wa-wrap {
+    bottom: 80px;
+    right: var(--space-4);
+  }
+  .wa-tooltip { display: none; }
+}

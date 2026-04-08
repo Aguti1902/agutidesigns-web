@@ -1306,3 +1306,141 @@
   /* Footer */
   .calc-footer { padding: var(--space-3) var(--space-4); }
 }
+
+/* ============================================
+   RESEÑAS EN RESULTADO
+   ============================================ */
+.calc-reviews {
+  width: 100%;
+  margin-top: var(--space-6);
+}
+.calc-reviews__title {
+  text-align: center;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-gray-500);
+  margin: 0 0 var(--space-4);
+}
+.calc-reviews__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+.calc-review-card {
+  background: #ffffff;
+  border: 1.5px solid var(--color-gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: reviewSlideIn 0.5s ease both;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.calc-review-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,71,255,.08);
+}
+@keyframes reviewSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.calc-review-card__stars {
+  color: #F59E0B;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.calc-review-card__text {
+  font-size: var(--text-sm);
+  color: var(--color-gray-600);
+  line-height: 1.6;
+  margin: 0;
+  flex: 1;
+  font-style: italic;
+}
+.calc-review-card__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.calc-review-card__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.calc-review-card__name {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-black);
+  font-weight: 600;
+}
+.calc-review-card__role {
+  display: block;
+  font-size: 11px;
+  color: var(--color-gray-500);
+  font-family: var(--font-mono);
+}
+
+/* ── Trust badges ── */
+.calc-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  background: rgba(0,71,255,.04);
+  border: 1px solid rgba(0,71,255,.12);
+  border-radius: var(--radius-xl);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+.calc-trust__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-gray-700);
+}
+.calc-trust__icon { font-size: 15px; }
+.calc-trust__sep {
+  width: 1px;
+  height: 20px;
+  background: var(--color-gray-300);
+}
+
+/* ── Animación del precio (glow pulse) ── */
+.calc-result__price-amount {
+  animation: priceGlow 2.5s ease-in-out 0.4s both;
+}
+@keyframes priceGlow {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* ── Check icon animado ── */
+.calc-result__check svg {
+  animation: checkPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes checkPop {
+  from { opacity: 0; transform: scale(0) rotate(-15deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@media (max-width: 640px) {
+  .calc-reviews__grid { grid-template-columns: 1fr; }
+  .calc-trust { gap: var(--space-3); }
+  .calc-trust__sep { display: none; }
+}

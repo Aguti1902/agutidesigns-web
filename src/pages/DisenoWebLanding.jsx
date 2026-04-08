@@ -11,6 +11,9 @@ import {
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
+import AIChatbot from '../components/chat/AIChatbot';
+import CookieBanner from '../components/ui/CookieBanner';
+import WhatsAppButton from '../components/ui/WhatsAppButton';
 import './DisenoWebLanding.css';
 
 const fadeUp = {
@@ -124,6 +127,7 @@ function PortfolioCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [slideW, setSlideW] = useState(0);
+  const [perPage, setPerPage] = useState(4);
   const wrapRef = useRef(null);
   const total = PORTFOLIO.length;
 
@@ -132,6 +136,7 @@ function PortfolioCarousel() {
       if (!wrapRef.current) return;
       const w = window.innerWidth;
       const pv = w < 640 ? 1 : w < 1024 ? 2 : 4;
+      setPerPage(pv);
       setSlideW(wrapRef.current.offsetWidth / pv);
     };
     update();
@@ -140,14 +145,17 @@ function PortfolioCarousel() {
     return () => ro.disconnect();
   }, []);
 
+  const maxActive = Math.max(0, total - perPage);
+
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(() => setActive(a => (a + 1) % total), 3500);
+    const t = setInterval(() => setActive(a => a >= maxActive ? 0 : a + 1), 3500);
     return () => clearInterval(t);
-  }, [paused, total]);
+  }, [paused, maxActive]);
 
   const go = (idx) => {
-    setActive(((idx % total) + total) % total);
+    const clamped = Math.max(0, Math.min(idx, maxActive));
+    setActive(clamped);
     setPaused(true);
     setTimeout(() => setPaused(false), 7000);
   };
@@ -182,7 +190,7 @@ function PortfolioCarousel() {
 
       {/* ── DOTS ── */}
       <div className="port-dots">
-        {PORTFOLIO.map((_, i) => (
+        {Array.from({ length: maxActive + 1 }).map((_, i) => (
           <button
             key={i}
             className={`port-dot ${i === active ? 'port-dot--on' : ''}`}
@@ -300,7 +308,7 @@ export default function DisenoWebLanding() {
 
             <motion.div variants={fadeUp} className="dw-hero__stats">
               <div className="dw-hero__stat">
-                <span className="dw-hero__stat-num">50+</span>
+                <span className="dw-hero__stat-num">200+</span>
                 <span className="dw-hero__stat-label">Webs entregadas</span>
               </div>
               <div className="dw-hero__stat-divider" />
@@ -462,7 +470,7 @@ export default function DisenoWebLanding() {
                 </div>
                 <div className="dw-about__stat-sep" />
                 <div className="dw-about__stat">
-                  <span className="dw-about__stat-num">50+</span>
+                  <span className="dw-about__stat-num">200+</span>
                   <span className="dw-about__stat-label">Webs<br/>entregadas</span>
                 </div>
                 <div className="dw-about__stat-sep" />
@@ -637,6 +645,11 @@ export default function DisenoWebLanding() {
       </section>
 
       <Footer />
+
+      {/* ── Widgets flotantes ── */}
+      <AIChatbot />
+      <WhatsAppButton />
+      <CookieBanner />
     </div>
   );
 }

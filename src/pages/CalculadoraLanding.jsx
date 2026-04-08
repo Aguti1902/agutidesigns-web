@@ -236,17 +236,8 @@ export default function CalculadoraLanding() {
       ...formData.functionalities,
       ...formData.seoExtras.filter(s => s !== 'chatbot-web' && s !== 'seo-basico'),
     ];
-    const styleMultipliers = { minimalista: 1, moderno: 1.1, premium: 1.25, creativo: 1.15 };
-    const styleM = styleMultipliers[formData.designStyle] || 1;
-
     const raw = calculatePrice({ ...formData, aiFeatures, extraFeatures });
-    const total = Math.round(raw.total * styleM);
-    const breakdownFull = [...raw.breakdown];
-    if (styleM !== 1) {
-      const diff = total - raw.total;
-      breakdownFull.push({ label: `Estilo ${formData.designStyle}`, price: diff });
-    }
-    const quoteData = { ...raw, total, breakdown: breakdownFull };
+    const quoteData = { ...raw };
     setQuote(quoteData);
     setIsLoading(false);
     sendLeadToN8N(quoteData);
@@ -297,6 +288,39 @@ export default function CalculadoraLanding() {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              {/* ── Reseñas de clientes ── */}
+              <div className="calc-reviews">
+                <p className="calc-reviews__title">Lo que dicen nuestros clientes</p>
+                <div className="calc-reviews__grid">
+                  {[
+                    { name: 'Ana M.', role: 'Hello Nails · Franquicia', text: 'Guti nos entregó la web en tiempo récord. Las reservas online aumentaron un 60% el primer mes. Totalmente recomendable.', stars: 5 },
+                    { name: 'Carlos R.', role: 'Stay4Days · Alquiler vacacional', text: 'Profesional, rápido y con mucho criterio de diseño. Nuestra web convierte muchísimo mejor que la anterior.', stars: 5 },
+                    { name: 'Laura V.', role: 'Spa Organic · Bienestar', text: 'El diseño superó todas mis expectativas. Los clientes nos dicen constantemente que la web es preciosa.', stars: 5 },
+                  ].map((r, i) => (
+                    <div className="calc-review-card" key={i} style={{ animationDelay: `${i * 0.15}s` }}>
+                      <div className="calc-review-card__stars">{'★'.repeat(r.stars)}</div>
+                      <p className="calc-review-card__text">"{r.text}"</p>
+                      <div className="calc-review-card__author">
+                        <div className="calc-review-card__avatar">{r.name[0]}</div>
+                        <div>
+                          <strong className="calc-review-card__name">{r.name}</strong>
+                          <span className="calc-review-card__role">{r.role}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Trust badges ── */}
+              <div className="calc-trust">
+                <div className="calc-trust__item"><span className="calc-trust__icon">⚡</span> Entrega en 2 semanas</div>
+                <div className="calc-trust__sep" />
+                <div className="calc-trust__item"><span className="calc-trust__icon">🔒</span> Pago tras aprobación</div>
+                <div className="calc-trust__sep" />
+                <div className="calc-trust__item"><span className="calc-trust__icon">♾️</span> Revisiones incluidas</div>
               </div>
 
               <div className="calc-result__email-note">
