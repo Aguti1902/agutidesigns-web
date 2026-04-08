@@ -6,7 +6,7 @@ import './AIChatbot.css';
 
 const INITIAL_MESSAGE = {
   role: 'assistant',
-  content: `¡Hola! 👋 Soy **Guti AI**, el asistente virtual de Agutidesigns.\n\nEstoy aquí para ayudarte a encontrar la solución web + IA perfecta para tu negocio. Puedo:\n\n- 🌐 Contarte sobre nuestros packs\n- 💰 Darte información de precios\n- 🤖 Explicarte cómo funciona la IA\n- 📋 Ayudarte con el proceso\n\n¿En qué puedo ayudarte?`,
+  content: `¡Hola! 👋 Soy **Guti AI**, el asistente de Agutidesigns.\n\nEstoy aquí para ayudarte con cualquier duda sobre tu proyecto web: qué tipo de web te conviene, cómo es el proceso, cuánto puede costar...\n\n¿Qué proyecto tienes en mente?`,
 };
 
 export default function AIChatbot() {

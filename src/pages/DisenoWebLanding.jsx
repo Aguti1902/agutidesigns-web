@@ -13,7 +13,6 @@ import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import AIChatbot from '../components/chat/AIChatbot';
 import CookieBanner from '../components/ui/CookieBanner';
-import WhatsAppButton from '../components/ui/WhatsAppButton';
 import './DisenoWebLanding.css';
 
 const fadeUp = {
@@ -648,7 +647,6 @@ export default function DisenoWebLanding() {
 
       {/* ── Widgets flotantes ── */}
       <AIChatbot />
-      <WhatsAppButton />
       <CookieBanner />
     </div>
   );
