@@ -21,13 +21,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithEmail = async (email) => {
-    const redirectTo = `${window.location.origin}/admin/dashboard`;
-    return supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    const base = window.location.origin;
+    return supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${base}/admin/dashboard` },
+    });
   };
 
   const signInClientMagicLink = async (email, quoteId) => {
-    const redirectTo = `${window.location.origin}/cliente/briefing?quote=${quoteId}`;
-    return supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    const base = window.location.origin;
+    return supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${base}/cliente/briefing?quote=${quoteId}` },
+    });
   };
 
   const signOut = () => supabase.auth.signOut();
