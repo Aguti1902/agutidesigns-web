@@ -5,7 +5,7 @@ import {
   Check, CheckCircle, Mail, Zap, MessageCircle, RefreshCw, Lock,
   Sparkles, TrendingUp, Layers, Clock, Search, BarChart3, Calendar,
   ShoppingBag, BookOpen, Users, Languages, MessageSquare, Star,
-  CreditCard, Image, Cpu, Package,
+  CreditCard, Image, Cpu, Package, Palette, Shield, Headphones, RotateCcw,
 } from 'lucide-react';
 import { calculatePrice, formatPrice } from '../services/priceCalculator';
 import './CalculadoraLanding.css';
@@ -295,14 +295,14 @@ export default function CalculadoraLanding() {
                 <h3 className="calc-includes__title">Todo lo que incluye tu web</h3>
                 <div className="calc-includes__grid">
                   {[
-                    { icon: '🎨', label: 'Diseño 100% a medida', desc: 'Único para tu marca, sin plantillas genéricas' },
-                    { icon: '📱', label: 'Adaptado a móvil', desc: 'Perfecto en cualquier dispositivo' },
-                    { icon: '⚡', label: 'Velocidad de carga', desc: 'Optimizado para cargar en menos de 2 segundos' },
-                    { icon: '🔍', label: 'SEO básico', desc: 'Estructura preparada para posicionar en Google' },
-                    { icon: '🔒', label: 'SSL + Seguridad', desc: 'Certificado de seguridad incluido' },
-                    { icon: '✏️', label: 'Revisiones ilimitadas', desc: 'Hasta que quede exactamente como lo imaginas' },
-                    { icon: '🚀', label: 'Entrega en ~2 semanas', desc: 'Sin esperas interminables' },
-                    { icon: '🤝', label: 'Soporte post-lanzamiento', desc: 'Estoy aquí después del lanzamiento' },
+                    { icon: <Palette size={18} />, label: 'Diseño 100% a medida', desc: 'Único para tu marca, sin plantillas genéricas' },
+                    { icon: <Smartphone size={18} />, label: 'Adaptado a móvil', desc: 'Perfecto en cualquier dispositivo' },
+                    { icon: <Zap size={18} />, label: 'Velocidad de carga', desc: 'Optimizado para cargar en menos de 2 segundos' },
+                    { icon: <Search size={18} />, label: 'SEO básico', desc: 'Estructura preparada para posicionar en Google' },
+                    { icon: <Shield size={18} />, label: 'SSL + Seguridad', desc: 'Certificado de seguridad incluido' },
+                    { icon: <RotateCcw size={18} />, label: 'Revisiones ilimitadas', desc: 'Hasta que quede exactamente como lo imaginas' },
+                    { icon: <Clock size={18} />, label: 'Entrega en ~2 semanas', desc: 'Sin esperas interminables' },
+                    { icon: <Headphones size={18} />, label: 'Soporte post-lanzamiento', desc: 'Estoy aquí después del lanzamiento' },
                   ].map((item, i) => (
                     <div className="calc-includes__item" key={i} style={{ animationDelay: `${i * 0.07}s` }}>
                       <span className="calc-includes__icon">{item.icon}</span>
@@ -357,11 +357,12 @@ export default function CalculadoraLanding() {
               <div className="calc-reviews">
                 <div className="calc-reviews__header">
                   <div className="calc-reviews__tp-logo">
-                    <svg viewBox="0 0 126 34" fill="none" xmlns="http://www.w3.org/2000/svg" className="calc-reviews__tp-svg">
-                      <path d="M17 0L20.9 11.8H33.9L23.5 19.1L27.4 31L17 23.7L6.6 31L10.5 19.1L0.1 11.8H13.1L17 0Z" fill="#00B67A"/>
-                      <path d="M24.4 21.7L23.5 19.1L17 23.7L24.4 21.7Z" fill="#005128"/>
-                      <text x="42" y="24" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="20" fill="#191919">Trustpilot</text>
+                    {/* Trustpilot star */}
+                    <svg width="28" height="28" viewBox="0 0 55 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <polygon points="27.5,0 34.5,19.5 55,19.5 39,31.5 45,51.5 27.5,39.5 10,51.5 16,31.5 0,19.5 20.5,19.5" fill="#00B67A"/>
+                      <polygon points="39,31.5 34.5,19.5 27.5,39.5" fill="#005128"/>
                     </svg>
+                    <span className="calc-reviews__tp-name">Trustpilot</span>
                   </div>
                   <div className="calc-reviews__tp-rating">
                     <span className="calc-reviews__tp-stars">★★★★★</span>

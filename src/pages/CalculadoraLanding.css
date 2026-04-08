@@ -1363,9 +1363,15 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 .calc-includes__icon {
-  font-size: 20px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,71,255,.08);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
 }
 .calc-includes__label {
   display: block;
@@ -1455,10 +1461,14 @@
 .calc-reviews__tp-logo {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
-.calc-reviews__tp-svg {
-  width: 120px;
-  height: auto;
+.calc-reviews__tp-name {
+  font-family: 'Arial', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #191919;
+  letter-spacing: -0.3px;
 }
 .calc-reviews__tp-rating {
   display: flex;
