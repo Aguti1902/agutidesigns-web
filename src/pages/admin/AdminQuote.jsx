@@ -153,6 +153,20 @@ export default function AdminQuote() {
                   {briefing.social_links && <div className="adm-bv-item"><span>Redes sociales</span><p>{briefing.social_links}</p></div>}
                   {briefing.pages_content && <div className="adm-bv-item"><span>Contenido de páginas</span><p>{briefing.pages_content}</p></div>}
                   {briefing.additional_notes && <div className="adm-bv-item"><span>Notas adicionales</span><p>{briefing.additional_notes}</p></div>}
+
+                  {/* Galería de imágenes */}
+                  {briefing.image_urls?.length > 0 && (
+                    <div className="adm-bv-item">
+                      <span>Imágenes subidas por el cliente ({briefing.image_urls.length})</span>
+                      <div className="adm-image-gallery">
+                        {briefing.image_urls.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="adm-image-thumb">
+                            <img src={url} alt={`Imagen ${i + 1}`} />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

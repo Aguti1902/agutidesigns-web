@@ -45,6 +45,7 @@ create table public.briefings (
   typography          text,
   tone                text,
   logo_url            text,
+  image_urls          text[],
   pages_content       text,
   key_messages        text,
   reference_sites     text,
@@ -107,7 +108,34 @@ VITE_ADMIN_EMAIL=tu@email.com
 
 Encuentra los valores en: **Supabase → Project Settings → API**
 
-## 4. Configurar Auth en Supabase
+## 4. Crear bucket de Storage para imágenes
+
+1. Ve a **Storage** en tu proyecto de Supabase
+2. Crea un nuevo bucket llamado exactamente: `briefing-assets`
+3. Márcalo como **Public** (para que las imágenes sean accesibles)
+4. Ejecuta este SQL para las políticas de acceso:
+
+```sql
+-- Permitir subida de imágenes a usuarios autenticados
+create policy "Authenticated users can upload"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'briefing-assets');
+
+-- Permitir lectura pública de imágenes
+create policy "Public read briefing assets"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'briefing-assets');
+
+-- Permitir borrado al propietario
+create policy "Owner can delete own uploads"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'briefing-assets' and auth.uid()::text = (storage.foldername(name))[1]);
+```
+
+## 5. Configurar Auth en Supabase
 
 1. Ve a **Authentication → Email Templates** y personaliza el asunto del magic link
 2. Ve a **Authentication → URL Configuration** y añade en **Redirect URLs**:
