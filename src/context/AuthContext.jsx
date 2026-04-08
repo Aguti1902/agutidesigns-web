@@ -20,12 +20,8 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithEmail = async (email) => {
-    const base = window.location.origin;
-    return supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${base}/admin/dashboard` },
-    });
+  const signInWithEmail = async (email, password) => {
+    return supabase.auth.signInWithPassword({ email, password });
   };
 
   const signInClientMagicLink = async (email, quoteId) => {
