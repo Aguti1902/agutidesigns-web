@@ -1,0 +1,228 @@
+/* ============================================
+   CLIENTE BRIEFING — Styles
+   ============================================ */
+
+.cli-layout {
+  min-height: 100vh;
+  background: #F8F9FC;
+  font-family: var(--font-body, 'Barlow Condensed', sans-serif);
+}
+
+/* ── Header ── */
+.cli-header {
+  background: #ffffff;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.cli-header__logo { height: 26px; object-fit: contain; }
+.cli-header__quote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.cli-header__quote span { font-size: 12px; color: #6B7280; }
+.cli-header__quote strong { font-size: 16px; font-weight: 700; color: #0047FF; }
+
+/* ── Body ── */
+.cli-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── Progress ── */
+.cli-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.cli-progress__step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  position: relative;
+}
+.cli-progress__step::after {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: #E5E7EB;
+  margin: 0 4px;
+}
+.cli-progress__step:last-child::after { display: none; }
+.cli-progress__dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.cli-progress__step--active .cli-progress__dot {
+  background: #0047FF;
+  border-color: #0047FF;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0,71,255,.15);
+}
+.cli-progress__step--done .cli-progress__dot {
+  background: #10B981;
+  border-color: #10B981;
+  color: #ffffff;
+}
+.cli-progress__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9CA3AF;
+  white-space: nowrap;
+}
+.cli-progress__step--active .cli-progress__label { color: #0047FF; }
+.cli-progress__step--done .cli-progress__label  { color: #10B981; }
+
+/* ── Card ── */
+.cli-card {
+  background: #ffffff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.04);
+}
+
+/* ── Step ── */
+.cli-step__title {
+  font-family: var(--font-display, sans-serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+}
+.cli-step__sub {
+  font-size: 15px;
+  color: #6B7280;
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+.cli-step__fields { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── Fields ── */
+.cli-field { display: flex; flex-direction: column; gap: 6px; }
+.cli-field__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.cli-field__input {
+  padding: 12px 16px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #111827;
+  background: #FAFAFA;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.cli-field__input:focus {
+  border-color: #0047FF;
+  background: #ffffff;
+}
+.cli-field__input--textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+/* ── Navigation ── */
+.cli-nav {
+  display: flex;
+  align-items: center;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid #F3F4F6;
+  gap: 12px;
+}
+
+/* ── Buttons ── */
+.cli-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.cli-btn--primary {
+  background: #0047FF;
+  color: #ffffff;
+}
+.cli-btn--primary:hover { background: #0035CC; }
+.cli-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.cli-btn--ghost {
+  background: #ffffff;
+  color: #6B7280;
+  border: 1.5px solid #E5E7EB;
+}
+.cli-btn--ghost:hover { color: #111827; border-color: #9CA3AF; }
+
+/* ── Autosave note ── */
+.cli-autosave {
+  text-align: center;
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-top: 16px;
+}
+
+/* ── Submitted ── */
+.cli-submitted {
+  min-height: 100vh;
+  background: #F8F9FC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.cli-submitted__card {
+  background: #ffffff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 24px;
+  padding: 56px 48px;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,.06);
+}
+.cli-submitted__icon { color: #10B981; margin-bottom: 16px; }
+.cli-submitted__card h2 { font-family: var(--font-display, sans-serif); font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 12px; }
+.cli-submitted__card p { font-size: 16px; color: #6B7280; line-height: 1.6; margin: 0 0 12px; }
+.cli-submitted__sign { font-weight: 700; color: #0047FF; font-size: 15px; }
+
+@media (max-width: 640px) {
+  .cli-card { padding: 24px 20px; }
+  .cli-body { padding: 24px 16px 60px; }
+  .cli-progress__label { display: none; }
+  .cli-step__title { font-size: 22px; }
+}

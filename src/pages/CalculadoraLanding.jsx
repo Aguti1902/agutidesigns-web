@@ -8,6 +8,7 @@ import {
   CreditCard, Image, Cpu, Package, Palette, Shield, Headphones, RotateCcw,
 } from 'lucide-react';
 import { calculatePrice, formatPrice } from '../services/priceCalculator';
+import { supabase } from '../lib/supabase';
 import './CalculadoraLanding.css';
 
 /* ── Step Data ── */
@@ -230,6 +231,28 @@ export default function CalculadoraLanding() {
     }
   };
 
+  const saveQuoteToSupabase = async (quoteData) => {
+    try {
+      const payload = {
+        name:           formData.name,
+        email:          formData.email,
+        web_type:       formData.webType,
+        pages:          formData.pages,
+        timeline:       formData.timeline,
+        product_count:  formData.productCount || null,
+        ai_features:    quoteData.breakdown.filter(b => b.label.toLowerCase().includes('chat')).map(b => b.label),
+        extra_features: formData.functionalities,
+        total:          quoteData.total,
+        monthly:        quoteData.monthly || 0,
+        breakdown:      quoteData.breakdown,
+        status:         'pending',
+      };
+      await supabase.from('quotes').insert(payload);
+    } catch (e) {
+      console.error('[Supabase] Error guardando presupuesto:', e);
+    }
+  };
+
   const handleLoadingDone = () => {
     const aiFeatures = formData.seoExtras.filter(s => s === 'chatbot-web');
     const extraFeatures = [
@@ -240,6 +263,7 @@ export default function CalculadoraLanding() {
     const quoteData = { ...raw };
     setQuote(quoteData);
     setIsLoading(false);
+    saveQuoteToSupabase(quoteData);
     sendLeadToN8N(quoteData);
   };
 
