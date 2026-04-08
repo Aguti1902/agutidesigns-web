@@ -1,0 +1,435 @@
+{
+  "name": "AgutiDesigns — Secuencia de Ventas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "calculadora-lead",
+        "options": { "responseCode": 200 }
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "🎯 Lead entrada (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "calculadora-lead"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "f1", "name": "name",          "value": "={{ $json.name }}",          "type": "string" },
+            { "id": "f2", "name": "email",         "value": "={{ $json.email }}",         "type": "string" },
+            { "id": "f3", "name": "webType",       "value": "={{ $json.webType }}",       "type": "string" },
+            { "id": "f4", "name": "price",         "value": "={{ $json.price }}",         "type": "number" },
+            { "id": "f5", "name": "priceDiscount", "value": "={{ Math.round($json.price * 0.8) }}", "type": "number" },
+            { "id": "f6", "name": "savings",       "value": "={{ $json.price - Math.round($json.price * 0.8) }}", "type": "number" },
+            { "id": "f7", "name": "monthly",       "value": "={{ $json.monthly }}",       "type": "number" },
+            { "id": "f8", "name": "timeline",      "value": "={{ $json.timeline }}",      "type": "string" },
+            { "id": "f9", "name": "submittedAt",   "value": "={{ $json.submittedAt }}",   "type": "string" },
+            { "id": "f10","name": "status",        "value": "nuevo",                       "type": "string" },
+            { "id": "f11","name": "breakdownText", "value": "={{ $json.breakdown.map(b => b.label + ': ' + b.price + '€').join('\\n') }}", "type": "string" },
+            { "id": "f12","name": "expiryDate",    "value": "={{ new Date(Date.now() + 5*24*60*60*1000).toLocaleDateString('es-ES', {day:'2-digit',month:'long'}) }}", "type": "string" }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "📦 Normalizar datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name":           "={{ $json.name }}",
+            "Email":          "={{ $json.email }}",
+            "Web Type":       "={{ $json.webType }}",
+            "Price":          "={{ $json.price }}",
+            "Price Discount": "={{ $json.priceDiscount }}",
+            "Monthly":        "={{ $json.monthly }}",
+            "Timeline":       "={{ $json.timeline }}",
+            "Status":         "nuevo",
+            "Breakdown":      "={{ $json.breakdownText }}",
+            "Submitted At":   "={{ $json.submittedAt }}"
+          }
+        }
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "🗄️ Crear lead en Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.holded.com/api/contacts/v1/contact/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "name",  "value": "={{ $json.name }}" },
+            { "name": "email", "value": "={{ $json.email }}" },
+            { "name": "type",  "value": "client" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "🏢 Holded — Crear contacto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 300],
+      "credentials": { "httpHeaderAuth": { "id": "holded-cred", "name": "Holded API" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.holded.com/api/invoices/v1/estimate/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contactId\": \"{{ $('🏢 Holded — Crear contacto').item.json.id }}\",\n  \"desc\": \"Diseño web: {{ $('📦 Normalizar datos').item.json.webType }}\",\n  \"date\": {{ Math.floor(Date.now()/1000) }},\n  \"notes\": \"Presupuesto generado automáticamente desde calculadora web\",\n  \"products\": [\n    {\n      \"name\": \"{{ $('📦 Normalizar datos').item.json.webType }}\",\n      \"desc\": \"{{ $('📦 Normalizar datos').item.json.breakdownText }}\",\n      \"units\": 1,\n      \"subtotal\": {{ $('📦 Normalizar datos').item.json.price }},\n      \"tax\": 21\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "📄 Holded — Crear presupuesto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 300],
+      "credentials": { "httpHeaderAuth": { "id": "holded-cred", "name": "Holded API" } }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.holded.com/api/invoices/v1/estimate/{{ $json.id }}/pdf/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "📎 Holded — Obtener PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 300],
+      "credentials": { "httpHeaderAuth": { "id": "holded-cred", "name": "Holded API" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "={{ $('📦 Normalizar datos').item.json.email }}",
+        "subject": "=Tu presupuesto para {{ $('📦 Normalizar datos').item.json.webType }} · AgutiDesigns",
+        "emailFormat": "html",
+        "message": "={{ $('📧 Cargar Email 1').item.json.html.replace('{{name}}', $('📦 Normalizar datos').item.json.name).replace('{{webType}}', $('📦 Normalizar datos').item.json.webType).replace('{{price}}', $('📦 Normalizar datos').item.json.price).replace('{{timeline}}', $('📦 Normalizar datos').item.json.timeline) }}",
+        "options": {
+          "attachments": "data"
+        }
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "📧 Email 1 — Presupuesto",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $('🗄️ Crear lead en Airtable').item.json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status":             "propuesta_enviada",
+            "Holded Estimate ID": "={{ $('📄 Holded — Crear presupuesto').item.json.id }}",
+            "Last Email Sent":    "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "✅ Airtable — propuesta_enviada",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1780, 300],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": { "amount": 3, "unit": "days" },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "⏳ Esperar 3 días",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2000, 300],
+      "webhookId": "wait-1"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "filterByFormula": "=AND({Email}='{{ $('📦 Normalizar datos').item.json.email }}')"
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "🔍 Airtable — Leer estado actual",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [2220, 300],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.fields.Status }}",
+              "rightValue": "propuesta_enviada",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "🤔 ¿Sin respuesta aún? (día 3)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2440, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "={{ $('📦 Normalizar datos').item.json.email }}",
+        "subject": "=¿Pudiste ver tu presupuesto, {{ $('📦 Normalizar datos').item.json.name }}?",
+        "emailFormat": "html",
+        "message": "=<!-- Email 2 HTML aquí — pegar contenido de email-2-seguimiento.html con variables reemplazadas -->"
+      },
+      "id": "a1b2c3d4-0012-0012-0012-000000000012",
+      "name": "📧 Email 2 — Seguimiento",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2660, 200],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $('🗄️ Crear lead en Airtable').item.json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": { "Status": "seguimiento_1", "Last Email Sent": "={{ new Date().toISOString() }}" }
+        }
+      },
+      "id": "a1b2c3d4-0013-0013-0013-000000000013",
+      "name": "✅ Airtable — seguimiento_1",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [2880, 200],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": { "amount": 2, "unit": "days" },
+      "id": "a1b2c3d4-0014-0014-0014-000000000014",
+      "name": "⏳ Esperar 2 días",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [3100, 200],
+      "webhookId": "wait-2"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "filterByFormula": "=AND({Email}='{{ $('📦 Normalizar datos').item.json.email }}')"
+      },
+      "id": "a1b2c3d4-0015-0015-0015-000000000015",
+      "name": "🔍 Airtable — Leer estado (día 5)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [3320, 200],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.fields.Status }}",
+              "rightValue": "seguimiento_1",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0016-0016-0016-000000000016",
+      "name": "🤔 ¿Sin respuesta? (día 5)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3540, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "={{ $('📦 Normalizar datos').item.json.email }}",
+        "subject": "=Oferta especial para ti: -20% en tu web 🎁",
+        "emailFormat": "html",
+        "message": "=<!-- Email 3 HTML aquí — pegar contenido de email-3-contraoferta.html con variables reemplazadas -->"
+      },
+      "id": "a1b2c3d4-0017-0017-0017-000000000017",
+      "name": "📧 Email 3 — Contraoferta -20%",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [3760, 100],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $('🗄️ Crear lead en Airtable').item.json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": { "Status": "seguimiento_2", "Last Email Sent": "={{ new Date().toISOString() }}" }
+        }
+      },
+      "id": "a1b2c3d4-0018-0018-0018-000000000018",
+      "name": "✅ Airtable — seguimiento_2",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [3980, 100],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": { "amount": 2, "unit": "days" },
+      "id": "a1b2c3d4-0019-0019-0019-000000000019",
+      "name": "⏳ Esperar 2 días más",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [4200, 100],
+      "webhookId": "wait-3"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "filterByFormula": "=AND({Email}='{{ $('📦 Normalizar datos').item.json.email }}')"
+      },
+      "id": "a1b2c3d4-0020-0020-0020-000000000020",
+      "name": "🔍 Airtable — Leer estado (día 7)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [4420, 100],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c3",
+              "leftValue": "={{ $json.fields.Status }}",
+              "rightValue": "seguimiento_2",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0021-0021-0021-000000000021",
+      "name": "🤔 ¿Sin respuesta? (día 7)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [4640, 100]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "={{ $('📦 Normalizar datos').item.json.email }}",
+        "subject": "={{ $('📦 Normalizar datos').item.json.name }}, voy a cerrar tu expediente",
+        "emailFormat": "html",
+        "message": "=<!-- Email 4 HTML aquí — pegar contenido de email-4-ultimo.html con variables reemplazadas -->"
+      },
+      "id": "a1b2c3d4-0022-0022-0022-000000000022",
+      "name": "📧 Email 4 — Último aviso",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [4860, 0],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $('🗄️ Crear lead en Airtable').item.json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": { "Status": "perdido", "Last Email Sent": "={{ new Date().toISOString() }}" }
+        }
+      },
+      "id": "a1b2c3d4-0023-0023-0023-000000000023",
+      "name": "❌ Airtable — perdido",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [5080, 0],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    }
+  ],
+  "connections": {
+    "🎯 Lead entrada (Webhook)":        { "main": [[{ "node": "📦 Normalizar datos",                "type": "main", "index": 0 }]] },
+    "📦 Normalizar datos":              { "main": [[{ "node": "🗄️ Crear lead en Airtable",          "type": "main", "index": 0 }]] },
+    "🗄️ Crear lead en Airtable":        { "main": [[{ "node": "🏢 Holded — Crear contacto",         "type": "main", "index": 0 }]] },
+    "🏢 Holded — Crear contacto":       { "main": [[{ "node": "📄 Holded — Crear presupuesto",      "type": "main", "index": 0 }]] },
+    "📄 Holded — Crear presupuesto":    { "main": [[{ "node": "📎 Holded — Obtener PDF",            "type": "main", "index": 0 }]] },
+    "📎 Holded — Obtener PDF":          { "main": [[{ "node": "📧 Email 1 — Presupuesto",           "type": "main", "index": 0 }]] },
+    "📧 Email 1 — Presupuesto":         { "main": [[{ "node": "✅ Airtable — propuesta_enviada",    "type": "main", "index": 0 }]] },
+    "✅ Airtable — propuesta_enviada":  { "main": [[{ "node": "⏳ Esperar 3 días",                  "type": "main", "index": 0 }]] },
+    "⏳ Esperar 3 días":                { "main": [[{ "node": "🔍 Airtable — Leer estado actual",   "type": "main", "index": 0 }]] },
+    "🔍 Airtable — Leer estado actual": { "main": [[{ "node": "🤔 ¿Sin respuesta aún? (día 3)",    "type": "main", "index": 0 }]] },
+    "🤔 ¿Sin respuesta aún? (día 3)":  {
+      "main": [
+        [{ "node": "📧 Email 2 — Seguimiento", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "📧 Email 2 — Seguimiento":         { "main": [[{ "node": "✅ Airtable — seguimiento_1",       "type": "main", "index": 0 }]] },
+    "✅ Airtable — seguimiento_1":      { "main": [[{ "node": "⏳ Esperar 2 días",                  "type": "main", "index": 0 }]] },
+    "⏳ Esperar 2 días":                { "main": [[{ "node": "🔍 Airtable — Leer estado (día 5)", "type": "main", "index": 0 }]] },
+    "🔍 Airtable — Leer estado (día 5)":{ "main": [[{ "node": "🤔 ¿Sin respuesta? (día 5)",       "type": "main", "index": 0 }]] },
+    "🤔 ¿Sin respuesta? (día 5)":      {
+      "main": [
+        [{ "node": "📧 Email 3 — Contraoferta -20%", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "📧 Email 3 — Contraoferta -20%":   { "main": [[{ "node": "✅ Airtable — seguimiento_2",       "type": "main", "index": 0 }]] },
+    "✅ Airtable — seguimiento_2":      { "main": [[{ "node": "⏳ Esperar 2 días más",              "type": "main", "index": 0 }]] },
+    "⏳ Esperar 2 días más":            { "main": [[{ "node": "🔍 Airtable — Leer estado (día 7)", "type": "main", "index": 0 }]] },
+    "🔍 Airtable — Leer estado (día 7)":{ "main": [[{ "node": "🤔 ¿Sin respuesta? (día 7)",       "type": "main", "index": 0 }]] },
+    "🤔 ¿Sin respuesta? (día 7)":      {
+      "main": [
+        [{ "node": "📧 Email 4 — Último aviso", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "📧 Email 4 — Último aviso":        { "main": [[{ "node": "❌ Airtable — perdido",              "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": [{ "name": "AgutiDesigns" }]
+}

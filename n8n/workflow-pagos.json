@@ -1,0 +1,194 @@
+{
+  "name": "AgutiDesigns — Tracking de Pagos (Holded)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "holded-payment-webhook",
+        "options": { "responseCode": 200 }
+      },
+      "id": "b1c2d3e4-0001-0001-0001-000000000001",
+      "name": "💳 Holded Webhook (pago)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "holded-payment-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "estimateAccepted",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "b1c2d3e4-0002-0002-0002-000000000002",
+      "name": "🤔 ¿Es un presupuesto aceptado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.holded.com/api/invoices/v1/estimate/{{ $('💳 Holded Webhook (pago)').item.json.docId }}/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "b1c2d3e4-0003-0003-0003-000000000003",
+      "name": "📄 Holded — Obtener detalle presupuesto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 200],
+      "credentials": { "httpHeaderAuth": { "id": "holded-cred", "name": "Holded API" } }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "filterByFormula": "={{ \"AND({Holded Estimate ID}='\" + $('💳 Holded Webhook (pago)').item.json.docId + \"')\" }}"
+      },
+      "id": "b1c2d3e4-0004-0004-0004-000000000004",
+      "name": "🔍 Airtable — Buscar lead por presupuesto",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status":   "ganado",
+            "Paid At":  "={{ new Date().toISOString() }}",
+            "Notes":    "Presupuesto aceptado en Holded"
+          }
+        }
+      },
+      "id": "b1c2d3e4-0005-0005-0005-000000000005",
+      "name": "🏆 Airtable — Marcar como GANADO",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1120, 200],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "={{ $('📄 Holded — Obtener detalle presupuesto').item.json.contactEmail }}",
+        "subject": "✅ ¡Presupuesto aceptado! Empezamos pronto",
+        "emailFormat": "html",
+        "message": "<!DOCTYPE html><html><body style='font-family:Helvetica,Arial,sans-serif;background:#f4f4f4;padding:32px 16px;'><table width='600' style='background:#fff;border-radius:12px;overflow:hidden;margin:0 auto;'><tr><td style='background:#0d0d0d;padding:24px 40px;text-align:center;'><div style='font-family:monospace;font-size:22px;font-weight:900;color:#E5FC63;'>AGUTIDESIGNS</div></td></tr><tr><td style='padding:40px;'><h1 style='margin:0 0 16px;font-size:26px;font-weight:800;color:#0d0d0d;'>¡Gracias por confiar en nosotros! 🎉</h1><p style='font-size:15px;color:#555;line-height:1.7;'>He recibido tu confirmación del presupuesto. Me pondré en contacto contigo en las próximas <strong>24 horas</strong> para arrancar el proyecto.</p><p style='font-size:15px;color:#555;line-height:1.7;'>Próximos pasos:<br>1. Llamada de briefing inicial (30 min)<br>2. Propuesta de diseño en 3-5 días<br>3. Desarrollo y lanzamiento</p><a href='https://cal.com/agutidesigns' style='display:inline-block;background:#E5FC63;color:#0d0d0d;font-weight:800;padding:16px 32px;border-radius:50px;text-decoration:none;margin-top:16px;'>RESERVAR LLAMADA INICIAL →</a></td></tr><tr><td style='background:#f8f9fa;padding:20px 40px;border-top:1px solid #eee;'><p style='margin:0;font-size:12px;color:#aaa;'>AgutiDesigns · agutidesigns.com</p></td></tr></table></body></html>"
+      },
+      "id": "b1c2d3e4-0006-0006-0006-000000000006",
+      "name": "📧 Email confirmación al cliente",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1340, 200],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hola@agutidesigns.com",
+        "toEmail": "hola@agutidesigns.com",
+        "subject": "=🏆 NUEVO CLIENTE: {{ $('📄 Holded — Obtener detalle presupuesto').item.json.contactName }} — {{ $('📄 Holded — Obtener detalle presupuesto').item.json.total }}€",
+        "emailFormat": "html",
+        "message": "=<h2>¡Nuevo cliente!</h2><p><strong>Nombre:</strong> {{ $('📄 Holded — Obtener detalle presupuesto').item.json.contactName }}<br><strong>Email:</strong> {{ $('📄 Holded — Obtener detalle presupuesto').item.json.contactEmail }}<br><strong>Importe:</strong> {{ $('📄 Holded — Obtener detalle presupuesto').item.json.total }}€<br><strong>Presupuesto Holded:</strong> {{ $('💳 Holded Webhook (pago)').item.json.docId }}</p>"
+      },
+      "id": "b1c2d3e4-0007-0007-0007-000000000007",
+      "name": "🔔 Notificación interna a Guti",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1340, 360],
+      "credentials": { "smtp": { "id": "smtp-cred", "name": "SMTP / Gmail" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "invoicePaid",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "b1c2d3e4-0008-0008-0008-000000000008",
+      "name": "🤔 ¿Es una factura pagada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 460]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "filterByFormula": "={{ \"AND({Holded Invoice ID}='\" + $('💳 Holded Webhook (pago)').item.json.docId + \"')\" }}"
+      },
+      "id": "b1c2d3e4-0009-0009-0009-000000000009",
+      "name": "🔍 Airtable — Buscar lead por factura",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [900, 460],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": { "__rl": true, "value": "={{ $env.AIRTABLE_BASE_ID }}", "mode": "id" },
+        "table": { "__rl": true, "value": "Leads", "mode": "name" },
+        "id": "={{ $json.id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status":   "pagado",
+            "Paid At":  "={{ new Date().toISOString() }}"
+          }
+        }
+      },
+      "id": "b1c2d3e4-0010-0010-0010-000000000010",
+      "name": "💰 Airtable — Marcar como PAGADO",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1120, 460],
+      "credentials": { "airtableTokenApi": { "id": "airtable-cred", "name": "Airtable" } }
+    }
+  ],
+  "connections": {
+    "💳 Holded Webhook (pago)":                  { "main": [[{ "node": "🤔 ¿Es un presupuesto aceptado?", "type": "main", "index": 0 }]] },
+    "🤔 ¿Es un presupuesto aceptado?":           {
+      "main": [
+        [{ "node": "📄 Holded — Obtener detalle presupuesto", "type": "main", "index": 0 }],
+        [{ "node": "🤔 ¿Es una factura pagada?", "type": "main", "index": 0 }]
+      ]
+    },
+    "📄 Holded — Obtener detalle presupuesto":   { "main": [[{ "node": "🔍 Airtable — Buscar lead por presupuesto", "type": "main", "index": 0 }]] },
+    "🔍 Airtable — Buscar lead por presupuesto": { "main": [[{ "node": "🏆 Airtable — Marcar como GANADO", "type": "main", "index": 0 }]] },
+    "🏆 Airtable — Marcar como GANADO":          {
+      "main": [[
+        { "node": "📧 Email confirmación al cliente", "type": "main", "index": 0 },
+        { "node": "🔔 Notificación interna a Guti", "type": "main", "index": 0 }
+      ]]
+    },
+    "🤔 ¿Es una factura pagada?":                { "main": [[{ "node": "🔍 Airtable — Buscar lead por factura", "type": "main", "index": 0 }], []] },
+    "🔍 Airtable — Buscar lead por factura":     { "main": [[{ "node": "💰 Airtable — Marcar como PAGADO", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": [{ "name": "AgutiDesigns" }]
+}
