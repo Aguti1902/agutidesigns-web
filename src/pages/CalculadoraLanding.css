@@ -1333,41 +1333,61 @@
    ============================================ */
 .calc-includes {
   width: 100%;
-  margin-top: var(--space-10, 56px);
-  padding: var(--space-9, 48px) var(--space-8, 40px);
+  margin-top: 64px;
+  padding: 52px 48px;
   background: #ffffff;
   border: 1.5px solid var(--color-gray-200);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 4px 24px rgba(0,71,255,.06);
+  border-radius: 24px;
+  box-shadow: 0 4px 32px rgba(0,71,255,.05);
+}
+.calc-includes__header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.calc-includes__eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--color-primary);
+  background: rgba(0,71,255,.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
 }
 .calc-includes__title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-black);
-  margin: 0 0 var(--space-7);
-  text-align: center;
+  margin: 0;
+  line-height: 1.2;
 }
 .calc-includes__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-5) var(--space-8);
+  gap: 12px;
 }
 .calc-includes__item {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  transition: background 0.15s;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-gray-200);
+  background: #FAFBFF;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   animation: includeSlideIn 0.4s ease both;
 }
 .calc-includes__item:hover {
-  background: rgba(0,71,255,.03);
+  border-color: rgba(0,71,255,.25);
+  box-shadow: 0 4px 16px rgba(0,71,255,.08);
+  transform: translateY(-2px);
 }
 @keyframes includeSlideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .calc-includes__icon {
   width: 40px;
@@ -1376,23 +1396,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,71,255,.08);
-  border-radius: var(--radius-md);
+  background: rgba(0,71,255,.1);
+  border-radius: 10px;
   color: var(--color-primary);
 }
 .calc-includes__label {
   display: block;
-  font-size: var(--text-base);
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-black);
   line-height: 1.3;
-  margin-bottom: 4px;
 }
 .calc-includes__desc {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-gray-500);
-  line-height: 1.5;
+  margin-top: 2px;
+  line-height: 1.4;
 }
 
 /* ============================================
@@ -1400,54 +1420,97 @@
    ============================================ */
 .calc-benefits {
   width: 100%;
-  margin-top: var(--space-7);
-  padding: var(--space-8) var(--space-7);
-  background: linear-gradient(135deg, rgba(0,71,255,.06) 0%, rgba(0,71,255,.02) 100%);
-  border: 1.5px solid rgba(0,71,255,.15);
-  border-radius: var(--radius-xl);
+  margin-top: 24px;
+  padding: 52px 48px;
+  background: #0047FF;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+.calc-benefits::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.calc-benefits::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+.calc-benefits__header {
+  text-align: center;
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 1;
+}
+.calc-benefits__eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.12);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
 }
 .calc-benefits__title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
-  font-weight: 700;
-  color: var(--color-black);
-  margin: 0 0 var(--space-6);
-  text-align: center;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
 }
 .calc-benefits__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  position: relative;
+  z-index: 1;
 }
 .calc-benefits__item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-5) var(--space-6);
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(0,71,255,.1);
-  box-shadow: 0 2px 12px rgba(0,71,255,.06);
+  text-align: center;
+  gap: 10px;
+  padding: 28px 20px;
+  background: rgba(255,255,255,.1);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.15);
+  backdrop-filter: blur(4px);
+  transition: background 0.2s, transform 0.2s;
+}
+.calc-benefits__item:hover {
+  background: rgba(255,255,255,.16);
+  transform: translateY(-3px);
 }
 .calc-benefits__stat {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 800;
-  color: var(--color-primary);
-  min-width: 80px;
+  font-size: 42px;
+  font-weight: 900;
+  color: #ffffff;
   line-height: 1;
 }
 .calc-benefits__label {
   display: block;
-  font-size: var(--text-base);
+  font-size: 15px;
   font-weight: 700;
-  color: var(--color-black);
+  color: #ffffff;
+  line-height: 1.3;
 }
 .calc-benefits__sub {
   display: block;
-  font-size: 13px;
-  color: var(--color-gray-500);
-  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,.65);
   line-height: 1.4;
 }
 
@@ -1569,9 +1632,11 @@
 }
 
 @media (max-width: 640px) {
-  .calc-includes { padding: var(--space-6) var(--space-5); }
-  .calc-includes__grid { grid-template-columns: 1fr; gap: var(--space-4); }
-  .calc-benefits { padding: var(--space-6) var(--space-5); }
+  .calc-includes { padding: 32px 20px; margin-top: 40px; }
+  .calc-includes__grid { grid-template-columns: 1fr; gap: 10px; }
+  .calc-benefits { padding: 36px 20px; }
+  .calc-benefits__list { grid-template-columns: 1fr; }
+  .calc-benefits__stat { font-size: 36px; }
   .calc-reviews__grid { grid-template-columns: 1fr; }
   .calc-benefits__stat { font-size: var(--text-2xl); min-width: 60px; }
 }

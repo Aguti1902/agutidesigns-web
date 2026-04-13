@@ -316,7 +316,10 @@ export default function CalculadoraLanding() {
 
               {/* ── Qué incluye tu web ── */}
               <div className="calc-includes">
-                <h3 className="calc-includes__title">Todo lo que incluye tu web</h3>
+                <div className="calc-includes__header">
+                  <span className="calc-includes__eyebrow">Tu proyecto incluye</span>
+                  <h3 className="calc-includes__title">Todo lo que viene en el precio</h3>
+                </div>
                 <div className="calc-includes__grid">
                   {[
                     { icon: <Palette size={18} />, label: 'Diseño 100% a medida', desc: 'Único para tu marca, sin plantillas genéricas' },
@@ -341,19 +344,20 @@ export default function CalculadoraLanding() {
 
               {/* ── Qué mejorará en tu negocio ── */}
               <div className="calc-benefits">
-                <h3 className="calc-benefits__title">Qué cambiará en tu negocio</h3>
+                <div className="calc-benefits__header">
+                  <span className="calc-benefits__eyebrow">Resultados reales</span>
+                  <h3 className="calc-benefits__title">Qué cambiará en tu negocio</h3>
+                </div>
                 <div className="calc-benefits__list">
                   {[
-                    { stat: '+60%', label: 'más consultas desde la web', sub: 'Media de clientes en el primer mes' },
+                    { stat: '+60%', label: 'más consultas desde la web', sub: 'Media de clientes el primer mes' },
                     { stat: '24/7', label: 'tu negocio visible online', sub: 'Tu web trabaja mientras tú descansas' },
-                    { stat: '×3', label: 'más credibilidad ante clientes', sub: 'Una web profesional genera confianza inmediata' },
+                    { stat: '×3', label: 'más credibilidad', sub: 'Una web profesional genera confianza inmediata' },
                   ].map((b, i) => (
                     <div className="calc-benefits__item" key={i}>
                       <span className="calc-benefits__stat">{b.stat}</span>
-                      <div>
-                        <strong className="calc-benefits__label">{b.label}</strong>
-                        <span className="calc-benefits__sub">{b.sub}</span>
-                      </div>
+                      <strong className="calc-benefits__label">{b.label}</strong>
+                      <span className="calc-benefits__sub">{b.sub}</span>
                     </div>
                   ))}
                 </div>
