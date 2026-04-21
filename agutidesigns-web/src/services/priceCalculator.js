@@ -1,6 +1,5 @@
 /* =============================================
    AGUTIDESIGNS - Calculadora de Precios
-   Calcula precio real en base a las selecciones
    ============================================= */
 
 const WEB_BASE_PRICES = {
@@ -13,13 +12,30 @@ const WEB_BASE_PRICES = {
   otra: 997,
 };
 
-const PAGE_EXTRA = {
-  '1': 0,
-  '1-3': 150,
-  '3-5': 400,
-  '5-10': 800,
-  '10+': 1200,
-  'no-se': 300,
+// Páginas incluidas por tipo de web:
+//   landing     → 1 página (fijo)
+//   corporativa → hasta 10 páginas incluidas → sólo cobra 10+
+//   portfolio   → hasta 5 páginas incluidas
+//   blog/otra   → hasta 5 páginas incluidas
+//   webapp      → no aplica igual
+const PAGE_EXTRA_BY_TYPE = {
+  landing:     { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 0,    'no-se': 0   },
+  corporativa: { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 350,  'no-se': 0   },
+  portfolio:   { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 150, '10+': 350,  'no-se': 0   },
+  blog:        { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 150, '10+': 350,  'no-se': 0   },
+  ecommerce:   { '1': 0, '1-3': 0,   '3-5': 0,   '5-10': 0,   '10+': 0,    'no-se': 0   },
+  webapp:      { '1': 0, '1-3': 0,   '3-5': 150, '5-10': 300, '10+': 600,  'no-se': 150 },
+  otra:        { '1': 0, '1-3': 0,   '3-5': 150, '5-10': 300, '10+': 550,  'no-se': 150 },
+};
+// Fallback legacy (no debería usarse)
+const PAGE_EXTRA = { '1': 0, '1-3': 0, '3-5': 150, '5-10': 300, '10+': 550, 'no-se': 150 };
+
+// Extra por número de productos en tienda online
+const PRODUCT_COUNT_EXTRA = {
+  '1-50':   0,     // incluido en el base
+  '50-200': 200,
+  '200-500': 450,
+  '500+':   850,
 };
 
 const AI_FEATURE_PRICES = {
@@ -36,7 +52,7 @@ const AI_FEATURE_PRICES = {
   'translations': 150,
 };
 
-const EXTRA_FEATURE_PRICE = 120; // per extra feature
+const EXTRA_FEATURE_PRICE = 120;
 
 const TIMELINE_MULTIPLIER = {
   urgente: 1.25,
@@ -55,39 +71,44 @@ const MONTHLY_BASE = {
   otra: 55,
 };
 
-const AI_MONTHLY_EXTRA = 15; // per AI feature per month
+const AI_MONTHLY_EXTRA = 15;
 
 export function calculatePrice(formData) {
-  // Base web price
   const webBase = WEB_BASE_PRICES[formData.webType] || 997;
+  const pageTable = PAGE_EXTRA_BY_TYPE[formData.webType] || PAGE_EXTRA;
+  const pagesExtra = pageTable[formData.pages] ?? 0;
 
-  // Pages extra
-  const pagesExtra = PAGE_EXTRA[formData.pages] || 0;
+  // Extra por productos (solo ecommerce)
+  const productExtra = formData.webType === 'ecommerce'
+    ? (PRODUCT_COUNT_EXTRA[formData.productCount] || 0)
+    : 0;
 
-  // AI features
   const aiFeatures = formData.aiFeatures || [];
   const aiTotal = aiFeatures.reduce((sum, f) => sum + (AI_FEATURE_PRICES[f] || 150), 0);
 
-  // Extra features
   const extras = formData.extraFeatures || [];
   const extrasTotal = extras.length * EXTRA_FEATURE_PRICE;
 
-  // Subtotal before timeline
-  const subtotal = webBase + pagesExtra + aiTotal + extrasTotal;
+  const subtotal = webBase + pagesExtra + productExtra + aiTotal + extrasTotal;
 
-  // Timeline multiplier
   const multiplier = TIMELINE_MULTIPLIER[formData.timeline] || 1;
   const total = Math.round(subtotal * multiplier);
 
-  // Monthly
   const monthlyBase = MONTHLY_BASE[formData.webType] || 55;
   const monthlyAi = aiFeatures.length * AI_MONTHLY_EXTRA;
   const monthly = monthlyBase + monthlyAi;
 
-  // Breakdown
   const breakdown = [];
   breakdown.push({ label: `Diseño web (${formData.webType || 'estándar'})`, price: webBase });
-  if (pagesExtra > 0) breakdown.push({ label: `Páginas adicionales (${formData.pages})`, price: pagesExtra });
+  if (pagesExtra > 0) breakdown.push({ label: `Páginas extra (${formData.pages} págs.)`, price: pagesExtra });
+  if (productExtra > 0) {
+    const productLabels = {
+      '50-200': '50–200 productos',
+      '200-500': '200–500 productos',
+      '500+': 'Más de 500 productos',
+    };
+    breakdown.push({ label: `Catálogo: ${productLabels[formData.productCount] || formData.productCount}`, price: productExtra });
+  }
   aiFeatures.forEach(f => {
     const names = {
       'chatbot-web': 'Chatbot IA web',
@@ -107,18 +128,10 @@ export function calculatePrice(formData) {
   if (extrasTotal > 0) breakdown.push({ label: `${extras.length} funcionalidades extra`, price: extrasTotal });
   if (multiplier !== 1) {
     const diff = total - subtotal;
-    const label = multiplier > 1 ? 'Recargo urgencia' : 'Descuento flexibilidad';
-    breakdown.push({ label, price: diff });
+    breakdown.push({ label: multiplier > 1 ? 'Recargo urgencia' : 'Descuento flexibilidad', price: diff });
   }
 
-  return {
-    total,
-    monthly,
-    breakdown,
-    webBase,
-    aiTotal,
-    extrasTotal,
-  };
+  return { total, monthly, breakdown, webBase, aiTotal, extrasTotal, productExtra };
 }
 
 export function formatPrice(n) {

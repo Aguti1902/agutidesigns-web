@@ -8,7 +8,7 @@
   height: 60px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   border: none;
   cursor: pointer;
   display: flex;
@@ -75,7 +75,7 @@
   height: 36px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +159,7 @@
 
 .chatbot__message--assistant .chatbot__message-avatar {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
 }
 
 .chatbot__message--user .chatbot__message-avatar {
@@ -182,7 +182,7 @@
 
 .chatbot__message--user .chatbot__message-content {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   border-bottom-right-radius: var(--radius-sm);
 }
 
@@ -253,7 +253,7 @@
 
 .chatbot__send {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   border: none;
   border-radius: var(--radius-full);
   width: 32px;

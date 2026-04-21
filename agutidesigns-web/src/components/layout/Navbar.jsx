@@ -50,7 +50,7 @@ export default function Navbar() {
       >
         <div className="container navbar__container">
           <a href="#" className="navbar__logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-            <img src="/images/Logo.png" alt="Agutidesigns" className="navbar__logo-img" />
+            <img src="/images/logoazul.png" alt="Agutidesigns" className="navbar__logo-img" />
           </a>
 
           <div className="navbar__links">

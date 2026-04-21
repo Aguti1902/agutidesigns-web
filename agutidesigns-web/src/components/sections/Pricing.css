@@ -83,7 +83,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: 700;

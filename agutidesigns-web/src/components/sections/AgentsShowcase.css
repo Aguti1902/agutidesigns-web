@@ -177,7 +177,7 @@
   height: 28px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,7 +248,7 @@
 
 .demo-chat__msg--user .demo-chat__msg-bubble {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   border-bottom-right-radius: 4px;
 }
 
@@ -399,7 +399,7 @@
   height: 28px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -593,7 +593,7 @@
 
 .agent-modal__msg--assistant .agent-modal__msg-avatar {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
 }
 
 .agent-modal__msg--user .agent-modal__msg-avatar {
@@ -616,7 +616,7 @@
 
 .agent-modal__msg--user .agent-modal__msg-text {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   border-bottom-right-radius: 4px;
 }
 

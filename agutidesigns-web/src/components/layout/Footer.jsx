@@ -30,7 +30,7 @@ export default function Footer() {
         <div className="footer__grid">
           <div className="footer__brand">
             <div className="footer__logo">
-              <img src="/images/Logo.png" alt="Agutidesigns" className="footer__logo-img" />
+              <img src="/images/logoazul.png" alt="Agutidesigns" className="footer__logo-img" />
             </div>
             <p className="footer__brand-desc">
               Diseño web profesional potenciado con Inteligencia Artificial. Creamos experiencias digitales que convierten.

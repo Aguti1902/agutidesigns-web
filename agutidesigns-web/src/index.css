@@ -19,8 +19,8 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-black);
-  color: var(--color-white);
+  background-color: var(--color-white);
+  color: var(--color-black);
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -31,7 +31,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-black);
+  background: var(--color-gray-100);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -46,7 +46,7 @@ body {
 /* ── Selection ── */
 ::selection {
   background-color: var(--color-primary);
-  color: var(--color-black);
+  color: var(--color-white);
 }
 
 /* ── Links ── */

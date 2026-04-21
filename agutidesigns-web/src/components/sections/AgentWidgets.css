@@ -151,7 +151,7 @@
 .widgets__card-toggle--on {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
 }
 
 /* ── Summary Bar ── */

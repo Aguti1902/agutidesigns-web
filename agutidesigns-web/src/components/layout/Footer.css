@@ -1,6 +1,7 @@
 /* ── Footer ── */
 .footer {
-  background: var(--color-dark);
+  background: var(--color-black);
+  color: var(--color-white);
   padding: var(--space-24) 0 var(--space-8);
   position: relative;
   overflow: hidden;
@@ -13,8 +14,8 @@
   left: 50%;
   transform: translateX(-50%);
   width: 80%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--color-primary-rgb), 0.3), transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
 }
 
 /* ── CTA ── */
@@ -25,10 +26,12 @@
 
 .footer__cta-title {
   font-family: var(--font-display);
-  font-size: clamp(var(--text-3xl), 5vw, var(--text-5xl));
+  font-size: clamp(var(--text-3xl), 5vw, var(--text-6xl));
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-4);
+  color: var(--color-white);
 }
 
 .footer__cta-text {
@@ -42,7 +45,7 @@
   align-items: center;
   gap: var(--space-2);
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: var(--text-base);
@@ -50,12 +53,12 @@
   border-radius: var(--radius-full);
   text-decoration: none;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   transition: all var(--transition-base);
 }
 
 .footer__cta-button:hover {
-  background: var(--color-accent-1);
+  background: var(--color-primary-dark);
   box-shadow: var(--shadow-glow);
   transform: translateY(-2px);
 }
@@ -88,11 +91,12 @@
   width: auto;
   object-fit: contain;
   display: block;
+  filter: brightness(0) invert(1);
 }
 
 .footer__brand-desc {
   font-size: var(--text-sm);
-  color: var(--color-gray-400);
+  color: var(--color-gray-500);
   line-height: 1.7;
   margin-bottom: var(--space-6);
   max-width: 320px;
@@ -111,7 +115,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-gray-400);
+  color: var(--color-gray-500);
   transition: all var(--transition-fast);
 }
 
@@ -124,7 +128,7 @@
 /* ── Columns ── */
 .footer__col-title {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -141,7 +145,7 @@
 
 .footer__col-list a {
   font-size: var(--text-sm);
-  color: var(--color-gray-400);
+  color: var(--color-gray-500);
   transition: color var(--transition-fast);
 }
 
@@ -179,7 +183,7 @@
 
 .footer__copyright {
   font-size: var(--text-sm);
-  color: var(--color-gray-500);
+  color: var(--color-gray-600);
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -193,7 +197,7 @@
 .footer__back-top {
   background: none;
   border: 1px solid var(--color-gray-700);
-  color: var(--color-gray-400);
+  color: var(--color-gray-500);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   padding: var(--space-2) var(--space-4);

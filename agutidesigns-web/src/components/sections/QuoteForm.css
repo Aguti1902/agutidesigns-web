@@ -87,7 +87,7 @@
 
 .quote__progress-step--active .quote__progress-icon {
   background: var(--color-primary);
-  color: var(--color-black);
+  color: #ffffff;
 }
 
 .quote__progress-step--done .quote__progress-icon {

@@ -5,9 +5,10 @@ import {
   Check, CheckCircle, Mail, Zap, MessageCircle, RefreshCw, Lock,
   Sparkles, TrendingUp, Layers, Clock, Search, BarChart3, Calendar,
   ShoppingBag, BookOpen, Users, Languages, MessageSquare, Star,
-  CreditCard, Image, Cpu,
+  CreditCard, Image, Cpu, Package, Palette, Shield, Headphones, RotateCcw,
 } from 'lucide-react';
 import { calculatePrice, formatPrice } from '../services/priceCalculator';
+import { supabase } from '../lib/supabase';
 import './CalculadoraLanding.css';
 
 /* ── Step Data ── */
@@ -58,6 +59,13 @@ const TIMELINES = [
   { id: 'normal',     label: 'Estándar',   desc: '2–3 semanas', color: 'green', recommended: true },
   { id: 'flexible',   label: 'Flexible',   desc: '1 mes',       color: 'blue' },
   { id: 'sin-prisa',  label: 'Sin prisa',  desc: '1–2 meses',   color: 'gray' },
+];
+
+const PRODUCT_COUNT_OPTIONS = [
+  { id: '1-50',    label: '1–50 productos',       desc: 'Catálogo pequeño',         extra: 0   },
+  { id: '50-200',  label: '50–200 productos',      desc: 'Catálogo mediano',         extra: 200 },
+  { id: '200-500', label: '200–500 productos',     desc: 'Catálogo grande',          extra: 450 },
+  { id: '500+',    label: 'Más de 500 productos',  desc: 'Catálogo profesional',     extra: 850 },
 ];
 
 const TOTAL_STEPS = 6;
@@ -147,6 +155,7 @@ export default function CalculadoraLanding() {
     timeline: 'normal',
     name: '',
     email: '',
+    productCount: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState(null);
@@ -163,11 +172,23 @@ export default function CalculadoraLanding() {
   const validate = () => {
     setError('');
     if (step === 1 && !formData.webType) { setError('Selecciona un tipo de web para continuar.'); return false; }
+    if (step === 2 && formData.webType === 'ecommerce' && !formData.productCount) {
+      setError('Indica cuántos productos tiene tu tienda.'); return false;
+    }
     if (step === 6) {
       if (!formData.name.trim()) { setError('Introduce tu nombre.'); return false; }
       if (!formData.email.trim() || !formData.email.includes('@')) { setError('Introduce un email válido.'); return false; }
     }
     return true;
+  };
+
+  // Al seleccionar landing, forzar 1 página
+  const selectWebType = (id) => {
+    if (id === 'landing') {
+      setFormData(p => ({ ...p, webType: id, pages: '1' }));
+    } else {
+      setFormData(p => ({ ...p, webType: id, pages: p.pages === '1' ? '1-3' : p.pages }));
+    }
   };
 
   const next = () => { if (validate()) setStep(s => Math.min(s + 1, TOTAL_STEPS)); };
@@ -193,6 +214,7 @@ export default function CalculadoraLanding() {
           webType: WEB_TYPE_LABELS[formData.webType] || formData.webType,
           webTypeId: formData.webType,
           pages: formData.pages,
+          productCount: formData.productCount || null,
           designStyle: formData.designStyle,
           functionalities: formData.functionalities,
           seoExtras: formData.seoExtras,
@@ -209,30 +231,44 @@ export default function CalculadoraLanding() {
     }
   };
 
+  const saveQuoteToSupabase = async (quoteData) => {
+    try {
+      const payload = {
+        name:           formData.name,
+        email:          formData.email,
+        web_type:       formData.webType,
+        pages:          formData.pages,
+        timeline:       formData.timeline,
+        product_count:  formData.productCount || null,
+        ai_features:    quoteData.breakdown.filter(b => b.label.toLowerCase().includes('chat')).map(b => b.label),
+        extra_features: formData.functionalities,
+        total:          quoteData.total,
+        monthly:        quoteData.monthly || 0,
+        breakdown:      quoteData.breakdown,
+        status:         'pending',
+      };
+      await supabase.from('quotes').insert(payload);
+    } catch (e) {
+      console.error('[Supabase] Error guardando presupuesto:', e);
+    }
+  };
+
   const handleLoadingDone = () => {
     const aiFeatures = formData.seoExtras.filter(s => s === 'chatbot-web');
     const extraFeatures = [
       ...formData.functionalities,
       ...formData.seoExtras.filter(s => s !== 'chatbot-web' && s !== 'seo-basico'),
     ];
-    const styleMultipliers = { minimalista: 1, moderno: 1.1, premium: 1.25, creativo: 1.15 };
-    const styleM = styleMultipliers[formData.designStyle] || 1;
-
     const raw = calculatePrice({ ...formData, aiFeatures, extraFeatures });
-    const total = Math.round(raw.total * styleM);
-    const breakdownFull = [...raw.breakdown];
-    if (styleM !== 1) {
-      const diff = total - raw.total;
-      breakdownFull.push({ label: `Estilo ${formData.designStyle}`, price: diff });
-    }
-    const quoteData = { ...raw, total, breakdown: breakdownFull };
+    const quoteData = { ...raw };
     setQuote(quoteData);
     setIsLoading(false);
+    saveQuoteToSupabase(quoteData);
     sendLeadToN8N(quoteData);
   };
 
   const reset = () => {
-    setFormData({ webType: '', pages: '1-3', designStyle: 'moderno', functionalities: [], seoExtras: ['seo-basico'], timeline: 'normal', name: '', email: '' });
+    setFormData({ webType: '', pages: '1-3', designStyle: 'moderno', functionalities: [], seoExtras: ['seo-basico'], timeline: 'normal', name: '', email: '', productCount: '' });
     setStep(1); setQuote(null); setError(''); setIsLoading(false);
   };
 
@@ -240,7 +276,7 @@ export default function CalculadoraLanding() {
     <div className="calc-landing">
       <header className="calc-header">
         <a href="/" className="calc-header__logo">
-          <img src="/images/Logo.png" alt="Agutidesigns" className="calc-header__logo-img" />
+          <img src="/images/logoazul.png" alt="Agutidesigns" className="calc-header__logo-img" />
         </a>
         <a href="/" className="calc-header__back">← Volver a la web</a>
       </header>
@@ -278,6 +314,55 @@ export default function CalculadoraLanding() {
                 </ul>
               </div>
 
+              {/* ── Qué incluye tu web ── */}
+              <div className="calc-includes">
+                <div className="calc-includes__header">
+                  <span className="calc-includes__eyebrow">Tu proyecto incluye</span>
+                  <h3 className="calc-includes__title">Todo lo que viene en el precio</h3>
+                </div>
+                <div className="calc-includes__grid">
+                  {[
+                    { icon: <Palette size={18} />, label: 'Diseño 100% a medida', desc: 'Único para tu marca, sin plantillas genéricas' },
+                    { icon: <Smartphone size={18} />, label: 'Adaptado a móvil', desc: 'Perfecto en cualquier dispositivo' },
+                    { icon: <Zap size={18} />, label: 'Velocidad de carga', desc: 'Optimizado para cargar en menos de 2 segundos' },
+                    { icon: <Search size={18} />, label: 'SEO básico', desc: 'Estructura preparada para posicionar en Google' },
+                    { icon: <Shield size={18} />, label: 'SSL + Seguridad', desc: 'Certificado de seguridad incluido' },
+                    { icon: <RotateCcw size={18} />, label: 'Revisiones ilimitadas', desc: 'Hasta que quede exactamente como lo imaginas' },
+                    { icon: <Clock size={18} />, label: 'Entrega en ~2 semanas', desc: 'Sin esperas interminables' },
+                    { icon: <Headphones size={18} />, label: 'Soporte post-lanzamiento', desc: 'Estoy aquí después del lanzamiento' },
+                  ].map((item, i) => (
+                    <div className="calc-includes__item" key={i} style={{ animationDelay: `${i * 0.07}s` }}>
+                      <span className="calc-includes__icon">{item.icon}</span>
+                      <div>
+                        <strong className="calc-includes__label">{item.label}</strong>
+                        <span className="calc-includes__desc">{item.desc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Qué mejorará en tu negocio ── */}
+              <div className="calc-benefits">
+                <div className="calc-benefits__header">
+                  <span className="calc-benefits__eyebrow">Resultados reales</span>
+                  <h3 className="calc-benefits__title">Qué cambiará en tu negocio</h3>
+                </div>
+                <div className="calc-benefits__list">
+                  {[
+                    { stat: '+60%', label: 'más consultas desde la web', sub: 'Media de clientes el primer mes' },
+                    { stat: '24/7', label: 'tu negocio visible online', sub: 'Tu web trabaja mientras tú descansas' },
+                    { stat: '×3', label: 'más credibilidad', sub: 'Una web profesional genera confianza inmediata' },
+                  ].map((b, i) => (
+                    <div className="calc-benefits__item" key={i}>
+                      <span className="calc-benefits__stat">{b.stat}</span>
+                      <strong className="calc-benefits__label">{b.label}</strong>
+                      <span className="calc-benefits__sub">{b.sub}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="calc-result__email-note">
                 <Mail size={13} />
                 <span>Presupuesto enviado a <strong>{formData.email}</strong></span>
@@ -294,6 +379,46 @@ export default function CalculadoraLanding() {
                 <button className="calc-btn calc-btn--primary" onClick={() => window.location.href = '/'}>
                   <Zap size={18} /> Empezar mi proyecto
                 </button>
+              </div>
+
+              {/* ── Reseñas con Trustpilot ── */}
+              <div className="calc-reviews">
+                <div className="calc-reviews__header">
+                  <div className="calc-reviews__tp-logo">
+                    {/* Trustpilot star */}
+                    <svg width="28" height="28" viewBox="0 0 55 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <polygon points="27.5,0 34.5,19.5 55,19.5 39,31.5 45,51.5 27.5,39.5 10,51.5 16,31.5 0,19.5 20.5,19.5" fill="#00B67A"/>
+                      <polygon points="39,31.5 34.5,19.5 27.5,39.5" fill="#005128"/>
+                    </svg>
+                    <span className="calc-reviews__tp-name">Trustpilot</span>
+                  </div>
+                  <div className="calc-reviews__tp-rating">
+                    <span className="calc-reviews__tp-stars">★★★★★</span>
+                    <span className="calc-reviews__tp-score">5.0 · Excelente</span>
+                  </div>
+                </div>
+                <div className="calc-reviews__grid">
+                  {[
+                    { name: 'Ana M.', role: 'Hello Nails · Franquicia', text: 'Guti nos entregó la web en tiempo récord. Las reservas online aumentaron un 60% el primer mes. Totalmente recomendable.', stars: 5 },
+                    { name: 'Carlos R.', role: 'Stay4Days · Alquiler vacacional', text: 'Profesional, rápido y con mucho criterio de diseño. Nuestra web convierte muchísimo mejor que la anterior.', stars: 5 },
+                    { name: 'Laura V.', role: 'Spa Organic · Bienestar', text: 'El diseño superó todas mis expectativas. Los clientes nos dicen constantemente que la web es preciosa.', stars: 5 },
+                  ].map((r, i) => (
+                    <div className="calc-review-card" key={i} style={{ animationDelay: `${i * 0.15}s` }}>
+                      <div className="calc-review-card__top">
+                        <div className="calc-review-card__stars">{'★'.repeat(r.stars)}</div>
+                        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M10 0L12.2 6.8H19.5L13.6 11L15.9 17.7L10 13.5L4.1 17.7L6.4 11L0.5 6.8H7.8L10 0Z" fill="#00B67A"/></svg>
+                      </div>
+                      <p className="calc-review-card__text">"{r.text}"</p>
+                      <div className="calc-review-card__author">
+                        <div className="calc-review-card__avatar">{r.name[0]}</div>
+                        <div>
+                          <strong className="calc-review-card__name">{r.name}</strong>
+                          <span className="calc-review-card__role">{r.role}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <button className="calc-btn calc-btn--ghost calc-result__reset" onClick={reset}>
@@ -337,7 +462,7 @@ export default function CalculadoraLanding() {
                       <p className="calc-step__desc">Selecciona el que mejor describe tu proyecto.</p>
                       <div className="calc-types">
                         {WEB_TYPES.map(t => (
-                          <button key={t.id} className={`calc-type ${formData.webType === t.id ? 'calc-type--active' : ''}`} onClick={() => set('webType', t.id)}>
+                          <button key={t.id} className={`calc-type ${formData.webType === t.id ? 'calc-type--active' : ''}`} onClick={() => selectWebType(t.id)}>
                             <div className="calc-type__icon">{t.icon}</div>
                             <div className="calc-type__info">
                               <span className="calc-type__label">{t.label} {t.popular && <span className="calc-type__popular">Popular</span>}</span>
@@ -354,14 +479,68 @@ export default function CalculadoraLanding() {
                     <>
                       <h2 className="calc-step__title">Páginas y estilo visual</h2>
                       <p className="calc-step__desc">Define el alcance y la estética de tu web.</p>
-                      <div className="calc-field">
-                        <label className="calc-field__label">Número de páginas</label>
-                        <div className="calc-pills">
-                          {PAGE_OPTIONS.map(p => (
-                            <button key={p.id} className={`calc-pill ${formData.pages === p.id ? 'calc-pill--active' : ''}`} onClick={() => set('pages', p.id)}>{p.label}</button>
-                          ))}
+
+                      {/* Número de páginas — oculto en ecommerce */}
+                      {formData.webType !== 'ecommerce' && (
+                        <div className="calc-field">
+                          <label className="calc-field__label">Número de páginas</label>
+                          {formData.webType === 'landing' && (
+                            <div className="calc-lock-notice">
+                              <Lock size={13} />
+                              <span>Las landing pages son siempre de una sola página</span>
+                            </div>
+                          )}
+                          <div className="calc-pills">
+                            {PAGE_OPTIONS.map(p => {
+                              const isLocked = formData.webType === 'landing' && p.id !== '1';
+                              return (
+                                <button
+                                  key={p.id}
+                                  className={`calc-pill ${formData.pages === p.id ? 'calc-pill--active' : ''} ${isLocked ? 'calc-pill--locked' : ''}`}
+                                  onClick={() => !isLocked && set('pages', p.id)}
+                                  disabled={isLocked}
+                                >
+                                  {isLocked && <Lock size={10} style={{ marginRight: 3, opacity: 0.5 }} />}
+                                  {p.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Campo condicional: productos para ecommerce */}
+                      {formData.webType === 'ecommerce' && (
+                        <div className="calc-field">
+                          <label className="calc-field__label">
+                            <Package size={15} />
+                            ¿Cuántos productos tiene tu tienda?
+                          </label>
+                          <p className="calc-step__desc" style={{ marginBottom: 'var(--space-3)', marginTop: '-4px', fontSize: 'var(--text-xs)' }}>
+                            Esto afecta al tiempo de desarrollo y configuración del catálogo.
+                          </p>
+                          <div className="calc-options">
+                            {PRODUCT_COUNT_OPTIONS.map(opt => (
+                              <button
+                                key={opt.id}
+                                className={`calc-option ${formData.productCount === opt.id ? 'calc-option--active' : ''}`}
+                                onClick={() => set('productCount', opt.id)}
+                              >
+                                <div className="calc-option__icon">
+                                  <Package size={18} />
+                                </div>
+                                <div>
+                                  <span className="calc-option__label">{opt.label}</span>
+                                  <span className="calc-option__desc">{opt.desc}</span>
+                                </div>
+                                {formData.productCount === opt.id && <Check size={16} style={{ marginLeft: 'auto', color: 'var(--color-primary)', flexShrink: 0 }} />}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estilo de diseño */}
                       <div className="calc-field">
                         <label className="calc-field__label">Estilo de diseño</label>
                         <div className="calc-styles">
@@ -469,8 +648,8 @@ export default function CalculadoraLanding() {
                       <div className="calc-field">
                         <label className="calc-field__label">Tu email *</label>
                         <div className="calc-input-wrap">
-                          <Mail size={16} className="calc-input-wrap__icon" />
-                          <input type="email" className="calc-input calc-input--icon" placeholder="tu@email.com" value={formData.email} onChange={e => set('email', e.target.value)} />
+                          <Mail size={16} className="calc-input-wrap__icon" aria-hidden="true" />
+                          <input type="email" className="calc-input calc-input--icon" placeholder="tu@email.com" value={formData.email} onChange={e => set('email', e.target.value)} autoComplete="email" />
                         </div>
                       </div>
 

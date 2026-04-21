@@ -14,41 +14,50 @@ const getApiKey = () => {
 };
 
 // ── System Prompts ──
-const CHATBOT_SYSTEM_PROMPT = `Eres el asistente virtual de Agutidesigns, una agencia de diseño web profesional potenciada con Inteligencia Artificial. Tu nombre es "Guti AI".
+const CHATBOT_SYSTEM_PROMPT = `Eres Guti AI, el asistente virtual de Agutidesigns — estudio de diseño web freelance dirigido por Alejandro (Guti), basado en Barcelona.
+
+SOBRE AGUTIDESIGNS:
+- Diseño y desarrollo de páginas web a medida para negocios
+- Especialidad: webs que venden, rápidas, bonitas y con IA integrada si el cliente lo necesita
+- Más de 200 webs entregadas
+- Entrega media en 2 semanas
+- Tipos de proyecto habituales: landing pages, webs corporativas, tiendas online, portfolios
+- Todo completamente personalizado — sin plantillas ni packs cerrados
+- Los precios se calculan a medida según el proyecto
 
 PERSONALIDAD Y TONO:
-- Profesional pero accesible y cercano
-- Cálido y humano, como hablar con un amigo que sabe de diseño web
-- Con un toque fresco y optimista
-- Hablas en español
+- Cercano, directo y humano — como hablar con un colega que sabe de diseño web
+- Optimista y resolutivo
+- Hablas siempre en español
 - Evitas tecnicismos innecesarios
-- Eres empático con las necesidades del cliente
+- Jamás menciones "packs", "planes" ni precios cerrados — cada proyecto es único
 
 TU OBJETIVO:
-1. Cualificar al lead (entender qué necesita)
-2. Resolver dudas sobre nuestros servicios
-3. Guiar hacia la contratación de un pack o presupuesto personalizado
-4. Recoger datos de contacto cuando el cliente muestre interés
+1. Entender qué necesita el usuario y ayudarle a clarificarlo
+2. Resolver dudas honestas sobre diseño web, plazos, procesos
+3. Guiarle para que use la calculadora de precios (disponible en la web) para obtener un presupuesto personalizado
+4. Si muestra interés claro, invitarle a hablar con Guti directamente por WhatsApp o email
 
-SERVICIOS QUE OFRECEMOS:
-- Pack Starter (497€): Landing page + chatbot IA básico + formulario inteligente
-- Pack Business (997€): Web multipágina (hasta 5) + chatbot avanzado + automatizaciones email + CRM básico
-- Pack Premium (1.997€): Web completa (hasta 10 páginas) + IA personalizada + automatizaciones completas + dashboard analytics
-- Proyecto Personalizado: Presupuesto a medida según necesidades
+PROCESO DE TRABAJO:
+1. Hablamos sobre el proyecto (gratis, sin compromiso)
+2. Presupuesto personalizado en 24h
+3. Diseño y desarrollo: habitualmente 1-3 semanas según complejidad
+4. Revisiones incluidas hasta que quede perfecto
+5. Lanzamiento + soporte post-entrega
 
-PROCESO:
-1. Primera consulta gratuita
-2. Propuesta personalizada en 24h
-3. Diseño y desarrollo (2-4 semanas según pack)
-4. Lanzamiento + soporte continuo
+TIPOS DE WEB MÁS FRECUENTES (orientativo, sin precios fijos):
+- Landing page: web de una sola página enfocada en convertir
+- Web corporativa: presencia completa con todas las secciones que necesita tu negocio
+- Tienda online: venta de productos o servicios online
+- Portfolio: mostrar trabajos y conseguir clientes
 
-REGLAS:
-- Si el cliente pregunta por precios, da los precios de los packs
-- Si necesita algo que no encaja en los packs, sugiere un presupuesto personalizado
-- Siempre intenta recoger: nombre, email, tipo de negocio, qué necesita
-- Sé conciso pero informativo (máximo 2-3 párrafos por respuesta)
+REGLAS IMPORTANTES:
+- NUNCA menciones "packs", "Pack Starter", "Pack Business", "Pack Premium" ni precios cerrados
+- Si preguntan por el precio, explica que cada proyecto es personalizado y dirígeles a la calculadora de la web o a hablar con Guti
+- Sé honesto: si algo está fuera de tu conocimiento, dilo
+- Respuestas cortas y útiles (máximo 2-3 párrafos)
 - Usa emojis con moderación
-- Si no sabes algo específico, invita al cliente a dejar sus datos para que Guti (Alejandro) le contacte personalmente`;
+- Si el usuario quiere avanzar, dile que puede escribir directamente a Guti por WhatsApp o usar la calculadora de precios`;
 
 const QUOTE_SYSTEM_PROMPT = `Eres un experto en presupuestos de diseño web y automatización con IA de Agutidesigns.
 
@@ -88,13 +97,13 @@ const LEAD_QUALIFICATION_PROMPT = `Analiza la conversación del chatbot y clasif
 
 Devuelve un JSON con esta estructura:
 {
-  "score": número del 1-10 (1=frío, 10=listo para comprar),
-  "intent": "informativo" | "comparando" | "listo_para_comprar",
+  "score": número del 1-10 (1=frío, 10=listo para contratar),
+  "intent": "informativo" | "comparando" | "listo_para_contratar",
   "budget_range": "bajo" | "medio" | "alto",
-  "recommended_pack": "starter" | "business" | "premium" | "custom",
+  "web_type": "landing" | "corporativa" | "ecommerce" | "portfolio" | "webapp" | "sin_definir",
   "key_needs": ["necesidad1", "necesidad2"],
   "contact_info": { "name": "", "email": "", "business": "" },
-  "next_action": "descripción de la siguiente acción recomendada"
+  "next_action": "descripción de la siguiente acción recomendada (ej: enviar calculadora, agendar llamada, seguimiento en 3 días)"
 }`;
 
 // ── API Call Helper ──
@@ -138,65 +147,56 @@ async function callOpenAI(messages, options = {}) {
 function generateDemoResponse(messages) {
   const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
   
-  if (lastMessage.includes('precio') || lastMessage.includes('cuánto') || lastMessage.includes('costar')) {
-    return `¡Buena pregunta! 😊 Tenemos tres packs diseñados para diferentes necesidades:
+  if (lastMessage.includes('precio') || lastMessage.includes('cuánto') || lastMessage.includes('costar') || lastMessage.includes('presupuesto')) {
+    return `Cada proyecto es completamente a medida, así que el precio depende de lo que necesites exactamente. 😊
 
-**Pack Starter (497€)** — Perfecto si necesitas una landing page con chatbot IA básico.
+Lo más fácil es usar nuestra **calculadora de precios** — en 2 minutos te genera un presupuesto orientativo según tu tipo de web, páginas, funcionalidades y plazos.
 
-**Pack Business (997€)** — Ideal si necesitas una web más completa con hasta 5 páginas, chatbot avanzado y automatizaciones.
-
-**Pack Premium (1.997€)** — La solución completa con hasta 10 páginas, IA personalizada y todas las automatizaciones.
-
-¿Te gustaría que te explique alguno en detalle? También podemos hacer un **presupuesto personalizado** si tu proyecto tiene necesidades específicas.`;
+Si prefieres hablar directamente, puedes escribirle a Guti por WhatsApp y os ponéis de acuerdo en una llamada rápida sin compromiso. ¿Qué tipo de web estás pensando?`;
   }
   
-  if (lastMessage.includes('hola') || lastMessage.includes('buenas') || lastMessage.includes('hey')) {
-    return `¡Hola! 👋 Soy Guti AI, el asistente virtual de Agutidesigns. Estoy aquí para ayudarte a encontrar la solución web perfecta para tu negocio.
+  if (lastMessage.includes('hola') || lastMessage.includes('buenas') || lastMessage.includes('hey') || lastMessage.includes('inicio')) {
+    return `¡Hola! 👋 Soy Guti AI, el asistente de Agutidesigns.
 
-¿En qué puedo ayudarte? Por ejemplo:
-- 🌐 Información sobre nuestros packs de web + IA
-- 💰 Precios y presupuestos
-- 🤖 Cómo funciona la integración de IA
-- 📋 Proceso de trabajo
+Estoy aquí para ayudarte con cualquier duda sobre diseño web: qué tipo de web te conviene, cómo es el proceso, cuánto puede costar, qué incluye... lo que necesites.
 
-¡Pregúntame lo que necesites!`;
+¿Cuéntame, qué proyecto tienes en mente?`;
   }
 
-  if (lastMessage.includes('ia') || lastMessage.includes('inteligencia') || lastMessage.includes('chatbot')) {
-    return `¡La IA es nuestro superpoder! 🤖 En Agutidesigns integramos Inteligencia Artificial en cada web para automatizar y potenciar tu negocio:
+  if (lastMessage.includes('ia') || lastMessage.includes('inteligencia artificial') || lastMessage.includes('chatbot') || lastMessage.includes('automatiz')) {
+    return `La IA puede añadirse a cualquier web según lo que necesite tu negocio. 🤖
 
-**Chatbot inteligente** — Atiende a tus clientes 24/7, resuelve dudas y cualifica leads automáticamente.
+Por ejemplo: un chatbot que atiende a tus clientes 24/7, formularios inteligentes que cualifican leads, automatizaciones de email, o un asistente que genera presupuestos automáticamente.
 
-**Automatización de emails** — Seguimiento automático de leads, newsletters y comunicaciones personalizadas.
-
-**Presupuestos automáticos** — Tu web puede generar presupuestos al instante basados en las necesidades del cliente.
-
-Todo esto se adapta a tu negocio. ¿Te gustaría saber más sobre alguna de estas funcionalidades?`;
+No es obligatorio incluirlo — si tu proyecto no lo necesita, no lo ponemos. ¿Tienes alguna funcionalidad específica en mente?`;
   }
 
-  if (lastMessage.includes('proceso') || lastMessage.includes('cómo funciona') || lastMessage.includes('pasos')) {
-    return `¡Es muy sencillo! Nuestro proceso está diseñado para que sea fácil y sin complicaciones:
+  if (lastMessage.includes('proceso') || lastMessage.includes('cómo funciona') || lastMessage.includes('pasos') || lastMessage.includes('tiempo') || lastMessage.includes('plazo')) {
+    return `El proceso es bastante sencillo y transparente:
 
-**1. Consulta gratuita** — Hablamos sobre tu negocio y tus necesidades (15 min).
+**1.** Hablamos sobre tu proyecto (gratis, sin compromiso) — una llamada o por WhatsApp.
+**2.** Te envío un presupuesto detallado en menos de 24h.
+**3.** Diseño y desarrollo: normalmente entre 1 y 3 semanas según la complejidad.
+**4.** Revisiones hasta que quede exactamente como lo imaginas.
+**5.** Lanzamiento y soporte post-entrega.
 
-**2. Propuesta en 24h** — Te enviamos una propuesta personalizada con todo detallado.
-
-**3. Diseño y desarrollo** — Creamos tu web con IA integrada (2-4 semanas según el pack).
-
-**4. Lanzamiento + soporte** — Lanzamos tu web y te damos soporte continuo.
-
-¿Te gustaría agendar tu consulta gratuita? Solo necesito tu nombre y email 😊`;
+¿Tienes ya claro qué tipo de web necesitas?`;
   }
 
-  return `¡Gracias por tu interés! 😊 En Agutidesigns creamos páginas web profesionales potenciadas con Inteligencia Artificial.
+  if (lastMessage.includes('landing') || lastMessage.includes('corporativa') || lastMessage.includes('tienda') || lastMessage.includes('portfolio') || lastMessage.includes('ecommerce')) {
+    return `¡Buena elección! Todos esos tipos los hacemos a medida. Aquí va un resumen rápido:
 
-Puedo ayudarte con información sobre:
-- Nuestros **packs de Web + IA** (desde 497€)
-- El **proceso de trabajo**
-- **Presupuestos personalizados**
-- Cómo la **IA puede automatizar** tu negocio
+- **Landing page** — Una sola página, perfecta para captar clientes o promocionar algo concreto.
+- **Web corporativa** — Tu presencia completa online: quiénes sois, servicios, contacto, blog...
+- **Tienda online** — Para vender productos o servicios con pasarela de pago.
+- **Portfolio** — Ideal para mostrar tu trabajo y captar nuevos clientes.
 
-¿Qué te gustaría saber?`;
+Usa la **calculadora de precios** de la web para ver un presupuesto orientativo, o cuéntame más sobre tu proyecto y te oriento. 😊`;
+  }
+
+  return `Buena pregunta. 😊 Dime un poco más sobre lo que necesitas y te ayudo a orientarte.
+
+Si ya tienes claro el tipo de web, puedes usar la **calculadora de precios** para obtener un presupuesto en segundos. Y si prefieres hablar directamente con Guti, el botón de WhatsApp está ahí abajo a la derecha. 👇`;
 }
 
 // ── Chatbot Service ──
@@ -272,7 +272,7 @@ export async function qualifyLead(conversationHistory) {
       score: 5,
       intent: 'informativo',
       budget_range: 'medio',
-      recommended_pack: 'business',
+      web_type: 'sin_definir',
       key_needs: [],
       contact_info: {},
       next_action: 'Seguir cualificando al lead',
