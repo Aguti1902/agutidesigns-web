@@ -244,6 +244,13 @@ function AIChatDemo() {
     }
   }, [visibleCount]);
 
+  // Tag each message with its original index so keys stay stable when filtering
+  const visibleMessages = CHAT_MESSAGES
+    .slice(0, visibleCount)
+    .map((msg, idx) => ({ ...msg, idx }))
+    // Show typing only when it's the last visible message (hides it once bot replies)
+    .filter(({ type }, i, arr) => type !== 'typing' || i === arr.length - 1);
+
   return (
     <div className="ai-chat-demo">
       <div className="ai-chat-demo__header">
@@ -254,17 +261,17 @@ function AIChatDemo() {
         </div>
       </div>
       <div className="ai-chat-demo__messages">
-        {CHAT_MESSAGES.slice(0, visibleCount).map((msg, i) => (
+        {visibleMessages.map(({ idx, type, text }) => (
           <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            key={idx}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className={`chat-bubble chat-bubble--${msg.type}`}
+            className={`chat-bubble chat-bubble--${type}`}
           >
-            {msg.type === 'typing' ? (
+            {type === 'typing' ? (
               <span className="typing-dots"><span /><span /><span /></span>
-            ) : msg.text}
+            ) : text}
           </motion.div>
         ))}
       </div>
