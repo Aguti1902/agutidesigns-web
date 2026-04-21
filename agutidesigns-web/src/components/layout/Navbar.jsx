@@ -11,7 +11,7 @@ const navLinks = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-export default function Navbar() {
+export default function Navbar({ dark = false, cta }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -43,7 +43,7 @@ export default function Navbar() {
   return (
     <>
       <motion.nav
-        className={`navbar ${isScrolled ? 'navbar--scrolled' : ''}`}
+        className={`navbar ${isScrolled ? 'navbar--scrolled' : ''} ${dark && !isScrolled ? 'navbar--dark' : ''}`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -67,15 +67,15 @@ export default function Navbar() {
           </div>
 
           <div className="navbar__actions">
-            <Button
-              variant="primary"
-              size="sm"
-              href="#presupuesto"
-              icon={<Zap size={14} />}
-              onClick={(e) => handleNavClick(e, '#presupuesto')}
-            >
-              Pedir Presupuesto
-            </Button>
+            {cta ? (
+              <a href={cta.href} target={cta.external ? '_blank' : undefined} rel={cta.external ? 'noopener noreferrer' : undefined} style={{ textDecoration: 'none' }}>
+                <Button variant="primary" size="sm" icon={cta.icon}>{cta.label}</Button>
+              </a>
+            ) : (
+              <Button variant="primary" size="sm" href="#presupuesto" icon={<Zap size={14} />} onClick={(e) => handleNavClick(e, '#presupuesto')}>
+                Pedir Presupuesto
+              </Button>
+            )}
           </div>
 
           <button

@@ -6,7 +6,7 @@ import {
   Star, Zap, TrendingUp, ChevronDown, ChevronUp, Sparkles,
   Calendar, Users, Phone, Bot, MapPin, X, CheckCircle,
   Clock, Shield, Award, HeartHandshake, Monitor, ExternalLink,
-  MousePointer, BarChart2, Activity,
+  MousePointer, BarChart2, Activity, Megaphone,
 } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -64,6 +64,14 @@ const SOLUTIONS = [
     title: 'IA 24/7',
     desc: 'Un asistente inteligente que atiende a tus pacientes, responde preguntas y agenda citas automáticamente.',
     features: ['Responde en <1 segundo', 'Reserva citas sola', 'Multiidioma', 'Disponible 24/7'],
+    color: 'primary',
+  },
+  {
+    icon: <Megaphone size={30} />,
+    num: '04',
+    title: 'Publicidad online',
+    desc: 'Campañas de Google Ads y Meta Ads gestionadas para captar pacientes desde el primer día.',
+    features: ['Google Ads gestionado', 'Meta Ads (Instagram/FB)', 'Segmentación local', 'Informe de ROI mensual'],
     color: 'primary',
   },
 ];
@@ -468,7 +476,15 @@ export default function ClinicasLanding() {
   return (
     <div className="cl-landing">
       <div className="noise-overlay" />
-      <Navbar />
+      <Navbar
+        dark
+        cta={{
+          label: 'WhatsApp',
+          href: 'https://wa.me/34600000000?text=Hola%2C+me+interesa+una+web+para+mi+cl%C3%ADnica+dental',
+          external: true,
+          icon: <MessageCircle size={14} />,
+        }}
+      />
 
       {/* ── HERO ── */}
       <section className="cl-hero">
@@ -1041,9 +1057,9 @@ export default function ClinicasLanding() {
             </motion.div>
 
             <motion.p variants={fadeUp} className="cl-pricing__note">
-              ¿Quieres un presupuesto personalizado?{' '}
-              <a href="https://wa.me/34600000000" target="_blank" rel="noopener noreferrer">
-                Hablamos gratis por WhatsApp →
+              ¿Tienes dudas sobre qué plan necesitas?{' '}
+              <a href="https://wa.me/34600000000?text=Hola%2C+quiero+saber+qu%C3%A9+plan+se+adapta+a+mi+cl%C3%ADnica" target="_blank" rel="noopener noreferrer">
+                Contáctame por WhatsApp →
               </a>
             </motion.p>
           </motion.div>
