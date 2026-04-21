@@ -929,14 +929,11 @@ export default function ClinicasLanding() {
         className="cl-tp-widget"
         aria-label="Ver reseñas en Trustpilot"
       >
-        <div className="cl-tp-widget__stars">
-          {[...Array(5)].map((_, i) => <TpStar key={i} size={14} />)}
-        </div>
-        <div className="cl-tp-widget__body">
-          <TrustpilotLogo height={18} />
-          <span className="cl-tp-widget__score">4.9 · <strong>Excelente</strong></span>
-        </div>
-        <div className="cl-tp-widget__count">47 opiniones verificadas</div>
+        <TrustpilotLogo height={16} />
+        <span className="cl-tp-widget__score">
+          {[...Array(5)].map((_, i) => <TpStar key={i} size={11} />)}
+          <span>4.9</span>
+        </span>
       </a>
 
       <Footer />
