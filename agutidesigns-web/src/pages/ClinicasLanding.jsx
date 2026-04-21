@@ -292,6 +292,34 @@ function DashboardPreview() {
             <span className="db-chart__sub">Esta semana</span>
           </div>
           <div className="db-chart__area">
+            {/* Animated SVG line overlay */}
+            <svg className="db-chart__svg" viewBox="0 0 280 60" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="dbLineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0047FF" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#0047FF" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {/* Area fill under the line */}
+              <path
+                className="db-line-area"
+                d="M0,52 C25,48 45,36 80,32 C110,28 130,16 160,11 C185,7 210,4 240,3 C255,2 270,4 280,3 L280,60 L0,60 Z"
+                fill="url(#dbLineGrad)"
+              />
+              {/* Ascending line */}
+              <path
+                className="db-line-path"
+                d="M0,52 C25,48 45,36 80,32 C110,28 130,16 160,11 C185,7 210,4 240,3 C255,2 270,4 280,3"
+                fill="none"
+                stroke="#0047FF"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Moving dot on the line */}
+              <circle className="db-line-dot" r="3" fill="#0047FF" />
+            </svg>
+
             {DB_BARS.map((b, i) => (
               <div key={i} className="db-chart__col">
                 <div
