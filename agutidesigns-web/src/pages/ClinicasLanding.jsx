@@ -552,14 +552,13 @@ export default function ClinicasLanding() {
           </p>
 
           <div className="cl-video__frame-wrap">
-            {/* ── Reemplaza VIDEO_ID con tu ID de YouTube ── */}
             <div className="cl-video__frame">
               <iframe
-                src="https://www.youtube.com/embed/VIDEO_ID?rel=0&controls=1&modestbranding=1"
-                title="Resultados clínicas dentales · Agutidesigns"
+                src="https://player.vimeo.com/video/1049518388?badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0"
                 frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
                 allowFullScreen
+                title="Agutidesigns para clínicas dentales"
               />
             </div>
 
