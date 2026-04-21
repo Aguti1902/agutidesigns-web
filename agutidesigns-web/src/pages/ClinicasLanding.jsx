@@ -6,6 +6,7 @@ import {
   Star, Zap, TrendingUp, ChevronDown, ChevronUp, Sparkles,
   Calendar, Users, Phone, Bot, MapPin, X, CheckCircle,
   Clock, Shield, Award, HeartHandshake, Monitor, ExternalLink,
+  MousePointer, BarChart2, Activity,
 } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -226,6 +227,128 @@ function AnimatedCounter({ end, suffix = '', prefix = '' }) {
     <span ref={inViewRef} className="stat-num">
       {prefix}{count}{suffix}
     </span>
+  );
+}
+
+/* ── Dashboard Preview (animated mockup) ── */
+const DB_BARS = [
+  { day: 'L', h: 52 }, { day: 'M', h: 74 }, { day: 'X', h: 61 },
+  { day: 'J', h: 89 }, { day: 'V', h: 100 }, { day: 'S', h: 78 }, { day: 'D', h: 43 },
+];
+const DB_SPARKS = [22, 35, 28, 46, 38, 55, 48, 67, 60, 76];
+
+function DashboardPreview() {
+  return (
+    <div className="db-mockup">
+      {/* Browser chrome */}
+      <div className="db-chrome">
+        <div className="db-chrome__dots"><span /><span /><span /></div>
+        <span className="db-chrome__url">panel.agutidesigns.com/dentplus</span>
+      </div>
+
+      {/* Dashboard body */}
+      <div className="db-body">
+        {/* Top bar */}
+        <div className="db-topbar">
+          <div>
+            <div className="db-topbar__name">Panel de Control</div>
+            <div className="db-topbar__clinic">Clínica DentPlus · Barcelona</div>
+          </div>
+          <div className="db-live"><span className="db-live__dot" />En vivo</div>
+        </div>
+
+        {/* KPI row */}
+        <div className="db-kpis">
+          <div className="db-kpi">
+            <div className="db-kpi__ico db-kpi__ico--blue"><TrendingUp size={11} /></div>
+            <div className="db-kpi__val">2.847</div>
+            <div className="db-kpi__lbl">Visitas / sem</div>
+            <div className="db-kpi__trend">↑ 23%</div>
+          </div>
+          <div className="db-kpi">
+            <div className="db-kpi__ico db-kpi__ico--green"><Users size={11} /></div>
+            <div className="db-kpi__val">127</div>
+            <div className="db-kpi__lbl">Nuevos pacientes</div>
+            <div className="db-kpi__trend">↑ 40%</div>
+          </div>
+          <div className="db-kpi db-kpi--hl">
+            <div className="db-kpi__ico db-kpi__ico--yellow"><Search size={11} /></div>
+            <div className="db-kpi__val">#1</div>
+            <div className="db-kpi__lbl">Google local</div>
+            <div className="db-kpi__trend">↑ 5 pos</div>
+          </div>
+          <div className="db-kpi">
+            <div className="db-kpi__ico db-kpi__ico--purple"><Zap size={11} /></div>
+            <div className="db-kpi__val">8.4%</div>
+            <div className="db-kpi__lbl">Conversión</div>
+            <div className="db-kpi__trend">↑ 2.1%</div>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="db-chart">
+          <div className="db-chart__hdr">
+            <span className="db-chart__title"><BarChart2 size={11} /> Visitas últimos 7 días</span>
+            <span className="db-chart__sub">Esta semana</span>
+          </div>
+          <div className="db-chart__area">
+            {DB_BARS.map((b, i) => (
+              <div key={i} className="db-chart__col">
+                <div
+                  className={`db-chart__bar${i === 4 ? ' db-chart__bar--hl' : ''}`}
+                  style={{ '--bh': `${b.h}%`, '--bi': i }}
+                />
+                <span className="db-chart__day">{b.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom widgets */}
+        <div className="db-widgets">
+          {/* IA */}
+          <div className="db-widget">
+            <div className="db-widget__hdr"><Bot size={11} /> IA 24/7</div>
+            <div className="db-widget__rows">
+              <div className="db-widget__row"><span>Consultas</span><strong>1.234</strong></div>
+              <div className="db-widget__row"><span>Citas auto</span><strong className="db-widget__strong--blue">89</strong></div>
+              <div className="db-widget__row"><span>Resp. media</span><strong>&lt;1s</strong></div>
+            </div>
+          </div>
+
+          {/* SEO ring */}
+          <div className="db-widget db-widget--center">
+            <div className="db-widget__hdr"><Search size={11} /> SEO Score</div>
+            <div className="db-ring">
+              <svg viewBox="0 0 64 64" className="db-ring__svg">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(0,71,255,0.12)" strokeWidth="6" />
+                <circle
+                  cx="32" cy="32" r="26"
+                  fill="none" stroke="#0047FF" strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray="163.4"
+                  className="db-ring__arc"
+                />
+              </svg>
+              <span className="db-ring__score">94</span>
+            </div>
+            <div className="db-widget__sub">de 100 pts</div>
+          </div>
+
+          {/* Clicks */}
+          <div className="db-widget">
+            <div className="db-widget__hdr"><MousePointer size={11} /> Clicks Google</div>
+            <div className="db-widget__big">3.421</div>
+            <div className="db-sparkline">
+              {DB_SPARKS.map((h, i) => (
+                <span key={i} className="db-spark" style={{ '--sh': `${h}%`, '--si': i }} />
+              ))}
+            </div>
+            <div className="db-widget__uptag">↑ +18% vs mes anterior</div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -724,6 +847,48 @@ export default function ClinicasLanding() {
                 <div className="cl-stat-card__shimmer" />
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PANEL DE CONTROL ── */}
+      <section className="cl-panel section">
+        <div className="container">
+          <div className="cl-panel__inner">
+            {/* Left: copy */}
+            <div className="cl-panel__copy">
+              <div className="cl-section-label"><Activity size={14} /> Panel de control</div>
+              <h2 className="cl-section-title">
+                Monitoriza todo<br />
+                <span className="text-primary">en tiempo real</span>
+              </h2>
+              <p className="cl-panel__sub">
+                Con cada plan tienes acceso a tu propio panel de control donde ves exactamente qué está pasando con tu clínica online: visitas, pacientes nuevos, posición en Google, clics y mucho más.
+              </p>
+              <ul className="cl-panel__feats">
+                {[
+                  { icon: <TrendingUp size={16} />, title: 'Visitas en tiempo real', desc: 'Cuántas personas visitan tu web cada día y de dónde vienen.' },
+                  { icon: <Users size={16} />, title: 'Pacientes nuevos captados', desc: 'Cuántos contactos nuevos genera tu web cada semana.' },
+                  { icon: <Search size={16} />, title: 'Posicionamiento SEO', desc: 'En qué posición apareces en Google para cada búsqueda clave.' },
+                  { icon: <MousePointer size={16} />, title: 'Clics y conversiones', desc: 'Qué botones pulsan, cuántas citas solicitan, qué convierte.' },
+                  { icon: <Bot size={16} />, title: 'Rendimiento de la IA', desc: 'Cuántas consultas responde sola y qué citas agenda tu IA.' },
+                  { icon: <BarChart2 size={16} />, title: 'Informes mensuales', desc: 'Recibe un informe automático con todos los resultados del mes.' },
+                ].map((f, i) => (
+                  <li key={i} className="cl-panel__feat">
+                    <div className="cl-panel__feat-ico">{f.icon}</div>
+                    <div>
+                      <strong>{f.title}</strong>
+                      <span>{f.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Right: animated dashboard */}
+            <div className="cl-panel__visual">
+              <DashboardPreview />
+            </div>
           </div>
         </div>
       </section>
