@@ -645,6 +645,7 @@
   position: relative;
   max-width: 860px;
   margin: 0 auto;
+  padding: 24px 20px;
 }
 
 .cl-video__frame {
@@ -670,20 +671,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-lg);
   padding: 10px 16px;
-  color: #fff;
+  color: var(--color-black);
   font-family: var(--font-mono);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15);
+  white-space: nowrap;
+  z-index: 10;
 }
 .cl-video__badge svg { color: var(--color-primary); flex-shrink: 0; }
-.cl-video__badge strong { display: block; font-size: var(--text-base); font-weight: 800; }
-.cl-video__badge span  { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
-.cl-video__badge--1 { top: -20px; left: -20px; animation: float1 5s ease-in-out infinite; }
-.cl-video__badge--2 { top: -20px; right: -20px; animation: float2 6s ease-in-out infinite 0.5s; }
-.cl-video__badge--3 { bottom: -20px; left: 50%; transform: translateX(-50%); animation: float3 5.5s ease-in-out infinite 1s; }
+.cl-video__badge strong { display: block; font-size: var(--text-base); font-weight: 800; color: var(--color-black); }
+.cl-video__badge span  { font-size: 0.65rem; color: var(--color-gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
+.cl-video__badge--1 { top: -18px; left: -16px; animation: float1 5s ease-in-out infinite; }
+.cl-video__badge--2 { top: -18px; right: -16px; animation: float2 6s ease-in-out infinite 0.5s; }
+.cl-video__badge--3 { bottom: -18px; left: 50%; transform: translateX(-50%); animation: float3 5.5s ease-in-out infinite 1s; }
 
 /* ==============================
    SOLUTIONS
