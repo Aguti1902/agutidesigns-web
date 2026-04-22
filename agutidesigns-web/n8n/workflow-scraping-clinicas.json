@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ TUS DATOS\n// ═══════════════════════════════════════════════════════\n\nconst GOOGLE_PLACES_KEY = 'TU_API_KEY_AQUI';  // ← pega tu Google Places API Key\nconst GOOGLE_SHEET_ID   = 'TU_SHEET_ID_AQUI'; // ← ID del Google Sheet (la parte /d/[ESTE_ID]/)\n\nconst ciudades = ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'];\nconst terminos = ['clínica dental', 'dentista', 'odontología'];\n\nconst busquedas = [];\nfor (const ciudad of ciudades) {\n  for (const termino of terminos) {\n    busquedas.push({ json: { ciudad, query: `${termino} ${ciudad}`, apiKey: GOOGLE_PLACES_KEY, sheetId: GOOGLE_SHEET_ID } });\n  }\n}\nreturn busquedas;"
+        "jsCode": "// ═══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ TUS DATOS\n// ═══════════════════════════════════════════════════════\n\nconst GOOGLE_PLACES_KEY = 'TU_API_KEY_AQUI';  // ← pega tu Google Places API Key\nconst GOOGLE_SHEET_ID   = 'TU_SHEET_ID_AQUI'; // ← ID del Google Sheet (la parte /d/[ESTE_ID]/)\n\nconst ciudades = ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'];\nconst terminos = [\n  'clínica dental',\n  'dentista',\n  'odontología',\n  'implantes dentales',\n  'ortodoncia',\n  'clínica odontológica',\n  'periodoncia'\n];\n\nconst busquedas = [];\nfor (const ciudad of ciudades) {\n  for (const termino of terminos) {\n    busquedas.push({ json: { ciudad, query: `${termino} ${ciudad}`, apiKey: GOOGLE_PLACES_KEY, sheetId: GOOGLE_SHEET_ID } });\n  }\n}\nreturn busquedas;"
       },
       "id": "sc-0002",
       "name": "⚙️ Config — ciudades y API Key",
