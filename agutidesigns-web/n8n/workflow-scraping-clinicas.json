@@ -222,8 +222,8 @@
     "🧹 Aplanar y deduplicar clínicas":     { "main": [[{ "node": "🔄 Procesar una clínica a la vez",            "type": "main", "index": 0 }]] },
     "🔄 Procesar una clínica a la vez":     {
       "main": [
-        [{ "node": "📋 Places Details API",                   "type": "main", "index": 0 }],
-        [{ "node": "🏁 Fin (todas las clínicas procesadas)",  "type": "main", "index": 0 }]
+        [{ "node": "🏁 Fin (todas las clínicas procesadas)",  "type": "main", "index": 0 }],
+        [{ "node": "📋 Places Details API",                   "type": "main", "index": 0 }]
       ]
     },
     "📋 Places Details API":                { "main": [[{ "node": "📝 Normalizar datos",                         "type": "main", "index": 0 }]] },
