@@ -200,9 +200,9 @@ Si ya tienes claro el tipo de web, puedes usar la **calculadora de precios** par
 }
 
 // ── Chatbot Service ──
-export async function sendChatMessage(conversationHistory, userMessage) {
+export async function sendChatMessage(conversationHistory, userMessage, customSystemPrompt) {
   const messages = [
-    { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+    { role: 'system', content: customSystemPrompt || CHATBOT_SYSTEM_PROMPT },
     ...conversationHistory,
     { role: 'user', content: userMessage },
   ];

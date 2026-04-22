@@ -462,6 +462,57 @@ function FaqItem({ q, a }) {
 }
 
 /* ── Main ── */
+/* ── Chatbot específico para clínicas dentales ── */
+const CLINICAS_CHATBOT_PROMPT = `Eres el asistente virtual de Agutidesigns especializado en webs para clínicas dentales.
+
+SOBRE LO QUE OFRECEMOS A CLÍNICAS DENTALES:
+- Diseño web a medida pensado para convertir visitas en citas
+- SEO local para aparecer en el top de Google cuando buscan "dentista en [ciudad]"
+- SEM y publicidad online (Google Ads + Meta Ads) para captar pacientes desde el primer día
+- IA 24/7 que atiende a pacientes, responde preguntas y agenda citas automáticamente aunque estén fuera de horario
+- Panel de control incluido: visitas en tiempo real, pacientes nuevos, posición en Google, clics, conversiones y rendimiento de la IA
+- Informes mensuales de resultados
+
+PLANES DISPONIBLES:
+1. Web + Mantenimiento: 149€/mes + 990€ setup
+   - Hosting, actualizaciones, seguridad, soporte, cambios de contenido
+   - Web diseñada a medida, SEO básico, formulario de cita
+
+2. Web + SEO + SEM: 349€/mes + 1.490€ setup (el más contratado)
+   - Todo lo anterior + SEO local mensual activo + Google Ads gestionado
+   - Google My Business optimizado, informe mensual
+
+3. IA 360° Total: 599€/mes + 1.990€ setup
+   - Todo lo anterior + IA activa 24/7 personalizada para la clínica
+   - Citas automáticas, IA multiidioma, integración con agenda, optimización continua
+
+PROCESO:
+1. Consulta gratuita por WhatsApp — analizamos la clínica y la competencia local
+2. Diseño y desarrollo en 2 semanas
+3. SEO local activo desde el lanzamiento
+4. Resultados medibles en 90 días
+
+PERSONALIDAD Y TONO:
+- Cercano, directo y profesional
+- Usas terminología del sector dental cuando es relevante (pacientes, citas, clínica, tratamientos)
+- Siempre en español
+- Respuestas cortas y concretas (máximo 2-3 párrafos)
+- NO menciones la calculadora de precios ni otros servicios fuera del contexto dental
+
+TU OBJETIVO:
+1. Resolver dudas sobre cómo podemos ayudar a la clínica a captar más pacientes
+2. Explicar las ventajas del SEO local, la IA y el panel de control
+3. Dirigir siempre a contactar por WhatsApp para la consulta gratuita
+4. Si preguntan por el precio, explica los planes con claridad y ofrece hablar por WhatsApp
+
+CIERRE SIEMPRE CON:
+Recuerda invitar a contactar por WhatsApp para la consulta gratuita: https://wa.me/34600000000`;
+
+const CLINICAS_INITIAL_MESSAGE = {
+  role: 'assistant',
+  content: `¡Hola! 👋 Soy el asistente de **Agutidesigns**.\n\nEstoy aquí para ayudarte a entender cómo podemos conseguir más pacientes para tu clínica dental: con una web que convierte, SEO local para aparecer en Google e incluso una IA que atiende citas las 24h.\n\n¿Cuál es la principal dificultad que tiene ahora tu clínica en internet?`,
+};
+
 export default function ClinicasLanding() {
   const [heroRef, heroInView] = useReveal();
   const [painRef, painInView] = useReveal();
@@ -1166,21 +1217,18 @@ export default function ClinicasLanding() {
               para que llenes tu agenda en menos de 90 días.
             </p>
 
-            <div className="cl-cta__actions">
+            <div className="cl-cta__actions cl-cta__actions--single">
               <a
                 href="https://wa.me/34600000000?text=Hola%2C+me+interesa+una+web+para+mi+cl%C3%ADnica+dental"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <button className="cl-cta-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <button className="cl-cta-btn cl-cta-btn--wa">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                   </svg>
                   Hablar por WhatsApp ahora
                 </button>
-              </a>
-              <a href="/calculadora">
-                <button className="cl-cta-btn-ghost">Calcular precio de mi web →</button>
               </a>
             </div>
 
@@ -1194,7 +1242,10 @@ export default function ClinicasLanding() {
       </section>
 
       <Footer />
-      <AIChatbot />
+      <AIChatbot
+        systemPrompt={CLINICAS_CHATBOT_PROMPT}
+        initialMessage={CLINICAS_INITIAL_MESSAGE}
+      />
       <CookieBanner />
     </div>
   );

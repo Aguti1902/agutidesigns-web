@@ -4,15 +4,15 @@ import { MessageCircle, X, Send, Bot, User, Sparkles, Minimize2 } from 'lucide-r
 import { sendChatMessage, qualifyLead } from '../../services/aiService';
 import './AIChatbot.css';
 
-const INITIAL_MESSAGE = {
+const DEFAULT_INITIAL_MESSAGE = {
   role: 'assistant',
   content: `¡Hola! 👋 Soy **Guti AI**, el asistente de Agutidesigns.\n\nEstoy aquí para ayudarte con cualquier duda sobre tu proyecto web: qué tipo de web te conviene, cómo es el proceso, cuánto puede costar...\n\n¿Qué proyecto tienes en mente?`,
 };
 
-export default function AIChatbot() {
+export default function AIChatbot({ systemPrompt, initialMessage }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState([initialMessage || DEFAULT_INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [leadData, setLeadData] = useState(null);
@@ -58,7 +58,7 @@ export default function AIChatbot() {
         content: m.content,
       }));
 
-      const response = await sendChatMessage(conversationHistory, userMessage);
+      const response = await sendChatMessage(conversationHistory, userMessage, systemPrompt);
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       setMessages(prev => [...prev, {

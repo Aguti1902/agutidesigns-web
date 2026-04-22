@@ -1620,6 +1620,10 @@
   margin-bottom: var(--space-8);
 }
 .cl-cta__actions a { text-decoration: none; }
+.cl-cta__actions--single { justify-content: center; }
+.cl-cta__actions--single .cl-cta-btn { min-width: 320px; justify-content: center; font-size: var(--text-base); padding: 18px 40px; }
+.cl-cta-btn--wa { background: #25D366; border-color: #25D366; }
+.cl-cta-btn--wa:hover { background: #1ebe59; border-color: #1ebe59; }
 
 .cl-cta-btn {
   display: inline-flex;
