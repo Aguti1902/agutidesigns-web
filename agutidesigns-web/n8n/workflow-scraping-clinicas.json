@@ -1,5 +1,5 @@
 {
-  "name": "AgutiDesigns — Scraping Clínicas Dentales v2",
+  "name": "AgutiDesigns — Scraping Clínicas Dentales v3",
   "nodes": [
     {
       "parameters": {},
@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ═══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ TUS DATOS\n// ═══════════════════════════════════════════════════════\n\nconst GOOGLE_PLACES_KEY = 'TU_API_KEY_AQUI';  // ← pega tu Google Places API Key\nconst GOOGLE_SHEET_ID   = 'TU_SHEET_ID_AQUI'; // ← pega el ID de tu Google Sheet\n                                               //   (la parte de la URL: /d/[ESTE_ID]/)\n\n// Ciudades y términos de búsqueda\nconst ciudades = ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'];\nconst terminos = ['clínica dental', 'dentista', 'odontología'];\n\n// Genera todas las combinaciones\nconst busquedas = [];\nfor (const ciudad of ciudades) {\n  for (const termino of terminos) {\n    busquedas.push({\n      json: {\n        ciudad,\n        query:        `${termino} ${ciudad}`,\n        apiKey:       GOOGLE_PLACES_KEY,\n        sheetId:      GOOGLE_SHEET_ID\n      }\n    });\n  }\n}\n\nreturn busquedas;"
+        "jsCode": "// ═══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ TUS DATOS\n// ═══════════════════════════════════════════════════════\n\nconst GOOGLE_PLACES_KEY = 'TU_API_KEY_AQUI';  // ← pega tu Google Places API Key\nconst GOOGLE_SHEET_ID   = 'TU_SHEET_ID_AQUI'; // ← ID del Google Sheet (la parte /d/[ESTE_ID]/)\n\nconst ciudades = ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'];\nconst terminos = ['clínica dental', 'dentista', 'odontología'];\n\nconst busquedas = [];\nfor (const ciudad of ciudades) {\n  for (const termino of terminos) {\n    busquedas.push({ json: { ciudad, query: `${termino} ${ciudad}`, apiKey: GOOGLE_PLACES_KEY, sheetId: GOOGLE_SHEET_ID } });\n  }\n}\nreturn busquedas;"
       },
       "id": "sc-0002",
       "name": "⚙️ Config — ciudades y API Key",
@@ -41,7 +41,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Aplanamos todos los resultados de todas las búsquedas.\n// IMPORTANTE: $input.all() tiene el mismo orden que $('⚙️ Config...').all()\n// así podemos mapear por índice para recuperar ciudad, apiKey, sheetId.\n\nconst httpResults = $input.all();\nconst configs     = $('⚙️ Config — ciudades y API Key').all();\n\nconst clinicas = [];\nconst seen     = new Set();\n\nfor (let i = 0; i < httpResults.length; i++) {\n  const results = httpResults[i].json.results || [];\n  const cfg     = configs[i]?.json || {};\n\n  for (const place of results) {\n    if (seen.has(place.place_id)) continue;\n    seen.add(place.place_id);\n\n    clinicas.push({\n      json: {\n        place_id:   place.place_id,\n        ciudad:     cfg.ciudad      || '',\n        apiKey:     cfg.apiKey      || '',\n        sheetId:    cfg.sheetId     || '',\n        nombre:     place.name      || '',\n        direccion:  place.formatted_address || '',\n        valoracion: place.rating            || '',\n        n_resenas:  place.user_ratings_total || 0\n      }\n    });\n  }\n}\n\nif (clinicas.length === 0) {\n  throw new Error('No se encontraron clínicas. Comprueba tu API Key y que la cuota no esté agotada.');\n}\n\nreturn clinicas;"
+        "jsCode": "const httpResults = $input.all();\nconst configs     = $('⚙️ Config — ciudades y API Key').all();\n\nconst clinicas = [];\nconst seen     = new Set();\n\nfor (let i = 0; i < httpResults.length; i++) {\n  const results = httpResults[i].json.results || [];\n  const cfg     = configs[i]?.json || {};\n  for (const place of results) {\n    if (seen.has(place.place_id)) continue;\n    seen.add(place.place_id);\n    clinicas.push({ json: {\n      place_id:   place.place_id,\n      ciudad:     cfg.ciudad  || '',\n      apiKey:     cfg.apiKey  || '',\n      sheetId:    cfg.sheetId || '',\n      nombre:     place.name  || '',\n      direccion:  place.formatted_address   || '',\n      valoracion: place.rating              || '',\n      n_resenas:  place.user_ratings_total  || 0\n    }});\n  }\n}\n\nif (clinicas.length === 0) throw new Error('No se encontraron clínicas. Comprueba tu API Key.');\nreturn clinicas;"
       },
       "id": "sc-0004",
       "name": "🧹 Aplanar y deduplicar clínicas",
@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "url": "=https://maps.googleapis.com/maps/api/place/details/json",
+        "url": "https://maps.googleapis.com/maps/api/place/details/json",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -82,7 +82,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Combina los datos del Details API con los que ya teníamos.\n// Usamos $('🔄 ...').item para acceder al item actual del bucle.\n\nconst detail = $input.first().json.result || {};\nconst prev   = $('🔄 Procesar una clínica a la vez').item.json;\n\nreturn [{\n  json: {\n    place_id:   prev.place_id,\n    ciudad:     prev.ciudad,\n    apiKey:     prev.apiKey,\n    sheetId:    prev.sheetId,\n    nombre:     detail.name                          || prev.nombre,\n    direccion:  detail.formatted_address             || prev.direccion,\n    telefono:   detail.formatted_phone_number        || '',\n    web:        detail.website                       || '',\n    valoracion: String(detail.rating                 || prev.valoracion || ''),\n    n_resenas:  String(detail.user_ratings_total     || prev.n_resenas  || '0'),\n    resumen:    detail.editorial_summary?.overview   || '',\n    email:      '',\n    fuente_email: ''\n  }\n}];"
+        "jsCode": "const detail = $input.first().json.result || {};\nconst prev   = $('🔄 Procesar una clínica a la vez').item.json;\n\nreturn [{ json: {\n  place_id:     prev.place_id,\n  ciudad:       prev.ciudad,\n  apiKey:       prev.apiKey,\n  sheetId:      prev.sheetId,\n  nombre:       detail.name                         || prev.nombre,\n  direccion:    detail.formatted_address            || prev.direccion,\n  telefono:     detail.formatted_phone_number       || '',\n  web:          detail.website                      || '',\n  valoracion:   String(detail.rating                || prev.valoracion || ''),\n  n_resenas:    String(detail.user_ratings_total    || prev.n_resenas  || '0'),\n  resumen:      detail.editorial_summary?.overview  || ''\n}}];"
       },
       "id": "sc-0007",
       "name": "📝 Normalizar datos",
@@ -92,96 +92,62 @@
     },
     {
       "parameters": {
-        "url": "={{ $json.web || 'https://agutidesigns.io' }}",
+        "url": "={{ $json.web || 'https://httpstat.us/204' }}",
         "options": {
           "timeout": 10000,
-          "response": {
-            "response": { "fullResponse": true, "neverError": true }
-          },
+          "response": { "response": { "fullResponse": true, "neverError": true } },
           "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 3 } }
         }
       },
       "id": "sc-0008",
-      "name": "🌍 Visitar web (o skip si no tiene)",
+      "name": "🌍 Visitar web homepage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [1920, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Extrae email del HTML de la homepage.\n// Si la clínica no tenía web, el HTML vendrá de agutidesigns.io → no habrá email relevante.\n\nconst html = String($input.first().json.data || $input.first().json.body || '');\nconst prev = $('📝 Normalizar datos').item.json;\n\nconst EMAIL_REGEX   = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST     = ['noreply','no-reply','donotreply','example','yourdomain',\n                       'sentry','wix','squarespace','.png','.jpg','.gif','@2x',\n                       'schema.org','w3.org','google.com','facebook.com'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst email = prev.web ? (emails[0] || '') : '';\n\nreturn [{\n  json: {\n    ...prev,\n    email,\n    fuente_email: (prev.web && email) ? 'homepage' : ''\n  }\n}];"
+        "jsCode": "const html  = String($input.first().json.data || $input.first().json.body || '');\nconst prev  = $('📝 Normalizar datos').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','.gif',\n                     'schema.org','w3.org','google.com','facebook.com','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailHomepage = prev.web ? (emails[0] || '') : '';\n\n// Pasamos todo hacia adelante incluyendo el email encontrado en homepage\nreturn [{ json: { ...prev, emailHomepage } }];"
       },
       "id": "sc-0009",
-      "name": "📧 Extraer email (homepage)",
+      "name": "📧 Email de homepage",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [2160, 300]
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {},
-          "conditions": [
-            {
-              "id": "no-email-and-has-web",
-              "leftValue": "={{ $json.email === '' && $json.web !== '' }}",
-              "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals" }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "sc-0010",
-      "name": "❓ ¿Sin email y tiene web?",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 2,
-      "position": [2400, 300]
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.web.replace(/\\/+$/, '') }}/contacto",
+        "url": "={{ $json.web ? $json.web.replace(/\\/+$/, '') + '/contacto' : 'https://httpstat.us/204' }}",
         "options": {
           "timeout": 8000,
           "response": { "response": { "fullResponse": true, "neverError": true } }
         }
       },
-      "id": "sc-0011",
+      "id": "sc-0010",
       "name": "📞 Visitar /contacto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2640, 200]
+      "position": [2400, 300]
     },
     {
       "parameters": {
-        "jsCode": "const html  = String($input.first().json.data || $input.first().json.body || '');\nconst prev  = $('📧 Extraer email (homepage)').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','schema.org'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst email = emails[0] || '';\n\nreturn [{\n  json: { ...prev, email, fuente_email: email ? 'pagina_contacto' : 'no_encontrado' }\n}];"
+        "jsCode": "const html  = String($input.first().json.data || $input.first().json.body || '');\nconst prev  = $('📧 Email de homepage').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','schema.org','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailContacto = emails[0] || '';\n\n// Prioridad: homepage > contacto > vacío\nconst email       = prev.emailHomepage || emailContacto || '';\nconst fuenteEmail = prev.emailHomepage ? 'homepage'\n                  : emailContacto      ? 'pagina_contacto'\n                  : prev.web           ? 'no_encontrado'\n                  : 'sin_web';\n\nreturn [{ json: { ...prev, email, fuenteEmail } }];"
       },
-      "id": "sc-0012",
-      "name": "📧 Extraer email (/contacto)",
+      "id": "sc-0011",
+      "name": "📧 Email final (homepage + /contacto)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2880, 200]
+      "position": [2640, 300]
     },
     {
       "parameters": {
-        "mode": "passThrough",
-        "output": "all"
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: {\n  Ciudad:            d.ciudad       || '',\n  Nombre:            d.nombre       || '',\n  'Dirección':       d.direccion    || '',\n  'Teléfono':        d.telefono     || '',\n  Web:               d.web          || '',\n  Email:             d.email        || '',\n  'Fuente Email':    d.fuenteEmail  || '',\n  'Valoración':      d.valoracion   || '',\n  'Nº Reseñas':      d.n_resenas    || '0',\n  Resumen:           d.resumen      || '',\n  'Email enviado':   'No',\n  'Fecha scraping':  new Date().toISOString().split('T')[0],\n  Notas:             '',\n  _sheetId:          d.sheetId\n}}];"
       },
-      "id": "sc-0013",
-      "name": "🔀 Merge ramas (con y sin /contacto)",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [3120, 300]
-    },
-    {
-      "parameters": {
-        "jsCode": "const item = $input.first().json;\n\n// Limpia campos internos antes de guardar\nconst row = {\n  Ciudad:            item.ciudad        || '',\n  Nombre:            item.nombre        || '',\n  'Dirección':       item.direccion     || '',\n  'Teléfono':        item.telefono      || '',\n  Web:               item.web           || '',\n  Email:             item.email         || '',\n  'Fuente Email':    item.fuente_email  || 'sin_web',\n  'Valoración':      item.valoracion    || '',\n  'Nº Reseñas':      item.n_resenas     || '0',\n  Resumen:           item.resumen       || '',\n  'Email enviado':   'No',\n  'Fecha scraping':  new Date().toISOString().split('T')[0],\n  Notas:             ''\n};\n\nreturn [{ json: { ...row, _sheetId: item.sheetId } }];"
-      },
-      "id": "sc-0014",
+      "id": "sc-0012",
       "name": "🧽 Preparar fila para Sheets",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3360, 300]
+      "position": [2880, 300]
     },
     {
       "parameters": {
@@ -194,21 +160,18 @@
           "matchingColumns": [],
           "schema": []
         },
-        "options": {
-          "cellFormat": "USER_ENTERED",
-          "valueInputMode": "USER_ENTERED"
-        }
+        "options": { "cellFormat": "USER_ENTERED", "valueInputMode": "USER_ENTERED" }
       },
-      "id": "sc-0015",
+      "id": "sc-0013",
       "name": "📊 Google Sheets — Guardar fila",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [3600, 300],
+      "position": [3120, 300],
       "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
     },
     {
       "parameters": {},
-      "id": "sc-0016",
+      "id": "sc-0014",
       "name": "🏁 Fin (todas las clínicas procesadas)",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -216,30 +179,27 @@
     }
   ],
   "connections": {
-    "▶️ Ejecutar manualmente":              { "main": [[{ "node": "⚙️ Config — ciudades y API Key",              "type": "main", "index": 0 }]] },
-    "⚙️ Config — ciudades y API Key":       { "main": [[{ "node": "🔍 Places Text Search",                      "type": "main", "index": 0 }]] },
-    "🔍 Places Text Search":                { "main": [[{ "node": "🧹 Aplanar y deduplicar clínicas",            "type": "main", "index": 0 }]] },
-    "🧹 Aplanar y deduplicar clínicas":     { "main": [[{ "node": "🔄 Procesar una clínica a la vez",            "type": "main", "index": 0 }]] },
-    "🔄 Procesar una clínica a la vez":     {
+    "▶️ Ejecutar manualmente":            { "main": [[{ "node": "⚙️ Config — ciudades y API Key",         "type": "main", "index": 0 }]] },
+    "⚙️ Config — ciudades y API Key":     { "main": [[{ "node": "🔍 Places Text Search",                  "type": "main", "index": 0 }]] },
+    "🔍 Places Text Search":              { "main": [[{ "node": "🧹 Aplanar y deduplicar clínicas",        "type": "main", "index": 0 }]] },
+    "🧹 Aplanar y deduplicar clínicas":   { "main": [[{ "node": "🔄 Procesar una clínica a la vez",        "type": "main", "index": 0 }]] },
+    "🔄 Procesar una clínica a la vez":   {
       "main": [
-        [{ "node": "🏁 Fin (todas las clínicas procesadas)",  "type": "main", "index": 0 }],
-        [{ "node": "📋 Places Details API",                   "type": "main", "index": 0 }]
+        [{ "node": "🏁 Fin (todas las clínicas procesadas)", "type": "main", "index": 0 }],
+        [{ "node": "📋 Places Details API",                  "type": "main", "index": 0 }]
       ]
     },
-    "📋 Places Details API":                { "main": [[{ "node": "📝 Normalizar datos",                         "type": "main", "index": 0 }]] },
-    "📝 Normalizar datos":                  { "main": [[{ "node": "🌍 Visitar web (o skip si no tiene)",         "type": "main", "index": 0 }]] },
-    "🌍 Visitar web (o skip si no tiene)":  { "main": [[{ "node": "📧 Extraer email (homepage)",                 "type": "main", "index": 0 }]] },
-    "📧 Extraer email (homepage)":          { "main": [[{ "node": "❓ ¿Sin email y tiene web?",                  "type": "main", "index": 0 }]] },
-    "❓ ¿Sin email y tiene web?":           { "main": [[{ "node": "📞 Visitar /contacto",                        "type": "main", "index": 0 }]] },
-    "📞 Visitar /contacto":                 { "main": [[{ "node": "📧 Extraer email (/contacto)",                "type": "main", "index": 0 }]] },
-    "📧 Extraer email (/contacto)":         { "main": [[{ "node": "🔀 Merge ramas (con y sin /contacto)",        "type": "main", "index": 0 }]] },
-    "📧 Extraer email (homepage)":          { "main": [[{ "node": "🔀 Merge ramas (con y sin /contacto)",        "type": "main", "index": 1 }]] },
-    "🔀 Merge ramas (con y sin /contacto)": { "main": [[{ "node": "🧽 Preparar fila para Sheets",                "type": "main", "index": 0 }]] },
-    "🧽 Preparar fila para Sheets":         { "main": [[{ "node": "📊 Google Sheets — Guardar fila",             "type": "main", "index": 0 }]] },
-    "📊 Google Sheets — Guardar fila":      { "main": [[{ "node": "🔄 Procesar una clínica a la vez",            "type": "main", "index": 0 }]] }
+    "📋 Places Details API":              { "main": [[{ "node": "📝 Normalizar datos",                     "type": "main", "index": 0 }]] },
+    "📝 Normalizar datos":                { "main": [[{ "node": "🌍 Visitar web homepage",                 "type": "main", "index": 0 }]] },
+    "🌍 Visitar web homepage":            { "main": [[{ "node": "📧 Email de homepage",                    "type": "main", "index": 0 }]] },
+    "📧 Email de homepage":               { "main": [[{ "node": "📞 Visitar /contacto",                    "type": "main", "index": 0 }]] },
+    "📞 Visitar /contacto":               { "main": [[{ "node": "📧 Email final (homepage + /contacto)",   "type": "main", "index": 0 }]] },
+    "📧 Email final (homepage + /contacto)": { "main": [[{ "node": "🧽 Preparar fila para Sheets",         "type": "main", "index": 0 }]] },
+    "🧽 Preparar fila para Sheets":       { "main": [[{ "node": "📊 Google Sheets — Guardar fila",         "type": "main", "index": 0 }]] },
+    "📊 Google Sheets — Guardar fila":    { "main": [[{ "node": "🔄 Procesar una clínica a la vez",        "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1" },
   "meta": { "instanceId": "agutidesigns" },
-  "notes": "## Setup rápido (3 pasos)\n\n### 1. Abre el nodo '⚙️ Config' y pon tus datos:\n```\nconst GOOGLE_PLACES_KEY = 'AIzaSy...';\nconst GOOGLE_SHEET_ID   = '1BxiMVs...';\n```\n\n### 2. Conecta credencial Google Sheets:\n- Ve al nodo '📊 Google Sheets — Guardar fila'\n- En Credential → elige o crea 'Google Sheets OAuth2'\n\n### 3. Prepara el Google Sheet:\nCrea una hoja llamada exactamente: **Clínicas Dentales**\nCon estas columnas en la fila 1:\nCiudad | Nombre | Dirección | Teléfono | Web | Email | Fuente Email | Valoración | Nº Reseñas | Resumen | Email enviado | Fecha scraping | Notas\n\n---\n## Coste estimado\n- Places Text Search: $32 / 1000 req\n- Places Details: $17 / 1000 req  \n- Total por clínica: ~$0.05\n- 200 clínicas ≈ $10"
+  "notes": "## Setup (3 pasos)\n1. Nodo '⚙️ Config': pon GOOGLE_PLACES_KEY y GOOGLE_SHEET_ID\n2. Nodo '📊 Google Sheets': conecta credencial Google Sheets OAuth2\n3. Google Sheet: crea hoja 'Clínicas Dentales' con columnas:\n   Ciudad | Nombre | Dirección | Teléfono | Web | Email | Fuente Email | Valoración | Nº Reseñas | Resumen | Email enviado | Fecha scraping | Notas"
 }
