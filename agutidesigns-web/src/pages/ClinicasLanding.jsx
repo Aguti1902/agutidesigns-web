@@ -15,6 +15,8 @@ import AIChatbot from '../components/chat/AIChatbot';
 import CookieBanner from '../components/ui/CookieBanner';
 import './ClinicasLanding.css';
 
+const WA_URL = `https://wa.me/34625204337?text=${encodeURIComponent('Hola Alejandro, he visto tu web y tengo una clínica dental. Me gustaría saber más sobre cómo podéis ayudarme.')}`;
+
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -506,7 +508,7 @@ TU OBJETIVO:
 4. Si preguntan por el precio, explica los planes con claridad y ofrece hablar por WhatsApp
 
 CIERRE SIEMPRE CON:
-Recuerda invitar a contactar por WhatsApp para la consulta gratuita: https://wa.me/34600000000`;
+Recuerda invitar a contactar por WhatsApp para la consulta gratuita: ${WA_URL}`;
 
 const CLINICAS_INITIAL_MESSAGE = {
   role: 'assistant',
@@ -531,7 +533,7 @@ export default function ClinicasLanding() {
         dark
         cta={{
           label: 'WhatsApp',
-          href: 'https://wa.me/34600000000?text=Hola%2C+me+interesa+una+web+para+mi+cl%C3%ADnica+dental',
+          href: WA_URL,
           external: true,
           icon: <MessageCircle size={14} />,
         }}
@@ -570,7 +572,7 @@ export default function ClinicasLanding() {
             </motion.p>
 
             <motion.div variants={fadeUp} className="cl-hero__ctas">
-              <a href="https://wa.me/34600000000?text=Hola%2C+me+interesa+una+web+para+mi+cl%C3%ADnica+dental" target="_blank" rel="noopener noreferrer">
+              <a href={WA_URL} target="_blank" rel="noopener noreferrer">
                 <button className="cl-btn-primary">
                   Consulta gratuita por WhatsApp <ArrowRight size={18} />
                 </button>
@@ -885,7 +887,7 @@ export default function ClinicasLanding() {
               </motion.div>
 
               <motion.div variants={fadeUp}>
-                <a href="https://wa.me/34600000000?text=Quiero+saber+más+sobre+la+IA+para+mi+clínica" target="_blank" rel="noopener noreferrer">
+                <a href={WA_URL} target="_blank" rel="noopener noreferrer">
                   <button className="cl-btn-primary">Quiero esta IA en mi clínica <ArrowRight size={16} /></button>
                 </a>
               </motion.div>
@@ -1098,7 +1100,7 @@ export default function ClinicasLanding() {
                     ))}
                   </ul>
 
-                  <a href="https://wa.me/34600000000" target="_blank" rel="noopener noreferrer" className="cl-price-card__cta-wrap">
+                  <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="cl-price-card__cta-wrap">
                     <button className={`cl-price-card__cta ${plan.color === 'popular' ? 'cl-price-card__cta--popular' : ''}`}>
                       {plan.cta} <ArrowRight size={15} />
                     </button>
@@ -1109,7 +1111,7 @@ export default function ClinicasLanding() {
 
             <motion.p variants={fadeUp} className="cl-pricing__note">
               ¿Tienes dudas sobre qué plan necesitas?{' '}
-              <a href="https://wa.me/34600000000?text=Hola%2C+quiero+saber+qu%C3%A9+plan+se+adapta+a+mi+cl%C3%ADnica" target="_blank" rel="noopener noreferrer">
+              <a href={WA_URL} target="_blank" rel="noopener noreferrer">
                 Contáctame por WhatsApp →
               </a>
             </motion.p>
@@ -1219,7 +1221,7 @@ export default function ClinicasLanding() {
 
             <div className="cl-cta__actions cl-cta__actions--single">
               <a
-                href="https://wa.me/34600000000?text=Hola%2C+me+interesa+una+web+para+mi+cl%C3%ADnica+dental"
+                href={WA_URL}
                 target="_blank"
                 rel="noopener noreferrer"
               >
