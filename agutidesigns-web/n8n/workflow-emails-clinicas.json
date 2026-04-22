@@ -1,0 +1,234 @@
+{
+  "name": "AgutiDesigns — Email Personalizado Clínicas Dentales",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "em-0001-0001-0001-0001-000000000001",
+      "name": "▶️ Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1-5" }]
+        }
+      },
+      "id": "em-0001b-001b-001b-001b-00000000001b",
+      "name": "⏰ Lunes-Viernes 9:00h (alternativo)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 460],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "={{ $vars.GOOGLE_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "filters": {},
+        "options": { "returnAllMatches": true }
+      },
+      "id": "em-0002-0002-0002-0002-000000000002",
+      "name": "📊 Leer clínicas del Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [480, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "has-email",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            },
+            {
+              "id": "not-sent",
+              "leftValue": "={{ $json['Email enviado'] }}",
+              "rightValue": "Sí",
+              "operator": { "type": "string", "operation": "notEquals" }
+            },
+            {
+              "id": "valid-email",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "@",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "em-0003-0003-0003-0003-000000000003",
+      "name": "🚦 ¿Email válido y no enviado?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "em-0004-0004-0004-0004-000000000004",
+      "name": "🔄 Una clínica a la vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Construye el prompt para que GPT-4o personalice el email\nconst clinica = $input.first().json;\n\nconst systemPrompt = `Eres el asistente de ventas de AgutiDesigns, una agencia de diseño web y marketing digital basada en España.\nTu objetivo es redactar emails de ventas B2B en español, profesionales, naturales y personalizados.\nEl remitente se llama Alejandro.\nEl email debe:\n- Tener un asunto llamativo y personalizado con el nombre de la clínica\n- Abrirse mencionando algo específico de la clínica (ciudad, especialidad dental si se menciona, su web si tiene)\n- Explicar brevemente qué puede hacer AgutiDesigns por ellos: web moderna, SEO local para captar pacientes, IA para responder consultas 24/7, campañas en Google/Meta\n- Incluir prueba social: \"trabajamos con clínicas en Barcelona, Madrid y Valencia que han aumentado sus citas un 40% en 3 meses\"\n- Cerrar con una llamada a la acción clara: responder al email o contactar por WhatsApp al 625204337\n- Ser conciso: máximo 180 palabras en el cuerpo\n- NO usar emojis en exceso, sonar humano\n\nDevuelve SOLO un JSON válido con exactamente estas claves:\n{\n  \"asunto\": \"string\",\n  \"saludo\": \"string\",\n  \"cuerpo_html\": \"string (HTML válido con <p>, <strong>, etc.)\",\n  \"despedida\": \"string\"\n}`;\n\nconst userPrompt = `Redacta un email para esta clínica dental:\n- Nombre: ${clinica.Nombre}\n- Ciudad: ${clinica.Ciudad}\n- Teléfono: ${clinica.Teléfono || 'no disponible'}\n- Web: ${clinica.Web || 'no tienen web'}\n- Valoración Google: ${clinica.Valoración || 'sin datos'} (${clinica['Nº Reseñas'] || '0'} reseñas)\n- Resumen: ${clinica.Resumen || 'clínica dental'}`;\n\nreturn [{\n  json: {\n    ...clinica,\n    _systemPrompt: systemPrompt,\n    _userPrompt:   userPrompt\n  }\n}];"
+      },
+      "id": "em-0005-0005-0005-0005-000000000005",
+      "name": "✍️ Preparar prompt de IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model":       "gpt-4o",
+          "temperature": 0.7,
+          "max_tokens":  600,
+          "messages": [
+            { "role": "system", "content": "={{ $json._systemPrompt }}" },
+            { "role": "user",   "content": "={{ $json._userPrompt }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "em-0006-0006-0006-0006-000000000006",
+      "name": "🤖 GPT-4o — Generar email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1440, 300],
+      "credentials": { "httpBearerAuth": { "id": "openai-bearer-cred", "name": "OpenAI Bearer" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item   = $input.first().json;\nconst prev   = $('✍️ Preparar prompt de IA').first().json;\n\n// Parsea la respuesta de GPT-4o\nlet emailData;\ntry {\n  const rawContent = item.choices?.[0]?.message?.content || '{}';\n  // Extrae el JSON aunque GPT ponga markdown (```json...```)\n  const jsonMatch = rawContent.match(/\\{[\\s\\S]*\\}/);\n  emailData = JSON.parse(jsonMatch ? jsonMatch[0] : rawContent);\n} catch (e) {\n  emailData = {\n    asunto:      `Mejora la presencia online de ${prev.Nombre}`,\n    saludo:      `Hola, me llamo Alejandro`,\n    cuerpo_html: `<p>Me gustaría presentarles los servicios de AgutiDesigns para clínicas dentales.</p>`,\n    despedida:   `Un saludo, Alejandro — AgutiDesigns`\n  };\n}\n\n// Construye el email HTML completo\nconst htmlBody = `\n<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\"><style>\n  body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6; }\n  .header { background: #0044FF; padding: 20px; text-align: center; }\n  .header img { height: 40px; }\n  .header h1 { color: white; font-size: 18px; margin: 8px 0 0; }\n  .body { padding: 30px 24px; }\n  .cta-btn { display: inline-block; background: #25D366; color: white; padding: 12px 28px;\n             border-radius: 8px; text-decoration: none; font-weight: bold; margin: 16px 0; }\n  .footer { background: #f5f5f5; padding: 16px 24px; font-size: 12px; color: #888; }\n  .footer a { color: #0044FF; }\n</style></head>\n<body>\n  <div class=\"header\">\n    <h1>AgutiDesigns — Diseño Web &amp; Marketing Digital</h1>\n  </div>\n  <div class=\"body\">\n    <p>${emailData.saludo},</p>\n    ${emailData.cuerpo_html}\n    <a href=\"https://wa.me/34625204337?text=${encodeURIComponent('Hola Alejandro, he recibido tu email sobre ' + prev.Nombre + '. Me gustaría saber más.')}\" class=\"cta-btn\">\n      💬 Contactar por WhatsApp\n    </a>\n  </div>\n  <div class=\"footer\">\n    <p>${emailData.despedida}</p>\n    <p>AgutiDesigns · <a href=\"https://agutidesigns.io\">agutidesigns.io</a> · +34 625 204 337</p>\n    <p style=\"font-size:10px\">Si no deseas recibir más comunicaciones de este tipo, responde con el asunto <strong>BAJA</strong>.\n    Tratamos tus datos conforme al RGPD. Email comercial B2B conforme a la LSSI-CE art. 21.2.</p>\n  </div>\n</body></html>`;\n\nreturn [{\n  json: {\n    ...prev,\n    _asunto:    emailData.asunto,\n    _htmlBody:  htmlBody,\n    _systemPrompt: undefined,\n    _userPrompt:   undefined\n  }\n}];"
+      },
+      "id": "em-0007-0007-0007-0007-000000000007",
+      "name": "📬 Construir email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo":      "={{ $json.Email }}",
+        "subject":     "={{ $json._asunto }}",
+        "emailFormat": "html",
+        "html":        "={{ $json._htmlBody }}",
+        "options": {
+          "replyTo":   "alejandro@agutidesigns.io",
+          "senderName": "Alejandro | AgutiDesigns"
+        }
+      },
+      "id": "em-0008-0008-0008-0008-000000000008",
+      "name": "📨 Enviar email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1920, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "={{ $vars.GOOGLE_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email enviado":       "Sí",
+            "Fecha envío":        "={{ new Date().toISOString().split('T')[0] }}",
+            "Asunto enviado":     "={{ $json._asunto }}"
+          },
+          "matchingColumns": ["Email"]
+        },
+        "options": {}
+      },
+      "id": "em-0009-0009-0009-0009-000000000009",
+      "name": "✅ Marcar como enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2160, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit":   "seconds"
+      },
+      "id": "em-0010-0010-0010-0010-000000000010",
+      "name": "⏳ Esperar 3s (anti-spam)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2400, 300],
+      "webhookId": "wait-anti-spam"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Logging de resumen por si quieres monitorizar\nconst item = $input.first().json;\nconsole.log(`✅ Email enviado a: ${item.Nombre} <${item.Email}> — ${item._asunto}`);\nreturn [$input.first()];"
+      },
+      "id": "em-0011-0011-0011-0011-000000000011",
+      "name": "📋 Log enviado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 300]
+    },
+    {
+      "parameters": {
+        "mode": "passThrough"
+      },
+      "id": "em-0012-0012-0012-0012-000000000012",
+      "name": "🔁 Siguiente clínica",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2880, 300]
+    }
+  ],
+  "connections": {
+    "▶️ Ejecutar manualmente":          { "main": [[{ "node": "📊 Leer clínicas del Sheet",      "type": "main", "index": 0 }]] },
+    "⏰ Lunes-Viernes 9:00h (alternativo)": { "main": [[{ "node": "📊 Leer clínicas del Sheet", "type": "main", "index": 0 }]] },
+    "📊 Leer clínicas del Sheet":        { "main": [[{ "node": "🚦 ¿Email válido y no enviado?", "type": "main", "index": 0 }]] },
+    "🚦 ¿Email válido y no enviado?":    { "main": [[{ "node": "🔄 Una clínica a la vez",        "type": "main", "index": 0 }]] },
+    "🔄 Una clínica a la vez":           {
+      "main": [
+        [{ "node": "✍️ Preparar prompt de IA", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "✍️ Preparar prompt de IA":          { "main": [[{ "node": "🤖 GPT-4o — Generar email",     "type": "main", "index": 0 }]] },
+    "🤖 GPT-4o — Generar email":         { "main": [[{ "node": "📬 Construir email HTML",        "type": "main", "index": 0 }]] },
+    "📬 Construir email HTML":           { "main": [[{ "node": "📨 Enviar email (Gmail)",        "type": "main", "index": 0 }]] },
+    "📨 Enviar email (Gmail)":           { "main": [[{ "node": "✅ Marcar como enviado",         "type": "main", "index": 0 }]] },
+    "✅ Marcar como enviado":            { "main": [[{ "node": "⏳ Esperar 3s (anti-spam)",      "type": "main", "index": 0 }]] },
+    "⏳ Esperar 3s (anti-spam)":         { "main": [[{ "node": "📋 Log enviado",                 "type": "main", "index": 0 }]] },
+    "📋 Log enviado":                    { "main": [[{ "node": "🔁 Siguiente clínica",           "type": "main", "index": 0 }]] },
+    "🔁 Siguiente clínica":              { "main": [[{ "node": "🔄 Una clínica a la vez",        "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agutidesigns"
+  },
+  "notes": "## Configuración necesaria\n\n1. **Variables de entorno en n8n** (Settings → Variables):\n   - `GOOGLE_SHEET_ID` → ID del Google Sheet con los datos del scraping\n\n2. **Credenciales** (Settings → Credentials):\n   - `Google Sheets OAuth2` → Tu cuenta de Google\n   - `OpenAI Bearer` → HTTP Bearer Auth con token = sk-...\n   - `Gmail OAuth2` → Tu cuenta de Gmail para enviar\n\n3. **Google Sheet**: Añade las columnas `Fecha envío` y `Asunto enviado` a la hoja `Clínicas Dentales`\n\n4. **Trigger alternativo**: El nodo `⏰ Lunes-Viernes 9:00h` está desactivado.\n   Actívalo si quieres que se ejecute automáticamente cada día laborable a las 9:00h.\n\n5. **Coste estimado GPT-4o**: ~0,006€ por email generado\n\n## Notas legales (RGPD / LSSI-CE)\n- El email incluye pie con opción de baja (opt-out)\n- Solo se envían a emails de empresas (B2B), no consumidores finales\n- Se menciona cómo tratamos los datos"
+}
