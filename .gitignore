@@ -33,3 +33,5 @@ pnpm-debug.log*
 
 # Temp
 *.local
+prospecting-agent/.env
+prospecting-agent/clinicas_dentales.xlsx
