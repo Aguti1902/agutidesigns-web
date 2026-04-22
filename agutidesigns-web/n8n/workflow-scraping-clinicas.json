@@ -94,7 +94,7 @@
       "parameters": {
         "url": "={{ $json.web || 'https://httpstat.us/204' }}",
         "options": {
-          "timeout": 10000,
+          "timeout": 6000,
           "response": { "response": { "fullResponse": true, "neverError": true } },
           "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 3 } }
         }
@@ -103,11 +103,12 @@
       "name": "🌍 Visitar web homepage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1920, 300]
+      "position": [1920, 300],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const html  = String($input.first().json.data || $input.first().json.body || '');\nconst prev  = $('📝 Normalizar datos').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','.gif',\n                     'schema.org','w3.org','google.com','facebook.com','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailHomepage = prev.web ? (emails[0] || '') : '';\n\n// Pasamos todo hacia adelante incluyendo el email encontrado en homepage\nreturn [{ json: { ...prev, emailHomepage } }];"
+        "jsCode": "// continueOnFail: si el HTTP falló, json puede tener 'error' en vez de 'data'\nconst inputJson = $input.first()?.json || {};\nconst html = String(inputJson.data || inputJson.body || '');\nconst prev = $('📝 Normalizar datos').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','.gif',\n                     'schema.org','w3.org','google.com','facebook.com','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailHomepage = prev.web ? (emails[0] || '') : '';\nreturn [{ json: { ...prev, emailHomepage } }];"
       },
       "id": "sc-0009",
       "name": "📧 Email de homepage",
@@ -119,7 +120,7 @@
       "parameters": {
         "url": "={{ $json.web ? $json.web.replace(/\\/+$/, '') + '/contacto' : 'https://httpstat.us/204' }}",
         "options": {
-          "timeout": 8000,
+          "timeout": 5000,
           "response": { "response": { "fullResponse": true, "neverError": true } }
         }
       },
@@ -127,11 +128,12 @@
       "name": "📞 Visitar /contacto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [2400, 300]
+      "position": [2400, 300],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const html  = String($input.first().json.data || $input.first().json.body || '');\nconst prev  = $('📧 Email de homepage').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','schema.org','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailContacto = emails[0] || '';\n\n// Prioridad: homepage > contacto > vacío\nconst email       = prev.emailHomepage || emailContacto || '';\nconst fuenteEmail = prev.emailHomepage ? 'homepage'\n                  : emailContacto      ? 'pagina_contacto'\n                  : prev.web           ? 'no_encontrado'\n                  : 'sin_web';\n\nreturn [{ json: { ...prev, email, fuenteEmail } }];"
+        "jsCode": "// continueOnFail: si el HTTP de /contacto falló, el input tiene el error\nconst inputJson = $input.first()?.json || {};\nconst html = String(inputJson.data || inputJson.body || '');\nconst prev = $('📧 Email de homepage').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','schema.org','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailContacto = emails[0] || '';\nconst email         = prev.emailHomepage || emailContacto || '';\nconst fuenteEmail   = prev.emailHomepage ? 'homepage'\n                    : emailContacto      ? 'pagina_contacto'\n                    : prev.web           ? 'no_encontrado'\n                    : 'sin_web';\n\nreturn [{ json: { ...prev, email, fuenteEmail } }];"
       },
       "id": "sc-0011",
       "name": "📧 Email final (homepage + /contacto)",
