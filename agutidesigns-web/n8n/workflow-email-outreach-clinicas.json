@@ -1,0 +1,216 @@
+{
+  "name": "AgutiDesigns — Email Outreach IA Clínicas Dentales",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "eo-0001",
+      "name": "▶️ Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1-5" }] }
+      },
+      "id": "eo-0001b",
+      "name": "⏰ Lunes-Viernes 9:00h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 460],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ\n// ══════════════════════════════════════════════════════\nconst CONFIG = {\n  GOOGLE_SHEET_ID:   'TU_SHEET_ID_AQUI',      // ID del Google Sheet con las clínicas\n  OPENAI_API_KEY:    'sk-...',                 // Tu OpenAI API Key\n  CALENDLY_LINK:     'https://calendly.com/alejandro-agutidesigns/30min',  // Tu link de Calendly\n  REMITENTE_NOMBRE:  'Alejandro | AgutiDesigns',\n  REMITENTE_EMAIL:   'alejandro@agutidesigns.io',\n  WEB_AGUTI:         'https://agutidesigns.io',\n  WHATSAPP:          '+34 625 204 337',\n  MAX_EMAILS_POR_EJECUCION: 20  // Cuántos emails enviar por ejecución (evita límites Gmail: 500/día)\n};\n\nreturn [{ json: CONFIG }];"
+      },
+      "id": "eo-0002",
+      "name": "⚙️ Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "={{ $json.GOOGLE_SHEET_ID }}", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "filters": {},
+        "options": { "returnAllMatches": true }
+      },
+      "id": "eo-0003",
+      "name": "📊 Leer clínicas del Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [720, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra solo clínicas pendientes de contactar:\n// - Tienen email\n// - 'Email enviado' = 'No' (o vacío)\n// - Estado != 'Descartado'\n// Respeta el límite de emails por ejecución\n\nconst config = $('⚙️ Config').first().json;\nconst todas  = $input.all();\nconst MAX    = config.MAX_EMAILS_POR_EJECUCION || 20;\n\nconst pendientes = todas.filter(item => {\n  const d = item.json;\n  const tieneEmail  = d.Email && d.Email.includes('@');\n  const noEnviado   = !d['Email enviado'] || d['Email enviado'] === 'No';\n  const noDescartado = d.Estado !== 'Descartado' && d.Estado !== 'Cerrado';\n  return tieneEmail && noEnviado && noDescartado;\n}).slice(0, MAX);\n\nif (pendientes.length === 0) {\n  throw new Error('No hay clínicas pendientes de contactar. ¡Todo enviado!');\n}\n\n// Añade la config a cada item para usarla después\nreturn pendientes.map(item => ({\n  json: {\n    ...item.json,\n    _config: config\n  }\n}));"
+      },
+      "id": "eo-0004",
+      "name": "🚦 Filtrar pendientes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "eo-0005",
+      "name": "🔄 Una clínica a la vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Web || 'https://httpstat.us/204' }}",
+        "options": {
+          "timeout": 7000,
+          "response": { "response": { "fullResponse": true, "neverError": true } },
+          "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 3 } }
+        }
+      },
+      "id": "eo-0006",
+      "name": "🌍 Analizar web de la clínica",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1440, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analiza el HTML para detectar problemas reales en la web de la clínica\nconst inputJson  = $input.first()?.json || {};\nconst htmlRaw    = String(inputJson.data || inputJson.body || '');\nconst html       = htmlRaw.substring(0, 5000).toLowerCase(); // Solo primeros 5000 chars\n\nconst clinica    = $('🔄 Una clínica a la vez').item.json;\nconst config     = clinica._config;\n\n// ── Detectar señales en el HTML ──────────────────────────\nconst analisis = {\n  tieneHTTPS:       (clinica.Web || '').startsWith('https://'),\n  tieneWeb:         !!clinica.Web && clinica.Web.includes('.'),\n  tieneFormCita:    /cita|reserva|appointment|booking|pedir cita/i.test(html),\n  tieneWhatsApp:    /whatsapp|wa\\.me/i.test(html),\n  tieneBlog:        /\\/blog|\\/articulos|\\/noticias/i.test(html),\n  tieneTestimonios: /testimonio|opiniones|valoraciones|pacientes/i.test(html),\n  tieneSchema:      /application\\/ld\\+json/i.test(htmlRaw),\n  tieneMetaDesc:    /<meta[^>]*name=[\"']description[\"']/i.test(htmlRaw),\n  tieneGTM:         /gtm\\.js|googletagmanager/i.test(html),\n  tieneChat:        /intercom|hubspot|crisp|tawk|livechat|chatbot/i.test(html),\n  valoracion:       parseFloat(clinica['Valoración'] || '0'),\n  nResenas:         parseInt(clinica['Nº Reseñas'] || '0')\n};\n\n// ── Construir lista de problemas detectados ──────────────\nconst problemas = [];\n\nif (!analisis.tieneWeb) {\n  problemas.push('No tienen página web propia — están perdiendo el 80% de pacientes que buscan dentista en Google');\n} else {\n  if (!analisis.tieneHTTPS)\n    problemas.push('Su web no tiene HTTPS: Google la penaliza en posicionamiento y los navegadores la marcan como \"No segura\"');\n  if (!analisis.tieneFormCita)\n    problemas.push('No tienen formulario de cita online — los pacientes que buscan por la noche no pueden reservar y llaman a la competencia');\n  if (!analisis.tieneWhatsApp)\n    problemas.push('No tienen botón de WhatsApp — el 67% de los pacientes prefiere contactar por WhatsApp antes que llamar');\n  if (!analisis.tieneBlog)\n    problemas.push('No tienen blog ni contenido SEO — no aparecen cuando alguien busca \"clínica dental \" + su ciudad en Google');\n  if (!analisis.tieneTestimonios)\n    problemas.push('No muestran testimonios de pacientes en la web — los visitantes no tienen prueba social para confiar y reservar');\n  if (!analisis.tieneSchema)\n    problemas.push('Falta marcado Schema en la web — Google no muestra sus estrellas y horario directamente en los resultados de búsqueda');\n}\n\nif (analisis.valoracion > 0 && analisis.valoracion < 4.3)\n  problemas.push(`Su valoración en Google (${analisis.valoracion}⭐) está por debajo de la media del sector — cada décima perdida equivale a menos clics`);\nif (analisis.nResenas < 30)\n  problemas.push(`Solo tienen ${analisis.nResenas} reseñas en Google — sus competidores con más reseñas aparecen primero en Maps`);\n\n// Si no hay problemas detectables, usar genérico\nif (problemas.length === 0) {\n  problemas.push('Su posicionamiento SEO local puede mejorarse para aparecer más arriba en búsquedas como \"dentista \" + ciudad');\n  problemas.push('No tienen implementado seguimiento de conversiones — no saben cuántos pacientes llegan desde internet');\n}\n\n// Máximo 3 problemas para que el email no sea largo\nconst topProblemas = problemas.slice(0, 3);\n\n// ── Construir prompt para GPT-4o ─────────────────────────\nconst systemPrompt = `Eres el asistente de ventas de AgutiDesigns, una agencia de marketing digital especializada en clínicas dentales en España.\nFirmas los emails como Alejandro.\n\nRedacta un email de prospección B2B en español. Reglas ESTRICTAS:\n- Máximo 180 palabras en el cuerpo total\n- Tono: personal, directo, como de colega a colega. NADA corporativo\n- NO empieces con \"Espero que...\" ni \"Me pongo en contacto...\"\n- Menciona el nombre de la clínica en el asunto y en la apertura\n- El asunto debe generar curiosidad real, no clickbait. Ejemplo: \"He revisado la web de [Clínica] y encontré algo\"\n- Lista los problemas de forma MUY concreta (ya te los doy yo)\n- Para cada problema, da la solución en UNA frase\n- Cierra con CTA claro a la llamada de Calendly\n- Firma completa al final\n\nDevuelve SOLO JSON válido con estas claves:\n{\n  \"asunto\": \"string\",\n  \"cuerpo_html\": \"string (HTML con <p> y <ul><li> para problemas)\"\n}`;\n\nconst userPrompt = `Redacta el email para esta clínica dental:\n\nNombre: ${clinica.Nombre}\nCiudad: ${clinica.Ciudad}\nWeb: ${clinica.Web || 'No tienen web propia'}\nTeléfono: ${clinica.Teléfono || ''}\nValoración Google: ${clinica['Valoración'] || 'Sin datos'} (${clinica['Nº Reseñas'] || '0'} reseñas)\n\nProblemas detectados en su web/presencia online:\n${topProblemas.map((p, i) => `${i+1}. ${p}`).join('\\n')}\n\nServicios de AgutiDesigns a mencionar: diseño web moderno, SEO local para dentistas, integración IA para responder consultas 24/7, campañas Google/Meta Ads, panel de control con métricas.\n\nLink Calendly para la llamada: ${config.CALENDLY_LINK}\nFirma: ${config.REMITENTE_NOMBRE} · ${config.WEB_AGUTI} · ${config.WHATSAPP}`;\n\nreturn [{\n  json: {\n    ...clinica,\n    _analisis:     analisis,\n    _problemas:    topProblemas,\n    _systemPrompt: systemPrompt,\n    _userPrompt:   userPrompt\n  }\n}];"
+      },
+      "id": "eo-0007",
+      "name": "🔬 Analizar web + preparar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model":       "gpt-4o",
+          "temperature": 0.75,
+          "max_tokens":  700,
+          "messages": [
+            { "role": "system", "content": "={{ $json._systemPrompt }}" },
+            { "role": "user",   "content": "={{ $json._userPrompt }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eo-0008",
+      "name": "🤖 GPT-4o — Generar email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1920, 300],
+      "credentials": { "httpBearerAuth": { "id": "openai-bearer-cred", "name": "OpenAI Bearer" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const gptJson  = $input.first().json;\nconst prev     = $('🔬 Analizar web + preparar prompt').item.json;\nconst config   = prev._config;\n\n// Parsear respuesta GPT\nlet emailData;\ntry {\n  const raw = gptJson.choices?.[0]?.message?.content || '{}';\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  emailData = JSON.parse(match ? match[0] : raw);\n} catch(e) {\n  emailData = {\n    asunto: `He revisado la web de ${prev.Nombre} y encontré algo importante`,\n    cuerpo_html: `<p>Hola,</p><p>Soy Alejandro de AgutiDesigns. He revisado vuestra presencia online y detecté algunas mejoras que podrían traeros más pacientes.</p><p>¿Tenéis 30 minutos esta semana para verlo juntos? <a href=\"${config.CALENDLY_LINK}\">Reservar llamada →</a></p>`\n  };\n}\n\n// HTML completo del email\nconst problemasList = (prev._problemas || []).map(p => `<li style=\"margin-bottom:8px\">${p}</li>`).join('');\n\nconst htmlFinal = `<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\"><style>\n  body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;line-height:1.65;font-size:15px}\n  .wrap{padding:32px 28px}\n  .problems{background:#fff8f0;border-left:3px solid #FF6B35;padding:16px 20px;margin:16px 0;border-radius:0 8px 8px 0}\n  .problems ul{margin:8px 0;padding-left:20px}\n  .cta-btn{display:inline-block;background:#0044FF;color:#fff!important;padding:13px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;margin:20px 0}\n  .footer{border-top:1px solid #eee;padding:20px 28px;font-size:12px;color:#888}\n  .footer a{color:#0044FF}\n</style></head>\n<body>\n  <div class=\"wrap\">\n    ${emailData.cuerpo_html}\n    <a href=\"${config.CALENDLY_LINK}\" class=\"cta-btn\">📅 Reservar llamada de 30 min →</a>\n  </div>\n  <div class=\"footer\">\n    <strong>${config.REMITENTE_NOMBRE}</strong><br>\n    <a href=\"${config.WEB_AGUTI}\">${config.WEB_AGUTI}</a> · ${config.WHATSAPP}\n    <br><br>\n    <span style=\"font-size:10px\">Recibes este email porque tu clínica aparece en Google Maps. Si no deseas recibir comunicaciones comerciales, responde con el asunto <strong>BAJA</strong>. Tratamos tus datos conforme al RGPD · LSSI-CE art.21.2</span>\n  </div>\n</body></html>`;\n\nreturn [{\n  json: {\n    _to:      prev.Email,\n    _asunto:  emailData.asunto,\n    _html:    htmlFinal,\n    _nombre:  prev.Nombre,\n    _rowEmail: prev.Email,\n    _sheetId: config.GOOGLE_SHEET_ID\n  }\n}];"
+      },
+      "id": "eo-0009",
+      "name": "📬 Construir email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 300]
+    },
+    {
+      "parameters": {
+        "sendTo":      "={{ $json._to }}",
+        "subject":     "={{ $json._asunto }}",
+        "emailFormat": "html",
+        "html":        "={{ $json._html }}",
+        "options": {
+          "replyTo":    "alejandro@agutidesigns.io",
+          "senderName": "Alejandro | AgutiDesigns"
+        }
+      },
+      "id": "eo-0010",
+      "name": "📨 Enviar email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [2400, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "={{ $json._sheetId }}", "mode": "id" },
+        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email enviado":      "Sí",
+            "Estado":             "Contactado",
+            "Fecha contacto":     "={{ new Date().toISOString().split('T')[0] }}",
+            "Nº seguimientos":    "0",
+            "Asunto enviado":     "={{ $json._asunto }}"
+          },
+          "matchingColumns": ["Email"]
+        },
+        "options": {}
+      },
+      "id": "eo-0011",
+      "name": "✅ Actualizar Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2640, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": { "amount": 5, "unit": "seconds" },
+      "id": "eo-0012",
+      "name": "⏳ Esperar 5s (anti-spam)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2880, 300],
+      "webhookId": "wait-outreach"
+    },
+    {
+      "parameters": {},
+      "id": "eo-0013",
+      "name": "🏁 Fin (todos enviados)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 500]
+    }
+  ],
+  "connections": {
+    "▶️ Ejecutar manualmente":          { "main": [[{ "node": "⚙️ Config",                         "type": "main", "index": 0 }]] },
+    "⏰ Lunes-Viernes 9:00h":           { "main": [[{ "node": "⚙️ Config",                         "type": "main", "index": 0 }]] },
+    "⚙️ Config":                        { "main": [[{ "node": "📊 Leer clínicas del Sheet",         "type": "main", "index": 0 }]] },
+    "📊 Leer clínicas del Sheet":        { "main": [[{ "node": "🚦 Filtrar pendientes",              "type": "main", "index": 0 }]] },
+    "🚦 Filtrar pendientes":             { "main": [[{ "node": "🔄 Una clínica a la vez",            "type": "main", "index": 0 }]] },
+    "🔄 Una clínica a la vez":           {
+      "main": [
+        [{ "node": "🏁 Fin (todos enviados)",        "type": "main", "index": 0 }],
+        [{ "node": "🌍 Analizar web de la clínica",  "type": "main", "index": 0 }]
+      ]
+    },
+    "🌍 Analizar web de la clínica":     { "main": [[{ "node": "🔬 Analizar web + preparar prompt", "type": "main", "index": 0 }]] },
+    "🔬 Analizar web + preparar prompt": { "main": [[{ "node": "🤖 GPT-4o — Generar email",         "type": "main", "index": 0 }]] },
+    "🤖 GPT-4o — Generar email":         { "main": [[{ "node": "📬 Construir email HTML",            "type": "main", "index": 0 }]] },
+    "📬 Construir email HTML":           { "main": [[{ "node": "📨 Enviar email (Gmail)",            "type": "main", "index": 0 }]] },
+    "📨 Enviar email (Gmail)":           { "main": [[{ "node": "✅ Actualizar Sheet",                "type": "main", "index": 0 }]] },
+    "✅ Actualizar Sheet":               { "main": [[{ "node": "⏳ Esperar 5s (anti-spam)",          "type": "main", "index": 0 }]] },
+    "⏳ Esperar 5s (anti-spam)":         { "main": [[{ "node": "🔄 Una clínica a la vez",            "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "agutidesigns" },
+  "notes": "## Setup (5 pasos)\n\n1. **Importa tu Excel a Google Sheets**\n   - Abre sheets.google.com → Importar → sube el .xlsx\n   - Copia el ID del Sheet (URL: /d/[ID]/)\n\n2. **Añade estas columnas** a la hoja 'Clínicas Dentales' (si no existen):\n   Estado | Fecha contacto | Nº seguimientos | Fecha último contacto | Asunto enviado\n\n3. **Nodo ⚙️ Config**: rellena GOOGLE_SHEET_ID, OPENAI_API_KEY, CALENDLY_LINK\n\n4. **Credenciales n8n**:\n   - Google Sheets OAuth2 → conecta tu cuenta Google\n   - OpenAI Bearer → HTTP Bearer con tu sk-...\n   - Gmail OAuth2 → conecta tu Gmail\n\n5. **Calendly** (gratis): calendly.com → crea un tipo de reunión de 30 min\n   → copia el link y ponlo en la Config\n\n## Qué hace la IA por cada clínica\n- Visita su web y analiza: HTTPS, formulario de citas, WhatsApp, blog, testimonios, schema markup\n- Comprueba su valoración y nº de reseñas de Google\n- Genera un email 100% personalizado mencionando sus problemas específicos\n- Incluye el link de Calendly para reservar llamada\n\n## Límites y costes\n- Gmail: 500 emails/día (cuenta normal) o 2000/día (Workspace)\n- GPT-4o: ~0.006€/email → 150 emails ≈ 0.90€ total\n- MAX_EMAILS_POR_EJECUCION: configurable (default 20 para empezar con calma)"
+}
