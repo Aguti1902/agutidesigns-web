@@ -100,15 +100,8 @@
         "genericAuthType": "httpBearerAuth",
         "sendBody": true,
         "contentType": "json",
-        "body": {
-          "model":       "gpt-4o",
-          "temperature": 0.75,
-          "max_tokens":  700,
-          "messages": [
-            { "role": "system", "content": "={{ $json._systemPrompt }}" },
-            { "role": "user",   "content": "={{ $json._userPrompt }}" }
-          ]
-        },
+        "specifyBody": "json",
+        "body": "={{ JSON.stringify({ model: 'gpt-4o', temperature: 0.75, max_tokens: 700, messages: [{ role: 'system', content: $json._systemPrompt }, { role: 'user', content: $json._userPrompt }] }) }}",
         "options": {}
       },
       "id": "eo-0008",
