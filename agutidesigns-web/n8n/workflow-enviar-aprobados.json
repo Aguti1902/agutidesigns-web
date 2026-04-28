@@ -104,20 +104,19 @@
     },
     {
       "parameters": {
-        "sendTo":      "={{ $json._email }}",
-        "subject":     "={{ $json._subject }}",
+        "fromEmail":  "Alejandro | AgutiDesigns <alejandro@agutidesigns.io>",
+        "toEmail":    "={{ $json._email }}",
+        "subject":    "={{ $json._subject }}",
         "emailFormat": "html",
-        "html":        "={{ $json._html }}",
-        "options": {
-          "senderName": "Alejandro | AgutiDesigns"
-        }
+        "html":       "={{ $json._html }}",
+        "options": {}
       },
       "id": "ea-0006",
-      "name": "📨 Enviar email (Gmail)",
-      "type": "n8n-nodes-base.gmail",
+      "name": "📨 Enviar email (SMTP Dondominio)",
+      "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2,
       "position": [1680, 420],
-      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } },
+      "credentials": { "smtp": { "id": "smtp-dondominio", "name": "SMTP Dondominio" } },
       "continueOnFail": true
     },
     {
@@ -203,5 +202,5 @@
   "active": false,
   "settings": { "executionOrder": "v1" },
   "meta": { "instanceId": "agutidesigns" },
-  "notes": "## Flujo de envío controlado\n\nEste workflow se activa desde el Admin Panel (botón 'Enviar todos los aprobados').\n\n### Pasos:\n1. Recibe POST del Admin Panel vía Webhook\n2. Lee todos los borradores con estado='aprobado' de Supabase\n3. Los envía uno a uno por Gmail (5s entre envíos para evitar spam)\n4. Marca cada uno como 'enviado' (o 'error') en Supabase\n5. Responde al Admin Panel con el resultado\n\n### Setup:\n1. Rellena SUPABASE_URL y SUPABASE_ANON_KEY en ⚙️ Config\n2. Conecta credencial Gmail OAuth2\n3. Activa el workflow y copia la URL del Webhook\n4. Pega la URL en AdminBorradores.jsx (constante N8N_WEBHOOK_URL)"
+  "notes": "## Flujo de envío controlado\n\nEste workflow se activa desde el Admin Panel (botón 'Enviar todos los aprobados').\n\n### Pasos:\n1. Recibe POST del Admin Panel vía Webhook\n2. Lee todos los borradores con estado='aprobado' de Supabase\n3. Los envía uno a uno por SMTP Dondominio (5s entre envíos para evitar spam)\n4. Marca cada uno como 'enviado' (o 'error') en Supabase\n5. Responde al Admin Panel con el resultado\n\n### Setup:\n1. Rellena SUPABASE_URL y SUPABASE_ANON_KEY en ⚙️ Config\n2. Crea credencial SMTP en n8n:\n   - Nombre: 'SMTP Dondominio'\n   - Host: mail.dondominio.com  (o el servidor SMTP de tu hosting)\n   - Port: 587\n   - Security: STARTTLS\n   - User: alejandro@agutidesigns.io\n   - Password: tu contraseña de email\n3. Activa el workflow y copia la URL del Webhook\n4. Pega la URL en AdminCampanas.jsx (constante N8N_WEBHOOK_URL)"
 }
