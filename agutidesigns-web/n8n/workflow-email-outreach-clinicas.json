@@ -1,5 +1,5 @@
 {
-  "name": "AgutiDesigns — Email Outreach IA Clínicas Dentales",
+  "name": "AgutiDesigns — Generar Borradores IA Clínicas (sin enviar)",
   "nodes": [
     {
       "parameters": {},
@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ\n// ══════════════════════════════════════════════════════\nconst CONFIG = {\n  GOOGLE_SHEET_ID:   'TU_SHEET_ID_AQUI',      // ID del Google Sheet con las clínicas\n  OPENAI_API_KEY:    'sk-...',                 // Tu OpenAI API Key\n  CALENDLY_LINK:     'https://calendly.com/alejandro-agutidesigns/30min',  // Tu link de Calendly\n  REMITENTE_NOMBRE:  'Alejandro | AgutiDesigns',\n  REMITENTE_EMAIL:   'alejandro@agutidesigns.io',\n  WEB_AGUTI:         'https://agutidesigns.io',\n  WHATSAPP:          '+34 625 204 337',\n  MAX_EMAILS_POR_EJECUCION: 20  // Cuántos emails enviar por ejecución (evita límites Gmail: 500/día)\n};\n\nreturn [{ json: CONFIG }];"
+        "jsCode": "// ══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ\n// ══════════════════════════════════════════════════════\nconst CONFIG = {\n  GOOGLE_SHEET_ID:    'TU_SHEET_ID_AQUI',\n  OPENAI_API_KEY:     'sk-...',\n  CALENDLY_LINK:      'https://calendly.com/alejandro-agutidesigns/30min',\n  REMITENTE_NOMBRE:   'Alejandro | AgutiDesigns',\n  REMITENTE_EMAIL:    'alejandro@agutidesigns.io',\n  WEB_AGUTI:          'https://agutidesigns.io',\n  WHATSAPP:           '+34 625 204 337',\n  SUPABASE_URL:       'https://TUPROYECTO.supabase.co',\n  SUPABASE_ANON_KEY:  'eyJhbGci...',\n  MAX_BORRADORES:     50  // Máximo de borradores a generar por ejecución\n};\n\nreturn [{ json: CONFIG }];"
       },
       "id": "eo-0002",
       "name": "⚙️ Config",
@@ -130,55 +130,47 @@
     },
     {
       "parameters": {
-        "sendTo":      "={{ $json._to }}",
-        "subject":     "={{ $json._asunto }}",
-        "emailFormat": "html",
-        "html":        "={{ $json._html }}",
-        "options": {
-          "replyTo":    "alejandro@agutidesigns.io",
-          "senderName": "Alejandro | AgutiDesigns"
-        }
+        "jsCode": "const item   = $input.first().json;\nconst config = $('⚙️ Config').first().json;\n\nconst payload = {\n  nombre:      item._nombre      || '',\n  ciudad:      $('🔬 Analizar web + preparar prompt').item.json.Ciudad || '',\n  to_email:    item._to          || '',\n  subject:     item._asunto      || '',\n  html_body:   item._html        || '',\n  seo_resumen: $('🔬 Analizar web + preparar prompt').item.json._problemas?.join(' · ') || '',\n  estado:      'borrador'\n};\n\nreturn [{ json: { payload, _supabaseUrl: config.SUPABASE_URL, _supabaseKey: config.SUPABASE_ANON_KEY } }];"
       },
       "id": "eo-0010",
-      "name": "📨 Enviar email (Gmail)",
-      "type": "n8n-nodes-base.gmail",
+      "name": "📋 Preparar borrador",
+      "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2400, 300],
-      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+      "position": [2400, 300]
     },
     {
       "parameters": {
-        "operation": "update",
-        "documentId": { "__rl": true, "value": "={{ $json._sheetId }}", "mode": "id" },
-        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Email enviado":      "Sí",
-            "Estado":             "Contactado",
-            "Fecha contacto":     "={{ new Date().toISOString().split('T')[0] }}",
-            "Nº seguimientos":    "0",
-            "Asunto enviado":     "={{ $json._asunto }}"
-          },
-          "matchingColumns": ["Email"]
+        "method": "POST",
+        "url": "={{ $json._supabaseUrl }}/rest/v1/campana_borradores",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $json._supabaseKey }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $json._supabaseKey }}" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=minimal" }
+          ]
         },
-        "options": {}
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json.payload) }}",
+        "options": { "response": { "response": { "neverError": true } } }
       },
       "id": "eo-0011",
-      "name": "✅ Actualizar Sheet",
-      "type": "n8n-nodes-base.googleSheets",
+      "name": "🗃️ Guardar borrador en Supabase",
+      "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [2640, 300],
-      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+      "continueOnFail": true
     },
     {
-      "parameters": { "amount": 5, "unit": "seconds" },
+      "parameters": { "amount": 1, "unit": "seconds" },
       "id": "eo-0012",
-      "name": "⏳ Esperar 5s (anti-spam)",
+      "name": "⏳ Esperar 1s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [2880, 300],
-      "webhookId": "wait-outreach"
+      "webhookId": "wait-draft"
     },
     {
       "parameters": {},
@@ -204,10 +196,10 @@
     "🌍 Analizar web de la clínica":     { "main": [[{ "node": "🔬 Analizar web + preparar prompt", "type": "main", "index": 0 }]] },
     "🔬 Analizar web + preparar prompt": { "main": [[{ "node": "🤖 GPT-4o — Generar email",         "type": "main", "index": 0 }]] },
     "🤖 GPT-4o — Generar email":         { "main": [[{ "node": "📬 Construir email HTML",            "type": "main", "index": 0 }]] },
-    "📬 Construir email HTML":           { "main": [[{ "node": "📨 Enviar email (Gmail)",            "type": "main", "index": 0 }]] },
-    "📨 Enviar email (Gmail)":           { "main": [[{ "node": "✅ Actualizar Sheet",                "type": "main", "index": 0 }]] },
-    "✅ Actualizar Sheet":               { "main": [[{ "node": "⏳ Esperar 5s (anti-spam)",          "type": "main", "index": 0 }]] },
-    "⏳ Esperar 5s (anti-spam)":         { "main": [[{ "node": "🔄 Una clínica a la vez",            "type": "main", "index": 0 }]] }
+    "📬 Construir email HTML":            { "main": [[{ "node": "📋 Preparar borrador",              "type": "main", "index": 0 }]] },
+    "📋 Preparar borrador":              { "main": [[{ "node": "🗃️ Guardar borrador en Supabase",    "type": "main", "index": 0 }]] },
+    "🗃️ Guardar borrador en Supabase":   { "main": [[{ "node": "⏳ Esperar 1s",                      "type": "main", "index": 0 }]] },
+    "⏳ Esperar 1s":                     { "main": [[{ "node": "🔄 Una clínica a la vez",             "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1" },

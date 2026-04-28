@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -8,9 +8,14 @@ import {
   ExternalLink, Phone, MapPin, Star, ChevronRight,
   X, Globe, MessageCircle, Megaphone, Shield,
   Zap, FileText, BookOpen, Tag, Send,
+  Eye, ThumbsUp, ThumbsDown, SendHorizonal, Inbox,
 } from 'lucide-react';
 import './Admin.css';
 import './AdminCampanas.css';
+
+/* URL del webhook n8n para enviar borradores aprobados          */
+/* Reemplaza con la URL real de tu workflow workflow-enviar-aprobados */
+const N8N_WEBHOOK_URL = 'https://TU_N8N.app.n8n.cloud/webhook/enviar-borradores-aprobados';
 
 /* ── Configuración de estados ─────────────────────────── */
 const ESTADOS = [
@@ -258,17 +263,408 @@ function DetailPanel({ clinica, onClose, onEstadoChange }) {
   );
 }
 
+/* ── Panel de preview de email borrador ───────────────── */
+function EmailPreviewPanel({ borrador, onClose, onAprobar, onDescartar }) {
+  const [saving, setSaving] = useState(false);
+
+  const ESTADO_COLORS = {
+    borrador:   '#9CA3AF',
+    aprobado:   '#10B981',
+    enviado:    '#3B82F6',
+    descartado: '#EF4444',
+    error:      '#F97316',
+  };
+
+  const handleAprobar = async () => {
+    setSaving(true);
+    await onAprobar(borrador.id);
+    setSaving(false);
+  };
+
+  const handleDescartar = async () => {
+    setSaving(true);
+    await onDescartar(borrador.id);
+    setSaving(false);
+  };
+
+  return (
+    <div className="camp-detail camp-preview-panel">
+      <div className="camp-detail__header">
+        <button className="camp-detail__close" onClick={onClose}>
+          <X size={18} />
+        </button>
+        <div className="camp-detail__avatar camp-preview-panel__avatar">
+          {(borrador.nombre || '?')[0].toUpperCase()}
+        </div>
+        <div>
+          <h3 className="camp-detail__name">{borrador.nombre}</h3>
+          <div className="camp-detail__meta">
+            <span className="adm-badge" style={{ '--badge-color': ESTADO_COLORS[borrador.estado] || '#9CA3AF' }}>
+              {borrador.estado}
+            </span>
+            <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{borrador.to_email}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="camp-detail__body">
+        <div className="camp-detail__section">
+          <span className="camp-detail__section-title">Asunto</span>
+          <p className="camp-preview__subject">{borrador.subject}</p>
+        </div>
+
+        {borrador.seo_resumen && (
+          <div className="camp-detail__section">
+            <span className="camp-detail__section-title">Problemas detectados</span>
+            <p style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: '1.5' }}>{borrador.seo_resumen}</p>
+          </div>
+        )}
+
+        <div className="camp-detail__section">
+          <span className="camp-detail__section-title">Preview del email</span>
+          <div className="camp-preview__iframe-wrap">
+            <iframe
+              srcDoc={borrador.html_body}
+              title="Preview email"
+              className="camp-preview__iframe"
+              sandbox="allow-same-origin"
+            />
+          </div>
+        </div>
+
+        {borrador.error_msg && (
+          <div className="camp-preview__error">
+            <AlertTriangle size={14} /> {borrador.error_msg}
+          </div>
+        )}
+
+        {borrador.sent_at && (
+          <p style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center', marginTop: '8px' }}>
+            Enviado: {new Date(borrador.sent_at).toLocaleString('es-ES')}
+          </p>
+        )}
+      </div>
+
+      {/* Acciones */}
+      {(borrador.estado === 'borrador' || borrador.estado === 'error') && (
+        <div className="camp-detail__actions">
+          <button
+            className="adm-btn adm-btn--ghost camp-preview__btn-discard"
+            onClick={handleDescartar}
+            disabled={saving}
+          >
+            <ThumbsDown size={14} /> Descartar
+          </button>
+          <button
+            className="adm-btn adm-btn--primary camp-preview__btn-approve"
+            onClick={handleAprobar}
+            disabled={saving}
+          >
+            {saving
+              ? <><RefreshCw size={14} className="adm-loading__icon" /> Guardando...</>
+              : <><ThumbsUp size={14} /> Aprobar</>}
+          </button>
+        </div>
+      )}
+      {borrador.estado === 'aprobado' && (
+        <div className="camp-detail__actions">
+          <button
+            className="adm-btn adm-btn--ghost camp-preview__btn-discard"
+            onClick={handleDescartar}
+            disabled={saving}
+          >
+            <ThumbsDown size={14} /> Descartar
+          </button>
+          <span className="camp-preview__approved-badge">
+            <CheckCircle2 size={14} /> Aprobado — listo para enviar
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Tab Borradores ───────────────────────────────────── */
+function BorradoresTab() {
+  const [borradores, setBorradores]     = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const [search, setSearch]             = useState('');
+  const [filterEstado, setFilterEstado] = useState('all');
+  const [selected, setSelected]         = useState(null);
+  const [sending, setSending]           = useState(false);
+  const [sendResult, setSendResult]     = useState(null);
+
+  const fetchBorradores = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('campana_borradores')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) setError(error.message);
+    else setBorradores(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchBorradores(); }, [fetchBorradores]);
+
+  const stats = useMemo(() => ({
+    total:       borradores.length,
+    borradores:  borradores.filter(b => b.estado === 'borrador').length,
+    aprobados:   borradores.filter(b => b.estado === 'aprobado').length,
+    enviados:    borradores.filter(b => b.estado === 'enviado').length,
+    descartados: borradores.filter(b => b.estado === 'descartado').length,
+  }), [borradores]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return borradores.filter(b => {
+      const matchQ = !q ||
+        b.nombre?.toLowerCase().includes(q) ||
+        b.to_email?.toLowerCase().includes(q) ||
+        b.ciudad?.toLowerCase().includes(q);
+      const matchE = filterEstado === 'all' || b.estado === filterEstado;
+      return matchQ && matchE;
+    });
+  }, [borradores, search, filterEstado]);
+
+  const handleAprobar = async (id) => {
+    const { error } = await supabase
+      .from('campana_borradores')
+      .update({ estado: 'aprobado' })
+      .eq('id', id);
+    if (!error) {
+      setBorradores(prev => prev.map(b => b.id === id ? { ...b, estado: 'aprobado' } : b));
+      setSelected(prev => prev?.id === id ? { ...prev, estado: 'aprobado' } : prev);
+    }
+  };
+
+  const handleDescartar = async (id) => {
+    const { error } = await supabase
+      .from('campana_borradores')
+      .update({ estado: 'descartado' })
+      .eq('id', id);
+    if (!error) {
+      setBorradores(prev => prev.map(b => b.id === id ? { ...b, estado: 'descartado' } : b));
+      setSelected(prev => prev?.id === id ? { ...prev, estado: 'descartado' } : prev);
+    }
+  };
+
+  const handleEnviarTodos = async () => {
+    if (stats.aprobados === 0) {
+      setSendResult({ ok: false, msg: 'No hay borradores aprobados. Aprueba al menos uno primero.' });
+      setTimeout(() => setSendResult(null), 4000);
+      return;
+    }
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'admin-panel', ts: Date.now() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setSendResult({ ok: true, msg: `¡Enviando ${stats.aprobados} emails! Refresca en unos minutos para ver el resultado.` });
+        setTimeout(() => { setSendResult(null); fetchBorradores(); }, 5000);
+      } else {
+        setSendResult({ ok: false, msg: json.msg || 'Error al contactar n8n. Comprueba la URL del webhook.' });
+      }
+    } catch {
+      setSendResult({ ok: false, msg: 'No se pudo conectar con n8n. Verifica la URL del webhook en el código.' });
+    }
+    setSending(false);
+  };
+
+  const ESTADO_COLORS = {
+    borrador:   '#9CA3AF',
+    aprobado:   '#10B981',
+    enviado:    '#3B82F6',
+    descartado: '#EF4444',
+    error:      '#F97316',
+  };
+
+  return (
+    <div className={`adm-main-inner ${selected ? 'adm-layout--with-panel' : ''}`} style={{ display: 'flex', gap: 0 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* ── KPIs borradores ── */}
+        <div className="camp-kpis camp-kpis--borradores">
+          <div className="adm-stat-card">
+            <Inbox size={16} className="adm-stat-card__icon" />
+            <span className="adm-stat-card__label">Total generados</span>
+            <span className="adm-stat-card__value">{stats.total}</span>
+          </div>
+          <div className="adm-stat-card">
+            <Eye size={16} className="adm-stat-card__icon" />
+            <span className="adm-stat-card__label">Pendientes revisión</span>
+            <span className="adm-stat-card__value adm-stat-card__value--amber">{stats.borradores}</span>
+          </div>
+          <div className="adm-stat-card">
+            <ThumbsUp size={16} className="adm-stat-card__icon" />
+            <span className="adm-stat-card__label">Aprobados</span>
+            <span className="adm-stat-card__value adm-stat-card__value--green">{stats.aprobados}</span>
+          </div>
+          <div className="adm-stat-card">
+            <Send size={16} className="adm-stat-card__icon" />
+            <span className="adm-stat-card__label">Enviados</span>
+            <span className="adm-stat-card__value adm-stat-card__value--blue">{stats.enviados}</span>
+          </div>
+          <div className="adm-stat-card">
+            <XCircle size={16} className="adm-stat-card__icon" />
+            <span className="adm-stat-card__label">Descartados</span>
+            <span className="adm-stat-card__value">{stats.descartados}</span>
+          </div>
+        </div>
+
+        {/* ── Banner send result ── */}
+        {sendResult && (
+          <div className={`camp-send-result ${sendResult.ok ? 'camp-send-result--ok' : 'camp-send-result--error'}`}>
+            {sendResult.ok ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+            {sendResult.msg}
+          </div>
+        )}
+
+        {/* ── Barra de acciones ── */}
+        <div className="adm-filters">
+          <div className="adm-search">
+            <Search size={15} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, email o ciudad..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="adm-search__input"
+            />
+          </div>
+          <div className="adm-filter-tabs">
+            {[
+              { key: 'all',        label: `Todos (${stats.total})` },
+              { key: 'borrador',   label: `Borrador (${stats.borradores})` },
+              { key: 'aprobado',   label: `Aprobado (${stats.aprobados})` },
+              { key: 'enviado',    label: `Enviado (${stats.enviados})` },
+              { key: 'descartado', label: `Descartado (${stats.descartados})` },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                className={`adm-filter-tab ${filterEstado === key ? 'adm-filter-tab--active' : ''}`}
+                onClick={() => setFilterEstado(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            className={`adm-btn adm-btn--primary camp-btn-enviar ${stats.aprobados === 0 ? 'adm-btn--disabled' : ''}`}
+            onClick={handleEnviarTodos}
+            disabled={sending}
+          >
+            {sending
+              ? <><RefreshCw size={14} className="adm-loading__icon" /> Enviando...</>
+              : <><SendHorizonal size={14} /> Enviar {stats.aprobados} aprobados</>}
+          </button>
+        </div>
+
+        {/* ── Tabla ── */}
+        {loading ? (
+          <div className="adm-loading">
+            <RefreshCw size={24} className="adm-loading__icon" /> Cargando borradores...
+          </div>
+        ) : error ? (
+          <div className="camp-setup">
+            <AlertTriangle size={40} />
+            <h3>Tabla no encontrada</h3>
+            <p>Ejecuta <code>scripts/migration-borradores.sql</code> en Supabase,<br />
+              luego corre el workflow <strong>Generar Borradores IA</strong> en n8n.</p>
+            <button className="adm-btn adm-btn--primary" onClick={fetchBorradores}>
+              <RefreshCw size={15} /> Reintentar
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="adm-empty">
+            <Inbox size={40} />
+            <p>
+              {borradores.length === 0
+                ? 'Corre el workflow "Generar Borradores IA" en n8n para generar emails.'
+                : 'Sin resultados para esta búsqueda.'}
+            </p>
+          </div>
+        ) : (
+          <div className="adm-table-wrap">
+            <table className="adm-table">
+              <thead>
+                <tr>
+                  <th>Clínica</th>
+                  <th>Ciudad</th>
+                  <th>Asunto</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(b => (
+                  <tr
+                    key={b.id}
+                    className={`adm-table__row camp-table__row ${selected?.id === b.id ? 'camp-table__row--active' : ''}`}
+                    onClick={() => setSelected(selected?.id === b.id ? null : b)}
+                  >
+                    <td>
+                      <div className="adm-table__client">
+                        <div className="adm-table__avatar">{(b.nombre || '?')[0].toUpperCase()}</div>
+                        <div>
+                          <strong>{b.nombre}</strong>
+                          <span>{b.to_email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="adm-table__type">{b.ciudad || '—'}</td>
+                    <td className="camp-borr-subject">{b.subject}</td>
+                    <td>
+                      <span className="adm-badge" style={{ '--badge-color': ESTADO_COLORS[b.estado] || '#9CA3AF' }}>
+                        {b.estado}
+                      </span>
+                    </td>
+                    <td className="adm-table__date">
+                      {b.created_at ? new Date(b.created_at).toLocaleDateString('es-ES') : '—'}
+                    </td>
+                    <td>
+                      <Eye size={15} style={{ color: '#9CA3AF', cursor: 'pointer' }} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Panel preview ── */}
+      {selected && (
+        <EmailPreviewPanel
+          borrador={selected}
+          onClose={() => setSelected(null)}
+          onAprobar={handleAprobar}
+          onDescartar={handleDescartar}
+        />
+      )}
+    </div>
+  );
+}
+
 /* ── Componente principal ─────────────────────────────── */
 export default function AdminCampanas() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const [clinicas, setClinicas]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
-  const [search, setSearch]       = useState('');
-  const [filter, setFilter]       = useState('all');
-  const [selected, setSelected]   = useState(null);
+  const [activeTab, setActiveTab]     = useState('clinicas'); // 'clinicas' | 'borradores'
+  const [clinicas, setClinicas]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
+  const [search, setSearch]           = useState('');
+  const [filter, setFilter]           = useState('all');
+  const [selected, setSelected]       = useState(null);
 
   useEffect(() => {
     if (!isAdmin) { navigate('/admin'); return; }
@@ -331,7 +727,7 @@ export default function AdminCampanas() {
   };
 
   return (
-    <div className={`adm-layout ${selected ? 'adm-layout--with-panel' : ''}`}>
+    <div className={`adm-layout ${selected && activeTab === 'clinicas' ? 'adm-layout--with-panel' : ''}`}>
       {/* ── Sidebar ── */}
       <aside className="adm-sidebar">
         <img src="/images/logoazul.png" alt="AgutiDesigns" className="adm-sidebar__logo" />
@@ -368,6 +764,28 @@ export default function AdminCampanas() {
             </button>
           </div>
         </div>
+
+        {/* ── Tabs ── */}
+        <div className="camp-tabs">
+          <button
+            className={`camp-tab ${activeTab === 'clinicas' ? 'camp-tab--active' : ''}`}
+            onClick={() => setActiveTab('clinicas')}
+          >
+            <Users size={15} /> Clínicas
+          </button>
+          <button
+            className={`camp-tab ${activeTab === 'borradores' ? 'camp-tab--active' : ''}`}
+            onClick={() => setActiveTab('borradores')}
+          >
+            <Mail size={15} /> Borradores emails
+          </button>
+        </div>
+
+        {/* ── Tab: Borradores ── */}
+        {activeTab === 'borradores' && <BorradoresTab />}
+
+        {/* ── Tab: Clínicas ── */}
+        {activeTab === 'clinicas' && <>
 
         {/* ── KPIs ── */}
         <div className="camp-kpis">
@@ -521,10 +939,12 @@ export default function AdminCampanas() {
             </table>
           </div>
         )}
+
+        </>}
       </main>
 
-      {/* ── Panel lateral ── */}
-      {selected && (
+      {/* ── Panel lateral clínicas ── */}
+      {activeTab === 'clinicas' && selected && (
         <DetailPanel
           clinica={selected}
           onClose={() => setSelected(null)}
