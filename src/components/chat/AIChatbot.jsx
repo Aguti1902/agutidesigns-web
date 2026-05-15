@@ -63,7 +63,7 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
     } catch (error) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Ups, ha habido un problemilla técnico. ¿Puedes intentarlo de nuevo? Si persiste, escríbenos a hola@agutidesigns.io 😊',
+        content: 'Ups, ha habido un problemilla técnico. ¿Puedes intentarlo de nuevo? Si persiste, escríbenos a info@agutidesigns.io 😊',
       }]);
     } finally {
       setIsLoading(false);
