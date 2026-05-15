@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Packs', href: '#packs' },
   { label: 'Proceso', href: '#proceso' },
   { label: 'FAQ', href: '#faq' },
+  { label: 'Blog', href: '/blog' },
 ];
 
 export default function Navbar({ dark = false, cta }) {
@@ -32,8 +33,9 @@ export default function Navbar({ dark = false, cta }) {
   }, [isMobileOpen]);
 
   const handleNavClick = (e, href) => {
-    e.preventDefault();
     setIsMobileOpen(false);
+    if (!href.startsWith('#')) return; // route link — let browser navigate
+    e.preventDefault();
     const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
