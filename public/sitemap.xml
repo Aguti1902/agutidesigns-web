@@ -36,4 +36,45 @@
     <priority>0.7</priority>
   </url>
 
+
+  <!-- Blog índice -->
+  <url>
+    <loc>https://agutidesigns.io/blog</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog: Cómo conseguir más pacientes clínica dental -->
+  <url>
+    <loc>https://agutidesigns.io/blog/como-conseguir-mas-pacientes-clinica-dental</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog: Precio página web clínica dental España 2026 -->
+  <url>
+    <loc>https://agutidesigns.io/blog/precio-pagina-web-clinica-dental-espana-2026</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog: Marketing digital para dentistas -->
+  <url>
+    <loc>https://agutidesigns.io/blog/marketing-digital-para-dentistas</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog: Cómo aparecer en Google Maps clínica dental -->
+  <url>
+    <loc>https://agutidesigns.io/blog/como-aparecer-google-maps-clinica-dental</loc>
+    <lastmod>2026-05-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>

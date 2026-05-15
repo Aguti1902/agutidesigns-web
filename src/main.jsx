@@ -12,6 +12,8 @@ import AdminQuote from './pages/admin/AdminQuote.jsx';
 import AdminCampanas from './pages/admin/AdminCampanas.jsx';
 import AdminLeads from './pages/admin/AdminLeads.jsx';
 import ClienteBriefing from './pages/cliente/ClienteBriefing.jsx';
+import Blog from './pages/Blog.jsx';
+import BlogPost from './pages/BlogPost.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
@@ -31,6 +33,10 @@ createRoot(document.getElementById('root')).render(
           <Route path="/admin/presupuesto/:id" element={<AdminQuote />} />
           <Route path="/admin/campanas" element={<AdminCampanas />} />
           <Route path="/admin/leads" element={<AdminLeads />} />
+
+          {/* Blog */}
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
 
           {/* Cliente */}
           <Route path="/cliente/briefing" element={<ClienteBriefing />} />
