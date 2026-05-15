@@ -9,4 +9,4 @@ Disallow: /wp-admin
 Disallow: /wp-login.php
 Disallow: /.env
 
-Sitemap: https://agutidesigns.com/sitemap.xml
+Sitemap: https://agutidesigns.io/sitemap.xml

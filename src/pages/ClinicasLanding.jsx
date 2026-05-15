@@ -252,7 +252,7 @@ function DashboardPreview() {
       {/* Browser chrome */}
       <div className="db-chrome">
         <div className="db-chrome__dots"><span /><span /><span /></div>
-        <span className="db-chrome__url">panel.agutidesigns.com/dentplus</span>
+        <span className="db-chrome__url">panel.agutidesigns.io/dentplus</span>
       </div>
 
       {/* Dashboard body */}
@@ -522,7 +522,7 @@ const PAGE_SCHEMA = {
       '@type': 'ProfessionalService',
       name: 'AgutiDesigns',
       description: 'Agencia de marketing digital especializada en clínicas dentales en España. Diseño web, SEO local, publicidad online e inteligencia artificial para dentistas.',
-      url: 'https://agutidesigns.com',
+      url: 'https://agutidesigns.io',
       telephone: '+34-XXX-XXX-XXX',
       address: {
         '@type': 'PostalAddress',
@@ -637,13 +637,13 @@ const PAGE_SCHEMA = {
           '@type': 'ListItem',
           position: 1,
           name: 'Inicio',
-          item: 'https://agutidesigns.com',
+          item: 'https://agutidesigns.io',
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: 'Clínicas Dentales',
-          item: 'https://agutidesigns.com/clinicas-dentales',
+          item: 'https://agutidesigns.io/clinicas-dentales',
         },
       ],
     },
@@ -667,8 +667,8 @@ export default function ClinicasLanding() {
   useEffect(() => {
     const TITLE = 'Diseño Web para Clínicas Dentales | AgutiDesigns';
     const DESC = 'Agencia de marketing dental especializada en España. Web profesional, SEO local, chatbot IA y publicidad online para dentistas. Desde 149€/mes.';
-    const CANONICAL = 'https://agutidesigns.com/clinicas-dentales';
-    const OG_IMAGE = 'https://agutidesigns.com/images/og-clinicas-dentales.jpg';
+    const CANONICAL = 'https://agutidesigns.io/clinicas-dentales';
+    const OG_IMAGE = 'https://agutidesigns.io/images/og-clinicas-dentales.jpg';
 
     // Title
     document.title = TITLE;

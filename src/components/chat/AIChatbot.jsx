@@ -63,7 +63,7 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
     } catch (error) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Ups, ha habido un problemilla técnico. ¿Puedes intentarlo de nuevo? Si persiste, escríbenos a hola@agutidesigns.com 😊',
+        content: 'Ups, ha habido un problemilla técnico. ¿Puedes intentarlo de nuevo? Si persiste, escríbenos a hola@agutidesigns.io 😊',
       }]);
     } finally {
       setIsLoading(false);
@@ -201,7 +201,7 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
                     </button>
                   </div>
                   <p className="chatbot__disclaimer">
-                    Powered by IA · agutidesigns.com
+                    Powered by IA · agutidesigns.io
                   </p>
                 </div>
               </>

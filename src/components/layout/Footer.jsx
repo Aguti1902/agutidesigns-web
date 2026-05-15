@@ -42,7 +42,7 @@ export default function Footer() {
               <a href="https://linkedin.com/in/agutidesigns" target="_blank" rel="noopener noreferrer" className="footer__social" aria-label="LinkedIn">
                 <Linkedin size={18} />
               </a>
-              <a href="mailto:hola@agutidesigns.com" className="footer__social" aria-label="Email">
+              <a href="mailto:hola@agutidesigns.io" className="footer__social" aria-label="Email">
                 <Mail size={18} />
               </a>
             </div>
@@ -63,7 +63,7 @@ export default function Footer() {
             <ul className="footer__col-list">
               <li><a href="#sobre-mi">Sobre Guti</a></li>
               <li><a href="#faq">FAQ</a></li>
-              <li><a href="mailto:hola@agutidesigns.com">Contacto</a></li>
+              <li><a href="mailto:hola@agutidesigns.io">Contacto</a></li>
             </ul>
           </div>
 
@@ -71,8 +71,8 @@ export default function Footer() {
             <h4 className="footer__col-title">Contacto</h4>
             <ul className="footer__col-list">
               <li>
-                <a href="mailto:hola@agutidesigns.com">
-                  hola@agutidesigns.com
+                <a href="mailto:hola@agutidesigns.io">
+                  hola@agutidesigns.io
                 </a>
               </li>
               <li className="footer__availability">

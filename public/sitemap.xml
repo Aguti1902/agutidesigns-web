@@ -6,7 +6,7 @@
 
   <!-- Homepage -->
   <url>
-    <loc>https://agutidesigns.com/</loc>
+    <loc>https://agutidesigns.io/</loc>
     <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -14,7 +14,7 @@
 
   <!-- Clínicas dentales landing — primary SEO target -->
   <url>
-    <loc>https://agutidesigns.com/clinicas-dentales</loc>
+    <loc>https://agutidesigns.io/clinicas-dentales</loc>
     <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -22,7 +22,7 @@
 
   <!-- Clínicas dentales consulta form -->
   <url>
-    <loc>https://agutidesigns.com/clinicas-dentales/consulta</loc>
+    <loc>https://agutidesigns.io/clinicas-dentales/consulta</loc>
     <lastmod>2026-05-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -30,7 +30,7 @@
 
   <!-- Calculadora de precios -->
   <url>
-    <loc>https://agutidesigns.com/calculadora</loc>
+    <loc>https://agutidesigns.io/calculadora</loc>
     <lastmod>2026-05-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
