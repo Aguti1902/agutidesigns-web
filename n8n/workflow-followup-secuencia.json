@@ -1,0 +1,197 @@
+{
+  "name": "AgutiDesigns — Seguimiento Automático Clínicas (días 3, 7, 12)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 10 * * 1-5" }] }
+      },
+      "id": "fu-0001",
+      "name": "⏰ Cada día laborable a las 10h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {},
+      "id": "fu-0001b",
+      "name": "▶️ Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 460]
+    },
+    {
+      "parameters": {
+        "jsCode": "const CONFIG = {\n  GOOGLE_SHEET_ID:  'TU_SHEET_ID_AQUI',      // Mismo Sheet que en el workflow de outreach\n  CALENDLY_LINK:    'https://calendly.com/alejandro-agutidesigns/30min',\n  REMITENTE_NOMBRE: 'Alejandro | AgutiDesigns',\n  REMITENTE_EMAIL:  'alejandro@agutidesigns.io',\n  WEB_AGUTI:        'https://agutidesigns.io',\n  WHATSAPP:         '+34 625 204 337'\n};\nreturn [{ json: CONFIG }];"
+      },
+      "id": "fu-0002",
+      "name": "⚙️ Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "={{ $json.GOOGLE_SHEET_ID }}", "mode": "id" },
+        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "filters": {},
+        "options": { "returnAllMatches": true }
+      },
+      "id": "fu-0003",
+      "name": "📊 Leer todas las clínicas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [720, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra clínicas que necesitan un seguimiento HOY\n// Secuencia: día 3 → follow-up 1 | día 7 → follow-up 2 | día 12 → follow-up 3 (último aviso)\n\nconst config = $('⚙️ Config').first().json;\nconst hoy    = new Date();\nhoy.setHours(0, 0, 0, 0);\n\nconst conSeguimiento = $input.all()\n  .map(item => {\n    const d = item.json;\n    const nSeg   = parseInt(d['Nº seguimientos'] || '0');\n    const estado = d.Estado || '';\n\n    // Solo clínicas contactadas, con email, que no hayan cerrado/respondido\n    if (!d.Email || !d.Email.includes('@')) return null;\n    if (!['Contactado', 'Seguimiento 1', 'Seguimiento 2'].includes(estado)) return null;\n    if (nSeg >= 3) return null; // Ya se enviaron los 3 follow-ups\n\n    // Calcular días desde el contacto\n    const fechaRef = d['Fecha último contacto'] || d['Fecha contacto'];\n    if (!fechaRef) return null;\n\n    const fecha    = new Date(fechaRef);\n    fecha.setHours(0, 0, 0, 0);\n    const diasDesde = Math.floor((hoy - fecha) / (1000 * 60 * 60 * 24));\n\n    // ¿Le toca seguimiento hoy?\n    const ventana = [\n      { min: 3, max: 5,  num: 1, tipo: 'Seguimiento 1' },  // día 3-5\n      { min: 7, max: 9,  num: 2, tipo: 'Seguimiento 2' },  // día 7-9\n      { min: 12, max: 14, num: 3, tipo: 'Último aviso' }   // día 12-14\n    ];\n\n    const accion = ventana.find(v =>\n      nSeg === v.num - 1 &&\n      diasDesde >= v.min &&\n      diasDesde <= v.max\n    );\n\n    if (!accion) return null;\n\n    return {\n      json: {\n        ...d,\n        _numSeguimiento: accion.num,\n        _tipoSeguimiento: accion.tipo,\n        _diasDesde: diasDesde,\n        _config: config\n      }\n    };\n  })\n  .filter(Boolean);\n\nif (conSeguimiento.length === 0) {\n  throw new Error(`Sin seguimientos para hoy (${hoy.toLocaleDateString('es-ES')}). Vuelve mañana.`);\n}\n\nreturn conSeguimiento;"
+      },
+      "id": "fu-0004",
+      "name": "🗓️ Filtrar seguimientos de hoy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "fu-0005",
+      "name": "🔄 Un seguimiento a la vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item   = $('🔄 Un seguimiento a la vez').item.json;\nconst config = item._config;\nconst num    = item._numSeguimiento;\n\n// ── Prompts diferentes según el número de seguimiento ────\nconst prompts = {\n  1: {\n    contexto: `Es el primer seguimiento (3-5 días después del primer email).\n    Estrategia: ofrecer valor gratuito. Menciona que tienes listo un análisis SEO de 5 minutos para su clínica.\n    Referencia el email anterior de forma natural. Sé breve (80-100 palabras). Nada agresivo.`,\n    asunto_base: `RE: sobre la web de ${item.Nombre}`\n  },\n  2: {\n    contexto: `Es el segundo seguimiento (7-9 días desde el primer contacto).\n    Estrategia: prueba social. Menciona una clínica dental (ficticia pero creíble) en su misma ciudad que\n    mejoró sus resultados. Algo como: \"La semana pasada una clínica en ${item.Ciudad} consiguió X nuevas\n    citas al mes tras optimizar su web y su ficha de Google\".\n    Breve (80-100 palabras). Termina con el link de Calendly.`,\n    asunto_base: `Caso real: clínica en ${item.Ciudad} +40% citas online`\n  },\n  3: {\n    contexto: `Es el tercer y último email (12-14 días desde el primer contacto).\n    Estrategia: cierre de puerta. Hazlo muy corto (50-70 palabras). Di que cierras la agenda para nuevos\n    proyectos este mes y que si no les interesa está bien, solo quieres saber.\n    Tono: natural, sin presión, como un colega que hace una última pregunta.\n    NO menciones problemas, solo la oportunidad de una llamada rápida.`,\n    asunto_base: `Última pregunta — ${item.Nombre}`\n  }\n};\n\nconst p = prompts[num] || prompts[1];\n\nconst systemPrompt = `Eres el asistente de ventas de AgutiDesigns, agencia de marketing para clínicas dentales.\nFirmas como Alejandro.\n\n${p.contexto}\n\nDevuelve SOLO JSON válido:\n{\n  \"asunto\": \"string\",\n  \"cuerpo_html\": \"string (HTML con etiquetas <p>)\"\n}`;\n\nconst userPrompt = `Clínica: ${item.Nombre} (${item.Ciudad})\nEmail anterior enviado hace ${item._diasDesde} días\nÚltimo asunto enviado: ${item['Asunto enviado'] || 'análisis web personalizado'}\nNombre contacto: equipo de la clínica (no tenemos nombre personal)\nLink Calendly: ${config.CALENDLY_LINK}\nFirma: ${config.REMITENTE_NOMBRE} · ${config.WEB_AGUTI} · ${config.WHATSAPP}`;\n\nreturn [{\n  json: {\n    ...item,\n    _systemPrompt: systemPrompt,\n    _userPrompt:   userPrompt,\n    _asuntoBase:   p.asunto_base\n  }\n}];"
+      },
+      "id": "fu-0006",
+      "name": "✍️ Preparar email de seguimiento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model":       "gpt-4o",
+          "temperature": 0.7,
+          "max_tokens":  500,
+          "messages": [
+            { "role": "system", "content": "={{ $json._systemPrompt }}" },
+            { "role": "user",   "content": "={{ $json._userPrompt }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fu-0007",
+      "name": "🤖 GPT-4o — Generar seguimiento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1680, 300],
+      "credentials": { "httpBearerAuth": { "id": "openai-bearer-cred", "name": "OpenAI Bearer" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const gptJson = $input.first().json;\nconst prev    = $('✍️ Preparar email de seguimiento').item.json;\nconst config  = prev._config;\n\nlet emailData;\ntry {\n  const raw   = gptJson.choices?.[0]?.message?.content || '{}';\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  emailData = JSON.parse(match ? match[0] : raw);\n} catch(e) {\n  emailData = {\n    asunto:      prev._asuntoBase,\n    cuerpo_html: `<p>Hola,</p><p>Solo quería hacer un seguimiento de mi email anterior. ¿Tenéis 30 minutos para una llamada rápida?</p><p><a href=\"${config.CALENDLY_LINK}\">Reservar llamada →</a></p>`\n  };\n}\n\nconst htmlFinal = `<!DOCTYPE html>\n<html lang=\"es\"><head><meta charset=\"UTF-8\"><style>\n  body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#222;line-height:1.65;font-size:15px}\n  .wrap{padding:32px 28px}\n  .cta-btn{display:inline-block;background:#0044FF;color:#fff!important;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:700;margin:16px 0}\n  .footer{border-top:1px solid #eee;padding:16px 28px;font-size:11px;color:#999}\n  .footer a{color:#0044FF}\n</style></head>\n<body>\n  <div class=\"wrap\">\n    ${emailData.cuerpo_html}\n    <a href=\"${config.CALENDLY_LINK}\" class=\"cta-btn\">📅 Reservar llamada de 30 min →</a>\n  </div>\n  <div class=\"footer\">\n    ${config.REMITENTE_NOMBRE} · <a href=\"${config.WEB_AGUTI}\">${config.WEB_AGUTI}</a> · ${config.WHATSAPP}\n    <br><span style=\"font-size:9px\">Para darte de baja responde con asunto BAJA. RGPD · LSSI-CE art.21.2</span>\n  </div>\n</body></html>`;\n\nreturn [{\n  json: {\n    _to:             prev.Email,\n    _asunto:         emailData.asunto,\n    _html:           htmlFinal,\n    _numSeguimiento: prev._numSeguimiento,\n    _tipoSeguimiento: prev._tipoSeguimiento,\n    _rowEmail:       prev.Email,\n    _sheetId:        config.GOOGLE_SHEET_ID\n  }\n}];"
+      },
+      "id": "fu-0008",
+      "name": "📬 Construir email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "sendTo":      "={{ $json._to }}",
+        "subject":     "={{ $json._asunto }}",
+        "emailFormat": "html",
+        "html":        "={{ $json._html }}",
+        "options": {
+          "replyTo":    "alejandro@agutidesigns.io",
+          "senderName": "Alejandro | AgutiDesigns"
+        }
+      },
+      "id": "fu-0009",
+      "name": "📨 Enviar seguimiento (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [2160, 300],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": { "__rl": true, "value": "={{ $json._sheetId }}", "mode": "id" },
+        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Estado":                  "={{ $json._tipoSeguimiento }}",
+            "Nº seguimientos":         "={{ String($json._numSeguimiento) }}",
+            "Fecha último contacto":   "={{ new Date().toISOString().split('T')[0] }}",
+            "Asunto enviado":          "={{ $json._asunto }}"
+          },
+          "matchingColumns": ["Email"]
+        },
+        "options": {}
+      },
+      "id": "fu-0010",
+      "name": "✅ Actualizar seguimiento en Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2400, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": { "amount": 5, "unit": "seconds" },
+      "id": "fu-0011",
+      "name": "⏳ Esperar 5s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2640, 300],
+      "webhookId": "wait-followup"
+    },
+    {
+      "parameters": {},
+      "id": "fu-0012",
+      "name": "🏁 Fin (seguimientos enviados)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 500]
+    }
+  ],
+  "connections": {
+    "⏰ Cada día laborable a las 10h":   { "main": [[{ "node": "⚙️ Config",                            "type": "main", "index": 0 }]] },
+    "▶️ Ejecutar manualmente":           { "main": [[{ "node": "⚙️ Config",                            "type": "main", "index": 0 }]] },
+    "⚙️ Config":                         { "main": [[{ "node": "📊 Leer todas las clínicas",            "type": "main", "index": 0 }]] },
+    "📊 Leer todas las clínicas":         { "main": [[{ "node": "🗓️ Filtrar seguimientos de hoy",       "type": "main", "index": 0 }]] },
+    "🗓️ Filtrar seguimientos de hoy":    { "main": [[{ "node": "🔄 Un seguimiento a la vez",            "type": "main", "index": 0 }]] },
+    "🔄 Un seguimiento a la vez":         {
+      "main": [
+        [{ "node": "🏁 Fin (seguimientos enviados)",  "type": "main", "index": 0 }],
+        [{ "node": "✍️ Preparar email de seguimiento","type": "main", "index": 0 }]
+      ]
+    },
+    "✍️ Preparar email de seguimiento":  { "main": [[{ "node": "🤖 GPT-4o — Generar seguimiento",     "type": "main", "index": 0 }]] },
+    "🤖 GPT-4o — Generar seguimiento":   { "main": [[{ "node": "📬 Construir email HTML",               "type": "main", "index": 0 }]] },
+    "📬 Construir email HTML":            { "main": [[{ "node": "📨 Enviar seguimiento (Gmail)",         "type": "main", "index": 0 }]] },
+    "📨 Enviar seguimiento (Gmail)":      { "main": [[{ "node": "✅ Actualizar seguimiento en Sheet",    "type": "main", "index": 0 }]] },
+    "✅ Actualizar seguimiento en Sheet": { "main": [[{ "node": "⏳ Esperar 5s",                         "type": "main", "index": 0 }]] },
+    "⏳ Esperar 5s":                      { "main": [[{ "node": "🔄 Un seguimiento a la vez",            "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "agutidesigns" },
+  "notes": "## Qué hace este workflow\n\nEjecuta todos los días laborables a las 10h y envía automáticamente:\n- **Día 3-5**: Follow-up 1 → ofrece análisis SEO gratuito\n- **Día 7-9**: Follow-up 2 → caso de éxito de clínica similar\n- **Día 12-14**: Follow-up 3 → último aviso, cierre de agenda\n\nSolo actúa sobre clínicas con Estado = 'Contactado', 'Seguimiento 1' o 'Seguimiento 2'.\nUna vez en Estado 'Reunión', 'Cerrado' o 'Descartado', se para automáticamente.\n\n## Activar el scheduler\nCuando estés listo, activa el nodo '⏰ Cada día laborable a las 10h' y\npara el nodo manual. El workflow se ejecutará solo cada mañana."
+}

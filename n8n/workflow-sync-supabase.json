@@ -1,0 +1,174 @@
+{
+  "name": "AgutiDesigns — Sync Clínicas → Supabase + SEO Analysis",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "sy-0001",
+      "name": "▶️ Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ══════════════════════════════════════════════════\n//  CONFIGURA AQUÍ\n// ══════════════════════════════════════════════════\nconst CONFIG = {\n  GOOGLE_SHEET_ID:      'TU_SHEET_ID_AQUI',\n  SUPABASE_URL:         'https://TUPROYECTO.supabase.co',    // Settings → API → Project URL\n  SUPABASE_ANON_KEY:    'eyJhbGci...',                        // Settings → API → anon/public key\n  GOOGLE_PAGESPEED_KEY: 'TU_API_KEY_AQUI'                    // Misma key de Google Cloud (habilita PageSpeed Insights API)\n};\nreturn [{ json: CONFIG }];"
+      },
+      "id": "sy-0002",
+      "name": "⚙️ Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "={{ $json.GOOGLE_SHEET_ID }}", "mode": "id" },
+        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "filters": {},
+        "options": { "returnAllMatches": true }
+      },
+      "id": "sy-0003",
+      "name": "📊 Leer Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [720, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra filas válidas y añade la config a cada item\nconst config = $('⚙️ Config').first().json;\nconst items  = $input.all();\n\nconst validas = items\n  .filter(item => item.json.Nombre && item.json.Nombre.trim())\n  .map(item => ({ json: { ...item.json, _config: config } }));\n\nif (validas.length === 0) throw new Error('No hay datos en el Google Sheet.');\nreturn validas;"
+      },
+      "id": "sy-0004",
+      "name": "🧹 Filtrar filas válidas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "sy-0005",
+      "name": "🔄 Una clínica a la vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Web || 'https://httpstat.us/204' }}",
+        "options": {
+          "timeout": 7000,
+          "response": { "response": { "fullResponse": true, "neverError": true } },
+          "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 3 } }
+        }
+      },
+      "id": "sy-0006",
+      "name": "🌍 Descargar web",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1440, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "url",      "value": "={{ $json.Web || 'https://httpstat.us/204' }}" },
+            { "name": "strategy", "value": "mobile" },
+            { "name": "category", "value": "performance" },
+            { "name": "category", "value": "seo" },
+            { "name": "key",      "value": "={{ $('🧹 Filtrar filas válidas').item.json._config.GOOGLE_PAGESPEED_KEY }}" }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": { "response": { "neverError": true } }
+        }
+      },
+      "id": "sy-0007",
+      "name": "⚡ PageSpeed Insights API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1440, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combina HTML análisis + PageSpeed + datos del Sheet\n// para generar el análisis SEO completo de la clínica\n\nconst clinica   = $('🔄 Una clínica a la vez').item.json;\nconst config    = clinica._config;\n\n// HTML de la web (puede estar vacío si falló el fetch)\nconst htmlRaw   = String($('🌍 Descargar web').item?.json?.data || $('🌍 Descargar web').item?.json?.body || '');\nconst html      = htmlRaw.substring(0, 6000).toLowerCase();\n\n// PageSpeed data\nconst psJson       = $('⚡ PageSpeed Insights API').item?.json || {};\nconst cats         = psJson.lighthouseResult?.categories || {};\nconst seoPerf      = Math.round((cats.performance?.score || 0) * 100);\nconst seoScore     = Math.round((cats.seo?.score || 0) * 100);\n\n// ── Análisis de la web ─────────────────────────────────\nconst web         = clinica.Web || '';\nconst tieneWeb    = web.length > 4 && web.includes('.');\nconst valoracion  = parseFloat(clinica['Valoración'] || '0');\nconst nResenas    = parseInt(clinica['Nº Reseñas'] || '0');\n\nconst checks = [\n  { type: 'web',        ok: tieneWeb,                           label: tieneWeb ? 'Tiene página web' : 'Sin página web propia' },\n  { type: 'https',      ok: web.startsWith('https://'),         label: web.startsWith('https://') ? 'HTTPS activado' : 'Sin HTTPS (penaliza en Google)' },\n  { type: 'cita',       ok: /cita|reserva|appointment|booking/i.test(html),  label: /cita|reserva|appointment|booking/i.test(html) ? 'Formulario de cita online' : 'Sin cita online (pierde pacientes nocturnos)' },\n  { type: 'whatsapp',   ok: /whatsapp|wa\\.me/i.test(html),     label: /whatsapp|wa\\.me/i.test(html) ? 'Botón WhatsApp presente' : 'Sin WhatsApp (67% prefiere app a llamar)' },\n  { type: 'blog',       ok: /\\/blog|\\/articulos|\\/noticias/i.test(html), label: /\\/blog|\\/articulos|\\/noticias/i.test(html) ? 'Tiene blog/contenido SEO' : 'Sin blog (invisible en Google para búsquedas informacionales)' },\n  { type: 'testimonios',ok: /testimonio|opiniones|pacientes/i.test(html),    label: /testimonio|opiniones|pacientes/i.test(html) ? 'Muestra testimonios' : 'Sin testimonios en web (reduce conversión)' },\n  { type: 'schema',     ok: /application\\/ld\\+json/i.test(htmlRaw),          label: /application\\/ld\\+json/i.test(htmlRaw) ? 'Schema markup presente' : 'Sin schema markup (no aparecen estrellas en Google)' },\n  { type: 'meta',       ok: /<meta[^>]*name=[\"']description[\"']/i.test(htmlRaw), label: /<meta[^>]*name=[\"']description[\"']/i.test(htmlRaw) ? 'Meta descripción configurada' : 'Sin meta descripción (Google ignora la página)' },\n  { type: 'valoracion', ok: valoracion >= 4.3,                  label: valoracion >= 4.3 ? `Buena valoración (${valoracion}⭐)` : `Valoración baja (${valoracion}⭐ — media del sector: 4.3)` },\n  { type: 'resenas',    ok: nResenas >= 30,                     label: nResenas >= 30 ? `Buenas reseñas (${nResenas})` : `Pocas reseñas (${nResenas} — competidores con más aparecen primero)` }\n];\n\n// Solo mostrar checks si tenemos web (o el check de 'sin web')\nconst problemas = tieneWeb ? checks : [checks[0]];\n\n// Resumen de debilidades\nconst debilidades = problemas.filter(c => !c.ok);\nconst seoResumen  = debilidades.length === 0\n  ? 'Presencia online sólida. Pocas mejoras urgentes detectadas.'\n  : `${debilidades.length} problema${debilidades.length > 1 ? 's' : ''} detectado${debilidades.length > 1 ? 's' : ''}: ${debilidades.slice(0,3).map(d => d.label.split('(')[0].trim()).join(', ')}.`;\n\n// Datos para Supabase\nconst row = {\n  place_id:         clinica['place_id'] || null,\n  ciudad:           clinica.Ciudad      || '',\n  nombre:           clinica.Nombre      || '',\n  direccion:        clinica.Dirección   || clinica.Direccion || '',\n  telefono:         clinica.Teléfono    || clinica.Telefono  || '',\n  web:              clinica.Web         || '',\n  email:            clinica.Email       || '',\n  fuente_email:     clinica['Fuente Email'] || '',\n  valoracion:       valoracion || null,\n  n_resenas:        nResenas || 0,\n  resumen:          clinica.Resumen     || '',\n  estado:           clinica.Estado      || 'Nuevo',\n  fecha_contacto:   clinica['Fecha contacto']        || null,\n  n_seguimientos:   parseInt(clinica['Nº seguimientos'] || '0'),\n  fecha_ultimo_contacto: clinica['Fecha último contacto'] || null,\n  asunto_enviado:   clinica['Asunto enviado'] || '',\n  seo_performance:  seoPerf  || null,\n  seo_score:        seoScore || null,\n  seo_problemas:    problemas,\n  seo_resumen:      seoResumen,\n  seo_analizado_at: new Date().toISOString(),\n  updated_at:       new Date().toISOString()\n};\n\nreturn [{ json: { ...row, _supabaseUrl: config.SUPABASE_URL, _supabaseKey: config.SUPABASE_ANON_KEY } }];"
+      },
+      "id": "sy-0008",
+      "name": "🔬 Preparar análisis SEO + row Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Limpia campos internos antes de enviar a Supabase\nconst item = $input.first().json;\nconst { _supabaseUrl, _supabaseKey, ...row } = item;\nreturn [{ json: { row, _supabaseUrl, _supabaseKey } }];"
+      },
+      "id": "sy-0009",
+      "name": "🧽 Preparar payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json._supabaseUrl }}/rest/v1/clinicas_campana",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $json._supabaseKey }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $json._supabaseKey }}" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "resolution=merge-duplicates,return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json.row) }}",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "sy-0010",
+      "name": "🗄️ Upsert en Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2160, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "id": "sy-0011",
+      "name": "🏁 Fin (sync completo)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 500]
+    }
+  ],
+  "connections": {
+    "▶️ Ejecutar manualmente":              { "main": [[{ "node": "⚙️ Config",                              "type": "main", "index": 0 }]] },
+    "⚙️ Config":                            { "main": [[{ "node": "📊 Leer Google Sheets",                  "type": "main", "index": 0 }]] },
+    "📊 Leer Google Sheets":                { "main": [[{ "node": "🧹 Filtrar filas válidas",               "type": "main", "index": 0 }]] },
+    "🧹 Filtrar filas válidas":             { "main": [[{ "node": "🔄 Una clínica a la vez",                "type": "main", "index": 0 }]] },
+    "🔄 Una clínica a la vez":              {
+      "main": [
+        [{ "node": "🏁 Fin (sync completo)", "type": "main", "index": 0 }],
+        [{ "node": "🌍 Descargar web",        "type": "main", "index": 0 }]
+      ]
+    },
+    "🌍 Descargar web":                     { "main": [[{ "node": "⚡ PageSpeed Insights API",              "type": "main", "index": 0 }]] },
+    "⚡ PageSpeed Insights API":            { "main": [[{ "node": "🔬 Preparar análisis SEO + row Supabase","type": "main", "index": 0 }]] },
+    "🔬 Preparar análisis SEO + row Supabase": { "main": [[{ "node": "🧽 Preparar payload",                "type": "main", "index": 0 }]] },
+    "🧽 Preparar payload":                  { "main": [[{ "node": "🗄️ Upsert en Supabase",                 "type": "main", "index": 0 }]] },
+    "🗄️ Upsert en Supabase":               { "main": [[{ "node": "🔄 Una clínica a la vez",                "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "agutidesigns" },
+  "notes": "## Qué hace\n\nSincroniza TODOS los datos del Google Sheet con Supabase y añade análisis SEO:\n1. Lee el Google Sheet\n2. Por cada clínica: descarga su web + llama a PageSpeed Insights\n3. Analiza: HTTPS, cita online, WhatsApp, blog, schema, meta desc, valoración, reseñas\n4. Hace upsert en Supabase (crea si no existe, actualiza si ya existe)\n\nEl panel de control de tu web leerá de Supabase en tiempo real.\n\n## Setup\n1. Nodo ⚙️ Config: pon GOOGLE_SHEET_ID, SUPABASE_URL, SUPABASE_ANON_KEY, GOOGLE_PAGESPEED_KEY\n2. Habilita 'PageSpeed Insights API' en tu proyecto de Google Cloud\n3. Crea la tabla en Supabase con el SQL de scripts/migration-campanas.sql\n\n## Cuándo ejecutar\n- Primera vez: para poblar la tabla Supabase con todos los datos\n- Después de cada campaña de emails (para sincronizar estados)\n- Se puede activar como scheduler diario si se quiere"
+}

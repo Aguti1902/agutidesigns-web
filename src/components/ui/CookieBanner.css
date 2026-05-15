@@ -77,10 +77,15 @@
 
 @media (max-width: 600px) {
   .cookie-banner {
+    left: var(--space-3);
+    right: var(--space-3);
+    transform: none;
+    width: auto;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
     bottom: var(--space-3);
+    padding: var(--space-4);
   }
   .cookie-banner__actions {
     width: 100%;

@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, RefreshCw, Search, Filter, Eye, Send,
-  TrendingUp, Clock, CheckCircle2, XCircle, Euro,
+  TrendingUp, Clock, CheckCircle2, XCircle, Euro, Megaphone, Users,
 } from 'lucide-react';
 import './Admin.css';
 
@@ -65,6 +65,18 @@ export default function AdminDashboard() {
         <nav className="adm-sidebar__nav">
           <button className="adm-sidebar__item adm-sidebar__item--active">
             <TrendingUp size={18} /> Presupuestos
+          </button>
+          <button
+            className="adm-sidebar__item"
+            onClick={() => navigate('/admin/campanas')}
+          >
+            <Megaphone size={18} /> Campañas dentales
+          </button>
+          <button
+            className="adm-sidebar__item"
+            onClick={() => navigate('/admin/leads')}
+          >
+            <Users size={18} /> Leads clínicas
           </button>
         </nav>
         <div className="adm-sidebar__footer">

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /cliente/
+
+# Block common attack paths
+Disallow: /wp-admin
+Disallow: /wp-login.php
+Disallow: /.env
+
+Sitemap: https://agutidesigns.com/sitemap.xml

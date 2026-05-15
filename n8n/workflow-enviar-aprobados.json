@@ -1,0 +1,206 @@
+{
+  "name": "AgutiDesigns — Enviar Borradores Aprobados",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "enviar-borradores-aprobados",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ea-0001",
+      "name": "🔔 Webhook — Admin Panel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "enviar-borradores-aprobados"
+    },
+    {
+      "parameters": {
+        "jsCode": "const CONFIG = {\n  SUPABASE_URL:       'https://TUPROYECTO.supabase.co',\n  SUPABASE_ANON_KEY:  'eyJhbGci...',\n  GMAIL_FROM_NOMBRE:  'Alejandro | AgutiDesigns',\n  GMAIL_FROM_EMAIL:   'alejandro@agutidesigns.io'\n};\n\nreturn [{ json: CONFIG }];"
+      },
+      "id": "ea-0002",
+      "name": "⚙️ Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.SUPABASE_URL }}/rest/v1/campana_borradores?estado=eq.aprobado&select=*&order=created_at.asc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $json.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $json.SUPABASE_ANON_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ea-0003",
+      "name": "📥 Leer aprobados de Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('⚙️ Config').first().json;\nconst raw    = $input.first().json;\n\nconst lista = Array.isArray(raw) ? raw : (raw.data || []);\n\nif (lista.length === 0) {\n  return [{ json: { _sin_pendientes: true, _config: config } }];\n}\n\nreturn lista.map(b => ({\n  json: {\n    _id:      b.id,\n    _nombre:  b.nombre,\n    _email:   b.to_email,\n    _subject: b.subject,\n    _html:    b.html_body,\n    _config:  config\n  }\n}));"
+      },
+      "id": "ea-0004",
+      "name": "🔀 Parsear borradores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json._sin_pendientes }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "ea-0004b",
+      "name": "❓ ¿Hay borradores?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": false, \"msg\": \"No hay borradores aprobados pendientes de envío.\" }",
+        "options": {}
+      },
+      "id": "ea-0004c",
+      "name": "↩️ Respuesta vacío",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1440, 180]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "ea-0005",
+      "name": "🔄 De uno en uno",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1440, 420]
+    },
+    {
+      "parameters": {},
+      "id": "ea-0005b",
+      "name": "🏁 Fin (todos enviados)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 600]
+    },
+    {
+      "parameters": {
+        "fromEmail":  "Alejandro | AgutiDesigns <alejandro@agutidesigns.io>",
+        "toEmail":    "={{ $json._email }}",
+        "subject":    "={{ $json._subject }}",
+        "emailFormat": "html",
+        "html":       "={{ $json._html }}",
+        "options": {}
+      },
+      "id": "ea-0006",
+      "name": "📨 Enviar email (SMTP Dondominio)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1680, 420],
+      "credentials": { "smtp": { "id": "smtp-dondominio", "name": "SMTP Dondominio" } },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const item    = $input.first().json;\nconst bId     = item._id;\nconst config  = item._config;\nconst error   = item.error?.message || null;\nconst estado  = error ? 'error' : 'enviado';\nconst sentAt  = new Date().toISOString();\n\nreturn [{ json: {\n  _bId:     bId,\n  _estado:  estado,\n  _sentAt:  sentAt,\n  _error:   error,\n  _config:  config\n} }];"
+      },
+      "id": "ea-0007",
+      "name": "📊 Marcar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 420]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json._config.SUPABASE_URL }}/rest/v1/campana_borradores?id=eq.{{ $json._bId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey",        "value": "={{ $json._config.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $json._config.SUPABASE_ANON_KEY }}" },
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Prefer",        "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={ \"estado\": \"{{ $json._estado }}\", \"sent_at\": \"{{ $json._sentAt }}\", \"error_msg\": {{ $json._error ? JSON.stringify($json._error) : 'null' }} }",
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "id": "ea-0008",
+      "name": "✅ Actualizar estado en Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2160, 420],
+      "continueOnFail": true
+    },
+    {
+      "parameters": { "amount": 5, "unit": "seconds" },
+      "id": "ea-0009",
+      "name": "⏳ Esperar 5s (anti-spam)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2400, 420],
+      "webhookId": "wait-enviar"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ JSON.stringify({ ok: true, msg: 'Envío iniciado correctamente.' }) }",
+        "options": {}
+      },
+      "id": "ea-0010",
+      "name": "↩️ Respuesta OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1440, 600]
+    }
+  ],
+  "connections": {
+    "🔔 Webhook — Admin Panel":       { "main": [[{ "node": "⚙️ Config",                       "type": "main", "index": 0 }]] },
+    "⚙️ Config":                      { "main": [[{ "node": "📥 Leer aprobados de Supabase",   "type": "main", "index": 0 }]] },
+    "📥 Leer aprobados de Supabase":  { "main": [[{ "node": "🔀 Parsear borradores",           "type": "main", "index": 0 }]] },
+    "🔀 Parsear borradores":          { "main": [[{ "node": "❓ ¿Hay borradores?",             "type": "main", "index": 0 }]] },
+    "❓ ¿Hay borradores?": {
+      "main": [
+        [{ "node": "↩️ Respuesta vacío",    "type": "main", "index": 0 }],
+        [{ "node": "🔄 De uno en uno",      "type": "main", "index": 0 }]
+      ]
+    },
+    "🔄 De uno en uno": {
+      "main": [
+        [{ "node": "🏁 Fin (todos enviados)",   "type": "main", "index": 0 }],
+        [{ "node": "📨 Enviar email (Gmail)",   "type": "main", "index": 0 }]
+      ]
+    },
+    "🏁 Fin (todos enviados)":        { "main": [[{ "node": "↩️ Respuesta OK",               "type": "main", "index": 0 }]] },
+    "📨 Enviar email (Gmail)":        { "main": [[{ "node": "📊 Marcar resultado",            "type": "main", "index": 0 }]] },
+    "📊 Marcar resultado":            { "main": [[{ "node": "✅ Actualizar estado en Supabase","type": "main", "index": 0 }]] },
+    "✅ Actualizar estado en Supabase":{ "main": [[{ "node": "⏳ Esperar 5s (anti-spam)",      "type": "main", "index": 0 }]] },
+    "⏳ Esperar 5s (anti-spam)":      { "main": [[{ "node": "🔄 De uno en uno",               "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "agutidesigns" },
+  "notes": "## Flujo de envío controlado\n\nEste workflow se activa desde el Admin Panel (botón 'Enviar todos los aprobados').\n\n### Pasos:\n1. Recibe POST del Admin Panel vía Webhook\n2. Lee todos los borradores con estado='aprobado' de Supabase\n3. Los envía uno a uno por SMTP Dondominio (5s entre envíos para evitar spam)\n4. Marca cada uno como 'enviado' (o 'error') en Supabase\n5. Responde al Admin Panel con el resultado\n\n### Setup:\n1. Rellena SUPABASE_URL y SUPABASE_ANON_KEY en ⚙️ Config\n2. Crea credencial SMTP en n8n:\n   - Nombre: 'SMTP Dondominio'\n   - Host: mail.dondominio.com  (o el servidor SMTP de tu hosting)\n   - Port: 587\n   - Security: STARTTLS\n   - User: alejandro@agutidesigns.io\n   - Password: tu contraseña de email\n3. Activa el workflow y copia la URL del Webhook\n4. Pega la URL en AdminCampanas.jsx (constante N8N_WEBHOOK_URL)"
+}

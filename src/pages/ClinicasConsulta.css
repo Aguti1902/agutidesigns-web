@@ -1,0 +1,197 @@
+/* ── Extensiones específicas de ClinicasConsulta ── */
+
+/* Página done — ancho extendido */
+.cc-done-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.cc-done-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Dos opciones de contacto */
+.cc-contact-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.cc-contact-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 2px solid var(--color-gray-200);
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.cc-contact-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+}
+
+.cc-contact-card--wa {
+  border-color: rgba(37, 211, 102, 0.3);
+}
+
+.cc-contact-card--wa:hover {
+  border-color: #25D366;
+}
+
+.cc-contact-card--cal {
+  border-color: rgba(var(--color-primary-rgb), 0.2);
+}
+
+.cc-contact-card--cal:hover {
+  border-color: var(--color-primary);
+}
+
+.cc-contact-card__icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-contact-card--wa .cc-contact-card__icon {
+  background: rgba(37, 211, 102, 0.12);
+  color: #25D366;
+}
+
+.cc-contact-card--cal .cc-contact-card__icon {
+  background: rgba(var(--color-primary-rgb), 0.1);
+  color: var(--color-primary);
+}
+
+.cc-contact-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cc-contact-card__body h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-black);
+  margin: 0;
+}
+
+.cc-contact-card__body p {
+  font-size: 0.82rem;
+  color: var(--color-gray-500);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.cc-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: all 0.18s;
+  width: fit-content;
+}
+
+.cc-contact-btn--wa {
+  background: #25D366;
+  color: #fff;
+}
+
+.cc-contact-btn--wa:hover {
+  background: #1db954;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
+}
+
+.cc-contact-btn--cal {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.cc-contact-btn--cal:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 14px rgba(var(--color-primary-rgb), 0.4);
+}
+
+/* Label encima del Calendly */
+.cc-calendly-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  background: rgba(var(--color-primary-rgb), 0.03);
+}
+
+/* Calendly iframe */
+.cc-calendly-page {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.cc-calendly-wrap {
+  margin-top: var(--space-6);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1.5px solid var(--color-gray-200);
+  box-shadow: 0 4px 24px rgba(0, 71, 255, 0.06);
+  text-align: left;
+}
+
+/* Calendly muestra 2 columnas automáticamente a partir de ~750px de ancho */
+.cc-calendly-iframe {
+  display: block;
+  width: 100%;
+  height: 700px;
+  border: none;
+  background: #fff;
+}
+
+/* Alinear al top cuando hay Calendly */
+.calc-main--top {
+  align-items: flex-start;
+  padding-top: var(--space-6);
+}
+
+/* Spinner reutilizado */
+.cc-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@media (max-width: 700px) {
+  .cc-contact-options {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-contact-card {
+    flex-direction: row;
+  }
+
+  .cc-calendly-iframe {
+    height: 600px;
+  }
+}

@@ -40,6 +40,17 @@
   display: block;
 }
 
+/* ── Dark mode (hero oscuro) ── */
+.navbar--dark .navbar__link {
+  color: rgba(255,255,255,0.75);
+}
+.navbar--dark .navbar__link:hover {
+  color: #fff;
+}
+.navbar--dark .navbar__mobile-toggle {
+  color: #fff;
+}
+
 /* ── Links ── */
 .navbar__links {
   display: flex;

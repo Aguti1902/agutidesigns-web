@@ -1,0 +1,207 @@
+{
+  "name": "AgutiDesigns — Scraping Clínicas Dentales v3",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "sc-0001",
+      "name": "▶️ Ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════\n//  ⚙️  CONFIGURA AQUÍ TUS DATOS\n// ═══════════════════════════════════════════════════════\n\nconst GOOGLE_PLACES_KEY = 'TU_API_KEY_AQUI';  // ← pega tu Google Places API Key\nconst GOOGLE_SHEET_ID   = 'TU_SHEET_ID_AQUI'; // ← ID del Google Sheet (la parte /d/[ESTE_ID]/)\n\nconst ciudades = ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'];\nconst terminos = [\n  'clínica dental',\n  'dentista',\n  'odontología',\n  'implantes dentales',\n  'ortodoncia',\n  'clínica odontológica',\n  'periodoncia'\n];\n\nconst busquedas = [];\nfor (const ciudad of ciudades) {\n  for (const termino of terminos) {\n    busquedas.push({ json: { ciudad, query: `${termino} ${ciudad}`, apiKey: GOOGLE_PLACES_KEY, sheetId: GOOGLE_SHEET_ID } });\n  }\n}\nreturn busquedas;"
+      },
+      "id": "sc-0002",
+      "name": "⚙️ Config — ciudades y API Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query",    "value": "={{ $json.query }}" },
+            { "name": "language", "value": "es" },
+            { "name": "region",   "value": "es" },
+            { "name": "key",      "value": "={{ $json.apiKey }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sc-0003",
+      "name": "🔍 Places Text Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const httpResults = $input.all();\nconst configs     = $('⚙️ Config — ciudades y API Key').all();\n\nconst clinicas = [];\nconst seen     = new Set();\n\nfor (let i = 0; i < httpResults.length; i++) {\n  const results = httpResults[i].json.results || [];\n  const cfg     = configs[i]?.json || {};\n  for (const place of results) {\n    if (seen.has(place.place_id)) continue;\n    seen.add(place.place_id);\n    clinicas.push({ json: {\n      place_id:   place.place_id,\n      ciudad:     cfg.ciudad  || '',\n      apiKey:     cfg.apiKey  || '',\n      sheetId:    cfg.sheetId || '',\n      nombre:     place.name  || '',\n      direccion:  place.formatted_address   || '',\n      valoracion: place.rating              || '',\n      n_resenas:  place.user_ratings_total  || 0\n    }});\n  }\n}\n\nif (clinicas.length === 0) throw new Error('No se encontraron clínicas. Comprueba tu API Key.');\nreturn clinicas;"
+      },
+      "id": "sc-0004",
+      "name": "🧹 Aplanar y deduplicar clínicas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "sc-0005",
+      "name": "🔄 Procesar una clínica a la vez",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/details/json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "place_id", "value": "={{ $json.place_id }}" },
+            { "name": "fields",   "value": "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,editorial_summary" },
+            { "name": "language", "value": "es" },
+            { "name": "key",      "value": "={{ $json.apiKey }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sc-0006",
+      "name": "📋 Places Details API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const detail = $input.first().json.result || {};\nconst prev   = $('🔄 Procesar una clínica a la vez').item.json;\n\nreturn [{ json: {\n  place_id:     prev.place_id,\n  ciudad:       prev.ciudad,\n  apiKey:       prev.apiKey,\n  sheetId:      prev.sheetId,\n  nombre:       detail.name                         || prev.nombre,\n  direccion:    detail.formatted_address            || prev.direccion,\n  telefono:     detail.formatted_phone_number       || '',\n  web:          detail.website                      || '',\n  valoracion:   String(detail.rating                || prev.valoracion || ''),\n  n_resenas:    String(detail.user_ratings_total    || prev.n_resenas  || '0'),\n  resumen:      detail.editorial_summary?.overview  || ''\n}}];"
+      },
+      "id": "sc-0007",
+      "name": "📝 Normalizar datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.web || 'https://httpstat.us/204' }}",
+        "options": {
+          "timeout": 6000,
+          "response": { "response": { "fullResponse": true, "neverError": true } },
+          "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 3 } }
+        }
+      },
+      "id": "sc-0008",
+      "name": "🌍 Visitar web homepage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1920, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// continueOnFail: si el HTTP falló, json puede tener 'error' en vez de 'data'\nconst inputJson = $input.first()?.json || {};\nconst html = String(inputJson.data || inputJson.body || '');\nconst prev = $('📝 Normalizar datos').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','.gif',\n                     'schema.org','w3.org','google.com','facebook.com','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailHomepage = prev.web ? (emails[0] || '') : '';\nreturn [{ json: { ...prev, emailHomepage } }];"
+      },
+      "id": "sc-0009",
+      "name": "📧 Email de homepage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.web ? $json.web.replace(/\\/+$/, '') + '/contacto' : 'https://httpstat.us/204' }}",
+        "options": {
+          "timeout": 5000,
+          "response": { "response": { "fullResponse": true, "neverError": true } }
+        }
+      },
+      "id": "sc-0010",
+      "name": "📞 Visitar /contacto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2400, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// continueOnFail: si el HTTP de /contacto falló, el input tiene el error\nconst inputJson = $input.first()?.json || {};\nconst html = String(inputJson.data || inputJson.body || '');\nconst prev = $('📧 Email de homepage').item.json;\n\nconst EMAIL_REGEX = /[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}/g;\nconst BLACKLIST   = ['noreply','no-reply','donotreply','example','yourdomain',\n                     'sentry','wix','squarespace','.png','.jpg','schema.org','httpstat.us'];\n\nconst emails = [...new Set((html.match(EMAIL_REGEX) || []))]\n  .filter(e => !BLACKLIST.some(b => e.toLowerCase().includes(b)))\n  .filter(e => e.length < 80);\n\nconst emailContacto = emails[0] || '';\nconst email         = prev.emailHomepage || emailContacto || '';\nconst fuenteEmail   = prev.emailHomepage ? 'homepage'\n                    : emailContacto      ? 'pagina_contacto'\n                    : prev.web           ? 'no_encontrado'\n                    : 'sin_web';\n\nreturn [{ json: { ...prev, email, fuenteEmail } }];"
+      },
+      "id": "sc-0011",
+      "name": "📧 Email final (homepage + /contacto)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: {\n  Ciudad:            d.ciudad       || '',\n  Nombre:            d.nombre       || '',\n  'Dirección':       d.direccion    || '',\n  'Teléfono':        d.telefono     || '',\n  Web:               d.web          || '',\n  Email:             d.email        || '',\n  'Fuente Email':    d.fuenteEmail  || '',\n  'Valoración':      d.valoracion   || '',\n  'Nº Reseñas':      d.n_resenas    || '0',\n  Resumen:           d.resumen      || '',\n  'Email enviado':   'No',\n  'Fecha scraping':  new Date().toISOString().split('T')[0],\n  Notas:             '',\n  _sheetId:          d.sheetId\n}}];"
+      },
+      "id": "sc-0012",
+      "name": "🧽 Preparar fila para Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2880, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "={{ $json._sheetId }}", "mode": "id" },
+        "sheetName":  { "__rl": true, "value": "Clínicas Dentales", "mode": "name" },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": { "cellFormat": "USER_ENTERED", "valueInputMode": "USER_ENTERED" }
+      },
+      "id": "sc-0013",
+      "name": "📊 Google Sheets — Guardar fila",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [3120, 300],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "google-sheets-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {},
+      "id": "sc-0014",
+      "name": "🏁 Fin (todas las clínicas procesadas)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1200, 500]
+    }
+  ],
+  "connections": {
+    "▶️ Ejecutar manualmente":            { "main": [[{ "node": "⚙️ Config — ciudades y API Key",         "type": "main", "index": 0 }]] },
+    "⚙️ Config — ciudades y API Key":     { "main": [[{ "node": "🔍 Places Text Search",                  "type": "main", "index": 0 }]] },
+    "🔍 Places Text Search":              { "main": [[{ "node": "🧹 Aplanar y deduplicar clínicas",        "type": "main", "index": 0 }]] },
+    "🧹 Aplanar y deduplicar clínicas":   { "main": [[{ "node": "🔄 Procesar una clínica a la vez",        "type": "main", "index": 0 }]] },
+    "🔄 Procesar una clínica a la vez":   {
+      "main": [
+        [{ "node": "🏁 Fin (todas las clínicas procesadas)", "type": "main", "index": 0 }],
+        [{ "node": "📋 Places Details API",                  "type": "main", "index": 0 }]
+      ]
+    },
+    "📋 Places Details API":              { "main": [[{ "node": "📝 Normalizar datos",                     "type": "main", "index": 0 }]] },
+    "📝 Normalizar datos":                { "main": [[{ "node": "🌍 Visitar web homepage",                 "type": "main", "index": 0 }]] },
+    "🌍 Visitar web homepage":            { "main": [[{ "node": "📧 Email de homepage",                    "type": "main", "index": 0 }]] },
+    "📧 Email de homepage":               { "main": [[{ "node": "📞 Visitar /contacto",                    "type": "main", "index": 0 }]] },
+    "📞 Visitar /contacto":               { "main": [[{ "node": "📧 Email final (homepage + /contacto)",   "type": "main", "index": 0 }]] },
+    "📧 Email final (homepage + /contacto)": { "main": [[{ "node": "🧽 Preparar fila para Sheets",         "type": "main", "index": 0 }]] },
+    "🧽 Preparar fila para Sheets":       { "main": [[{ "node": "📊 Google Sheets — Guardar fila",         "type": "main", "index": 0 }]] },
+    "📊 Google Sheets — Guardar fila":    { "main": [[{ "node": "🔄 Procesar una clínica a la vez",        "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "agutidesigns" },
+  "notes": "## Setup (3 pasos)\n1. Nodo '⚙️ Config': pon GOOGLE_PLACES_KEY y GOOGLE_SHEET_ID\n2. Nodo '📊 Google Sheets': conecta credencial Google Sheets OAuth2\n3. Google Sheet: crea hoja 'Clínicas Dentales' con columnas:\n   Ciudad | Nombre | Dirección | Teléfono | Web | Email | Fuente Email | Valoración | Nº Reseñas | Resumen | Email enviado | Fecha scraping | Notas"
+}
