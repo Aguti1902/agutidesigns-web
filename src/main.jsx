@@ -14,6 +14,7 @@ import AdminLeads from './pages/admin/AdminLeads.jsx';
 import ClienteBriefing from './pages/cliente/ClienteBriefing.jsx';
 import Blog from './pages/Blog.jsx';
 import BlogPost from './pages/BlogPost.jsx';
+import Onboarding from './pages/Onboarding.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
@@ -40,6 +41,9 @@ createRoot(document.getElementById('root')).render(
 
           {/* Cliente */}
           <Route path="/cliente/briefing" element={<ClienteBriefing />} />
+
+          {/* Onboarding SaaS */}
+          <Route path="/empezar" element={<Onboarding />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
