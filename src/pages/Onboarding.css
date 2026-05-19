@@ -423,41 +423,110 @@
 .ob-day-closed { font-size: 11px; color: rgba(254, 250, 245, 0.25); margin-left: auto; font-style: italic; }
 
 /* ═══════════════════════════════════════════════
-   TEMPLATE CARDS
+   TEMPLATE PICKER — BIG LIVE CARDS (Step 1)
 ═══════════════════════════════════════════════ */
-.ob-templates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.ob-tpl-card {
-  border: 1.5px solid rgba(254, 250, 245, 0.1);
-  border-radius: 12px; overflow: hidden;
-  cursor: pointer; transition: all 0.25s;
+.ob-tpl-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ob-tpl-bigcard {
+  border: 2px solid rgba(254, 250, 245, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.22s, transform 0.18s, box-shadow 0.22s;
   background: rgba(254, 250, 245, 0.02);
+  position: relative;
 }
-.ob-tpl-card:hover { border-color: rgba(0, 71, 255, 0.4); transform: translateY(-2px); }
-.ob-tpl-card.selected { border-color: var(--color-primary, #0047FF); background: rgba(0, 71, 255, 0.06); }
-.ob-tpl-thumb {
-  height: 110px; display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
+.ob-tpl-bigcard:hover {
+  border-color: rgba(0, 71, 255, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
-.ob-tpl-check {
-  position: absolute; top: 8px; right: 8px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--color-primary, #0047FF);
-  display: flex; align-items: center; justify-content: center; color: #fff;
+.ob-tpl-bigcard.selected {
+  border-color: var(--color-primary, #0047FF);
+  box-shadow: 0 0 0 1px var(--color-primary, #0047FF), 0 10px 36px rgba(0, 71, 255, 0.22);
 }
-.ob-tpl-preview-btn {
-  position: absolute; inset: 0;
-  background: rgba(17,17,17,0.72);
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.04em;
+
+.ob-tpl-preview-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ob-tpl-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, opacity 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+.ob-tpl-bigcard:hover .ob-tpl-hover-overlay {
+  background: rgba(17, 17, 17, 0.3);
+  opacity: 1;
+}
+
+.ob-tpl-expand-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(17, 17, 17, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px; padding: 7px 14px;
+  font-size: 11px; font-weight: 700;
+  color: #fff; letter-spacing: 0.03em;
   font-family: var(--font-body, monospace);
-  cursor: pointer; border: none; opacity: 0; transition: opacity 0.2s; width: 100%;
+  pointer-events: none;
 }
-.ob-tpl-thumb:hover .ob-tpl-preview-btn { opacity: 1; }
-.ob-tpl-info { padding: 12px 14px 14px; }
-.ob-tpl-name  { font-size: 13px; font-weight: 700; color: var(--color-white, #FEFAF5); margin-bottom: 3px; }
-.ob-tpl-desc  { font-size: 11px; color: rgba(254, 250, 245, 0.38); line-height: 1.5; margin-bottom: 8px; }
-.ob-tpl-selected { font-size: 11px; font-weight: 700; color: var(--color-check, #009A62); display: flex; align-items: center; gap: 4px; }
-.ob-tpl-use      { font-size: 11px; color: rgba(254, 250, 245, 0.3); }
+
+.ob-tpl-selected-badge {
+  position: absolute; top: 8px; right: 8px;
+  width: 26px; height: 26px;
+  background: var(--color-primary, #0047FF);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.ob-tpl-card-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(254, 250, 245, 0.07);
+}
+.ob-tpl-card-name {
+  font-size: 12px; font-weight: 700;
+  color: var(--color-white, #FEFAF5);
+  margin-bottom: 2px;
+}
+.ob-tpl-card-desc {
+  font-size: 10px;
+  color: rgba(254, 250, 245, 0.33);
+  line-height: 1.4;
+}
+.ob-tpl-card-chosen {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700;
+  color: var(--color-check, #009A62);
+  letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0;
+}
+.ob-tpl-card-pick {
+  font-size: 10px; font-weight: 700;
+  color: rgba(254, 250, 245, 0.25);
+  letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0;
+  transition: color 0.2s;
+}
+.ob-tpl-bigcard:hover .ob-tpl-card-pick {
+  color: var(--color-primary, #0047FF);
+}
 
 /* ═══════════════════════════════════════════════
    SERVICES

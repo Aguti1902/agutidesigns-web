@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconArrowRight, IconArrowLeft, IconUpload, IconPlus, IconTrash,
-  IconEye, IconCheck, IconBolt, IconX, IconMaximize,
+  IconEye, IconCheck, IconBolt, IconX, IconMaximize, IconBrush,
   IconPalette, IconBuilding, IconFileText, IconSettings,
   IconPhone, IconMail, IconMapPin, IconClock, IconWorld,
   IconBrandInstagram, IconBrandFacebook, IconBrandTiktok, IconBrandLinkedin,
@@ -10,7 +10,7 @@ import {
   IconBrandWhatsapp, IconMessage, IconShield, IconAward,
   IconLanguage, IconPhoto, IconSearch, IconBrandGoogle,
   IconToggleLeft, IconToggleRight, IconUser, IconTypography, IconLink,
-  IconColorPicker, IconSparkles, IconExternalLink, IconLoader2,
+  IconExternalLink, IconLoader2,
 } from '@tabler/icons-react';
 import ClinicaDentalTemplate from '../templates/ClinicaDental/Template';
 import FisioterapiaTemplate  from '../templates/Fisioterapia/Template';
@@ -28,7 +28,7 @@ import { generateDescription } from '../utils/generateContent';
 import { extractColorsFromUrl, makeLightVariant } from '../utils/colorExtract';
 import './Onboarding.css';
 
-/* ── Template registry (hidden from user) ── */
+/* ── Template registry ── */
 const TEMPLATES = {
   ClinicaDental: { component: ClinicaDentalTemplate, config: clinicaConfig },
   Fisioterapia:  { component: FisioterapiaTemplate,  config: fisioConfig   },
@@ -38,7 +38,16 @@ const TEMPLATES = {
   Generica:      { component: GenericaTemplate,      config: genConfig     },
 };
 
-/* ── Sector → template mapping (auto-assigned) ── */
+const TPL_LIST = [
+  { id: 'ClinicaDental', name: 'Clínica Dental',     desc: 'Clínicas, consultas y centros médicos'  },
+  { id: 'Fisioterapia',  name: 'Fisioterapia',        desc: 'Centros de salud y bienestar físico'    },
+  { id: 'Psicologia',    name: 'Psicología',          desc: 'Terapia, coaching y bienestar mental'   },
+  { id: 'Restaurante',   name: 'Restaurante / Bar',   desc: 'Hostelería, restauración y ocio'        },
+  { id: 'Abogados',      name: 'Abogados / Asesoría', desc: 'Servicios legales y consultoría'        },
+  { id: 'Generica',      name: 'Negocio general',     desc: 'Cualquier tipo de empresa o servicio'   },
+];
+
+/* ── Sector → template mapping ── */
 const SECTORS = [
   { value: 'clinica-dental', label: 'Clínica Dental',      template: 'ClinicaDental' },
   { value: 'fisioterapia',   label: 'Fisioterapia',         template: 'Fisioterapia'  },
@@ -48,7 +57,7 @@ const SECTORS = [
   { value: 'otro',           label: 'Otro negocio',         template: 'Generica'      },
 ];
 
-/* ── Style variants per template (color + layout presets) ── */
+/* ── Style variants per template ── */
 const STYLE_VARIANTS = {
   ClinicaDental: [
     { name: 'Azul clínico',   primary: '#1B6CA8', secondary: '#E8F4FD' },
@@ -88,6 +97,106 @@ const STYLE_VARIANTS = {
   ],
 };
 
+/* ── Realistic demo data per template ── */
+const DEMO_DATA = {
+  ClinicaDental: {
+    businessName: 'Clínica Dental Sonrisa',
+    heroTitle: 'Tu sonrisa perfecta, nuestra misión',
+    description: 'En Clínica Dental Sonrisa ponemos tu salud bucal en el centro de todo. Tecnología de vanguardia, profesionales certificados y un trato cercano que te hará sentir en casa desde la primera visita.',
+    about: 'Más de 15 años cuidando sonrisas en Madrid. Nuestro equipo combina la última tecnología con atención personalizada para ofrecerte los mejores resultados.',
+    address: 'Calle Gran Vía 48, Madrid', phone: '91 234 56 78', email: 'info@clinicasonrisa.com',
+    services: [
+      { id: 1, name: 'Limpieza dental',       description: 'Higiene oral profesional',   price: '60€',          photoPreview: '' },
+      { id: 2, name: 'Ortodoncia invisible',   description: 'Alineadores a medida',       price: 'Desde 2.400€', photoPreview: '' },
+      { id: 3, name: 'Implantes dentales',     description: 'Implantes de titanio',       price: 'Desde 950€',   photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'María García',  text: 'Excelente atención y resultados increíbles. Mi ortodoncia quedó perfecta.',       rating: 5 },
+      { id: 2, name: 'Carlos López',  text: 'Los mejores dentistas de Madrid. Profesionales y muy amables con cada paciente.',   rating: 5 },
+    ],
+  },
+  Fisioterapia: {
+    businessName: 'Centro FisioVital',
+    heroTitle: 'Recupera tu movilidad, vive sin dolor',
+    description: 'En FisioVital combinamos técnicas manuales avanzadas con tecnología de última generación para tratar la raíz de tu dolencia y darte resultados duraderos.',
+    about: 'Especialistas en fisioterapia deportiva, neurológica y traumatológica. 10 años ayudando a pacientes a recuperar su vida activa.',
+    address: 'Paseo de la Castellana 120, Madrid', phone: '91 567 89 01', email: 'citas@fisiovital.es',
+    services: [
+      { id: 1, name: 'Fisioterapia deportiva', description: 'Recuperación de lesiones',  price: '55€',       photoPreview: '' },
+      { id: 2, name: 'Masaje terapéutico',     description: 'Alivio de contracturas',    price: '45€',       photoPreview: '' },
+      { id: 3, name: 'Pilates terapéutico',    description: 'Grupos reducidos',          price: '35€/sesión',photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'Ana Martínez', text: 'Después de mi operación de rodilla, recuperé la movilidad completa en tiempo récord.', rating: 5 },
+      { id: 2, name: 'Javier Ruiz',  text: 'Llevo meses sin dolor de espalda por primera vez en años. Increíble equipo.',          rating: 5 },
+    ],
+  },
+  Psicologia: {
+    businessName: 'Centro Psicología Mindful',
+    heroTitle: 'Tu bienestar emocional, nuestra prioridad',
+    description: 'Un espacio de escucha, confianza y transformación personal. Terapia individual, de pareja y grupal con enfoque integrativo y basado en evidencia.',
+    about: 'Equipo de psicólogos colegiados con formación en terapia cognitivo-conductual, EMDR y mindfulness. Consultas presenciales y online.',
+    address: 'Calle Serrano 45, Madrid', phone: '91 345 67 89', email: 'consultas@psicologiamindful.com',
+    services: [
+      { id: 1, name: 'Terapia individual', description: 'Sesiones personalizadas',   price: '75€', photoPreview: '' },
+      { id: 2, name: 'Terapia de pareja',  description: 'Mejora la comunicación',    price: '90€', photoPreview: '' },
+      { id: 3, name: 'Psicología infantil',description: 'Niños y adolescentes',      price: '70€', photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'Laura Fernández', text: 'Me ayudaron a superar mi ansiedad. Tengo herramientas para gestionar el día a día.', rating: 5 },
+      { id: 2, name: 'Pablo Sánchez',   text: 'La terapia de pareja salvó nuestra relación. Muy recomendable.',                    rating: 5 },
+    ],
+  },
+  Restaurante: {
+    businessName: 'Restaurante El Rincón',
+    heroTitle: 'Gastronomía que despierta los sentidos',
+    description: 'Cocina mediterránea de autor con ingredientes frescos de temporada. Una experiencia gastronómica única en el corazón de la ciudad.',
+    about: 'Desde 1995 ofrecemos una cocina honesta con recetas tradicionales y toques contemporáneos. Chef formado en las mejores escuelas de Europa.',
+    address: 'Plaza Mayor 5, Madrid', phone: '91 123 45 67', email: 'reservas@elrincon.es',
+    services: [
+      { id: 1, name: 'Menú del día',       description: 'Primero, segundo y postre', price: '18€',       photoPreview: '' },
+      { id: 2, name: 'Carta',              description: 'Platos de temporada',       price: 'Desde 12€', photoPreview: '' },
+      { id: 3, name: 'Menú degustación',   description: '7 platos + maridaje',       price: '65€',       photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'Isabel Torres',  text: 'La mejor croqueta de Madrid. Ambiente acogedor y servicio impecable.',       rating: 5 },
+      { id: 2, name: 'Roberto Gómez', text: 'Llevamos años viniendo y siempre sorprenden con platos nuevos. ¡10/10!',     rating: 5 },
+    ],
+  },
+  Abogados: {
+    businessName: 'Bufete Jurídico Lex',
+    heroTitle: 'Defensa jurídica con rigor y resultados',
+    description: 'Más de 20 años defendiendo los intereses de personas y empresas. Especialistas en derecho civil, mercantil, laboral y penal.',
+    about: 'Nuestro equipo combina rigor técnico, estrategia y compromiso con el cliente. Soluciones legales a medida para cada caso.',
+    address: 'Calle Alcalá 72, Madrid', phone: '91 789 01 23', email: 'contacto@bufetelex.com',
+    services: [
+      { id: 1, name: 'Derecho civil',     description: 'Contratos, herencias, divorcios', price: 'Consulta gratuita', photoPreview: '' },
+      { id: 2, name: 'Derecho laboral',   description: 'Despidos y reclamaciones',        price: 'Consulta gratuita', photoPreview: '' },
+      { id: 3, name: 'Derecho mercantil', description: 'Constitución y contratos',        price: 'Consulta gratuita', photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'Empresa TechSol',   text: 'Excelente gestión de nuestro contrato mercantil. Profesionales y eficientes.', rating: 5 },
+      { id: 2, name: 'Miguel Rodríguez',  text: 'Me ayudaron a ganar mi caso laboral. Muy satisfecho con el resultado.',         rating: 5 },
+    ],
+  },
+  Generica: {
+    businessName: 'Estudio Creativo Nexus',
+    heroTitle: 'Soluciones creativas para tu negocio',
+    description: 'Diseño, estrategia y tecnología al servicio de tu marca. Ayudamos a negocios a crecer con propuestas visuales únicas y efectivas.',
+    about: 'Somos un equipo multidisciplinar con más de 10 años creando experiencias digitales y físicas para marcas que quieren destacar.',
+    address: 'Calle Fuencarral 89, Madrid', phone: '91 456 78 90', email: 'hola@estudionexus.com',
+    services: [
+      { id: 1, name: 'Diseño gráfico',    description: 'Identidad y branding',    price: 'Desde 500€',     photoPreview: '' },
+      { id: 2, name: 'Diseño web',        description: 'Webs modernas y rápidas', price: 'Desde 1.500€',   photoPreview: '' },
+      { id: 3, name: 'Marketing digital', description: 'Redes y campañas',        price: 'Desde 300€/mes', photoPreview: '' },
+    ],
+    testimonials: [
+      { id: 1, name: 'StartupXYZ',      text: 'Renovaron por completo nuestra imagen. Los resultados hablan por sí solos.',       rating: 5 },
+      { id: 2, name: 'Boutique Moda',   text: 'Profesionales, creativos y muy atentos al detalle. Totalmente recomendables.',     rating: 5 },
+    ],
+  },
+};
+
 const DAYS = [
   { key: 'lunes',     label: 'Lunes'     },
   { key: 'martes',    label: 'Martes'    },
@@ -106,19 +215,19 @@ const FONT_PAIRS = [
   { id: 'poppins',  name: 'Poppins',          subtitle: 'Amigable y cercano', css: 'Poppins, sans-serif'                },
 ];
 
-/* 4 visible steps — template is assigned silently */
+/* 5 visible steps */
 const STEPS = [
-  { num: 1, label: 'Negocio',    Icon: IconBuilding  },
-  { num: 2, label: 'Identidad',  Icon: IconPalette   },
-  { num: 3, label: 'Contenido',  Icon: IconFileText  },
-  { num: 4, label: 'SEO',        Icon: IconSettings  },
+  { num: 1, label: 'Diseño',     Icon: IconBrush    },
+  { num: 2, label: 'Negocio',    Icon: IconBuilding },
+  { num: 3, label: 'Identidad',  Icon: IconPalette  },
+  { num: 4, label: 'Contenido',  Icon: IconFileText },
+  { num: 5, label: 'SEO',        Icon: IconSettings },
 ];
 
 const INITIAL_DATA = {
-  /* internal — never shown */
-  selectedTemplate: 'Generica',
+  selectedTemplate: 'ClinicaDental',
 
-  /* Step 1 — Negocio */
+  /* Step 2 — Negocio */
   businessName: '', sector: '',
   phone: '', email: '', address: '', website: '',
   instagram: '', facebook: '', tiktok: '', linkedin: '',
@@ -132,13 +241,13 @@ const INITIAL_DATA = {
     domingo:   { open: false, from: '',      to: ''      },
   },
 
-  /* Step 2 — Identidad */
+  /* Step 3 — Identidad */
   logo: null, logoPreview: '',
-  primaryColor: '#2563EB', secondaryColor: '#EFF6FF',
+  primaryColor: '#1B6CA8', secondaryColor: '#E8F4FD',
   fontPair: 'inter',
   referenceUrls: ['', '', ''],
 
-  /* Step 3 — Contenido */
+  /* Step 4 — Contenido */
   heroTitle: '', description: '', about: '',
   heroPhoto: null, heroPhotoPreview: '',
   services: [
@@ -151,7 +260,7 @@ const INITIAL_DATA = {
   coverageArea: '', certifications: '',
   languages: ['Español'],
 
-  /* Step 4 — SEO */
+  /* Step 5 — SEO */
   seoTitle: '', seoDescription: '', seoKeyword: '',
   domainOption: 'new', domainSearch: '', domainExisting: '',
   gaId: '', fbPixel: '',
@@ -177,6 +286,41 @@ function computeSchedule(sbd) {
     .join(' · ');
 }
 
+/* Merges user data with template demo data — demo fills any empty fields */
+function mergeWithDemo(userData, demoData) {
+  const d = demoData || {};
+  const result = {
+    ...userData,
+    schedule: computeSchedule(userData.scheduleByDay),
+    photosPreviews: [userData.heroPhotoPreview, ...userData.galleryPreviews].filter(Boolean),
+  };
+  for (const f of ['businessName', 'heroTitle', 'description', 'about', 'address', 'phone', 'email']) {
+    if (!userData[f]?.trim()) result[f] = d[f] || '';
+  }
+  if (!userData.services?.some(s => s.name)) result.services = d.services || userData.services;
+  if (!userData.testimonials?.length)         result.testimonials = d.testimonials || [];
+  return result;
+}
+
+/* Full demo preview object for template cards */
+function demoPreview(tplId) {
+  const d    = DEMO_DATA[tplId] || {};
+  const cfg  = TEMPLATES[tplId]?.config;
+  return {
+    ...d,
+    primaryColor:    cfg?.primaryColor   || '#2563EB',
+    secondaryColor:  cfg?.secondaryColor || '#EFF6FF',
+    schedule:        'Lun–Vie 09:00–20:00 · Sáb 09:00–14:00',
+    photosPreviews:  [],
+    team:            [],
+    faqs:            [],
+    gallery:         [],
+    galleryPreviews: [],
+    instagram: '', facebook: '', tiktok: '', linkedin: '',
+    logoPreview: '', fontPair: 'inter',
+  };
+}
+
 function readFile(file) {
   return new Promise(resolve => {
     const r = new FileReader();
@@ -195,14 +339,12 @@ export default function Onboarding() {
   const [showStyles, setShowStyles] = useState(false);
   const [gen,   setGen]         = useState({});
 
-  /* Reference URL color extraction state */
   const [refState, setRefState] = useState([
     { colors: [], loading: false },
     { colors: [], loading: false },
     { colors: [], loading: false },
   ]);
   const refTimers = useRef([null, null, null]);
-
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -215,45 +357,43 @@ export default function Onboarding() {
 
   const up = useCallback((k, v) => setData(p => ({ ...p, [k]: v })), []);
 
-  const goNext = () => { setDir(1);  setStep(s => Math.min(s + 1, 4)); };
+  const goNext = () => { setDir(1);  setStep(s => Math.min(s + 1, 5)); };
   const goPrev = () => { setDir(-1); setStep(s => Math.max(s - 1, 1)); };
 
-  /* Auto-assign template when sector is chosen */
-  const handleSector = useCallback((value) => {
-    const tplId = SECTORS.find(s => s.value === value)?.template || 'Generica';
-    const cfg   = TEMPLATES[tplId]?.config;
+  /* Select template from Step 1 — sets template and matching default colors */
+  const selectTemplate = useCallback((id) => {
+    const cfg = TEMPLATES[id]?.config;
     setData(p => ({
       ...p,
-      sector: value,
-      selectedTemplate: tplId,
+      selectedTemplate: id,
       primaryColor:   cfg?.primaryColor   || p.primaryColor,
       secondaryColor: cfg?.secondaryColor || p.secondaryColor,
     }));
   }, []);
 
-  /* Apply style variant from the preview panel */
+  /* Sector selection — does NOT override user's template choice */
+  const handleSector = useCallback((value) => {
+    setData(p => ({ ...p, sector: value }));
+  }, []);
+
   const applyVariant = useCallback((v) => {
     setData(p => ({ ...p, primaryColor: v.primary, secondaryColor: v.secondary }));
     setShowStyles(false);
   }, []);
 
-  /* Apply an extracted reference color */
   const applyRefColor = useCallback((hex) => {
     setData(p => ({ ...p, primaryColor: hex, secondaryColor: makeLightVariant(hex) }));
   }, []);
 
-  /* Reference URL handler with debounced extraction */
   const handleRefUrl = useCallback((i, value) => {
     setData(p => {
       const urls = [...p.referenceUrls];
       urls[i] = value;
       return { ...p, referenceUrls: urls };
     });
-    /* Reset colors for this slot */
     setRefState(s => s.map((v, j) => j === i ? { colors: [], loading: false } : v));
     if (refTimers.current[i]) clearTimeout(refTimers.current[i]);
     if (!value.trim()) return;
-
     refTimers.current[i] = setTimeout(async () => {
       setRefState(s => s.map((v, j) => j === i ? { ...v, loading: true } : v));
       const colors = await extractColorsFromUrl(value);
@@ -273,7 +413,7 @@ export default function Onboarding() {
       galleryPreviews: [...p.galleryPreviews,  ...previews].slice(0, 12),
     }));
   };
-  const rmGallery  = i => setData(p => ({
+  const rmGallery = i => setData(p => ({
     ...p,
     gallery:         p.gallery.filter((_, j) => j !== i),
     galleryPreviews: p.galleryPreviews.filter((_, j) => j !== i),
@@ -347,14 +487,11 @@ export default function Onboarding() {
     }
   };
 
-  const templateData = {
-    ...data,
-    schedule: computeSchedule(data.scheduleByDay),
-    photosPreviews: [data.heroPhotoPreview, ...data.galleryPreviews].filter(Boolean),
-  };
-  const CurrentTpl = TEMPLATES[data.selectedTemplate]?.component || GenericaTemplate;
-  const progress   = ((step - 1) / 3) * 100;
-  const variants   = STYLE_VARIANTS[data.selectedTemplate] || STYLE_VARIANTS.Generica;
+  /* Live preview data — demo fills any empty user fields */
+  const templateData  = mergeWithDemo(data, DEMO_DATA[data.selectedTemplate]);
+  const CurrentTpl    = TEMPLATES[data.selectedTemplate]?.component || GenericaTemplate;
+  const progress      = ((step - 1) / 4) * 100;
+  const variants      = STYLE_VARIANTS[data.selectedTemplate] || STYLE_VARIANTS.Generica;
 
   return (
     <div className="ob-root">
@@ -377,7 +514,7 @@ export default function Onboarding() {
             </div>
           ))}
         </div>
-        <span className="ob-step-counter">Paso {step} de 4</span>
+        <span className="ob-step-counter">Paso {step} de 5</span>
       </header>
 
       <div className="ob-layout">
@@ -385,9 +522,10 @@ export default function Onboarding() {
         <div className="ob-form-panel">
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div key={step} custom={dir} variants={slide} initial="enter" animate="center" exit="exit" className="ob-step-content">
-              {step === 1 && <StepNegocio data={data} up={up} handleSector={handleSector} upDay={upDay} />}
-              {step === 2 && <StepIdentidad data={data} up={up} onLogo={uploadLogo} refState={refState} handleRefUrl={handleRefUrl} applyRefColor={applyRefColor} />}
-              {step === 3 && <StepContenido
+              {step === 1 && <StepPlantilla data={data} selectTemplate={selectTemplate} />}
+              {step === 2 && <StepNegocio data={data} up={up} handleSector={handleSector} upDay={upDay} />}
+              {step === 3 && <StepIdentidad data={data} up={up} onLogo={uploadLogo} refState={refState} handleRefUrl={handleRefUrl} applyRefColor={applyRefColor} />}
+              {step === 4 && <StepContenido
                 data={data} up={up} gen={gen} generate={generate}
                 addSvc={addSvc} rmSvc={rmSvc} upSvc={upSvc} svcPhoto={svcPhoto}
                 onHero={uploadHero}
@@ -397,7 +535,7 @@ export default function Onboarding() {
                 addFaq={addFaq} rmFaq={rmFaq} upFaq={upFaq}
                 toggleLang={toggleLang}
               />}
-              {step === 4 && <StepSeo data={data} up={up} gen={gen} generate={generate} />}
+              {step === 5 && <StepSeo data={data} up={up} gen={gen} generate={generate} />}
             </motion.div>
           </AnimatePresence>
 
@@ -407,7 +545,7 @@ export default function Onboarding() {
                 <IconArrowLeft size={15} /> Anterior
               </button>
             )}
-            {step < 4 ? (
+            {step < 5 ? (
               <button className="ob-btn-next" onClick={goNext}>
                 Siguiente <IconArrowRight size={15} />
               </button>
@@ -428,7 +566,6 @@ export default function Onboarding() {
               <IconMaximize size={13} />
             </button>
           </div>
-          {/* Preview body — position:relative so the styles panel can anchor inside */}
           <div className="ob-preview-body">
             <div className="ob-preview-outer" ref={previewRef}>
               <div className="ob-preview-inner" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 1440 }}>
@@ -436,7 +573,6 @@ export default function Onboarding() {
               </div>
             </div>
 
-            {/* Styles panel slides up from the bottom of the preview body */}
             <AnimatePresence>
               {showStyles && (
                 <motion.div
@@ -446,39 +582,36 @@ export default function Onboarding() {
                   exit={{ y: '100%', opacity: 0 }}
                   transition={{ duration: 0.28, ease: 'easeOut' }}
                 >
-                <div className="ob-styles-header">
-                  <span>Variaciones de estilo</span>
-                  <button onClick={() => setShowStyles(false)}><IconX size={14} /></button>
-                </div>
-                <div className="ob-styles-grid">
-                  {variants.map((v, i) => (
-                    <button
-                      key={i}
-                      className={`ob-style-card${data.primaryColor === v.primary ? ' active' : ''}`}
-                      onClick={() => applyVariant(v)}
-                    >
-                      <div className="ob-style-swatches">
-                        <span style={{ background: v.primary }} />
-                        <span style={{ background: v.secondary }} />
-                      </div>
-                      <span className="ob-style-name">{v.name}</span>
-                      {data.primaryColor === v.primary && <IconCheck size={10} className="ob-style-check" />}
-                    </button>
-                  ))}
-                </div>
+                  <div className="ob-styles-header">
+                    <span>Variaciones de estilo</span>
+                    <button onClick={() => setShowStyles(false)}><IconX size={14} /></button>
+                  </div>
+                  <div className="ob-styles-grid">
+                    {variants.map((v, i) => (
+                      <button
+                        key={i}
+                        className={`ob-style-card${data.primaryColor === v.primary ? ' active' : ''}`}
+                        onClick={() => applyVariant(v)}
+                      >
+                        <div className="ob-style-swatches">
+                          <span style={{ background: v.primary }} />
+                          <span style={{ background: v.secondary }} />
+                        </div>
+                        <span className="ob-style-name">{v.name}</span>
+                        {data.primaryColor === v.primary && <IconCheck size={10} className="ob-style-check" />}
+                      </button>
+                    ))}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>{/* /ob-preview-body */}
+          </div>
 
           <div className="ob-preview-footer">
             <span className="ob-preview-tag">
               {TEMPLATES[data.selectedTemplate]?.config.name || 'Web personalizada'}
             </span>
-            <button
-              className="ob-preview-styles-btn"
-              onClick={() => setShowStyles(s => !s)}
-            >
+            <button className="ob-preview-styles-btn" onClick={() => setShowStyles(s => !s)}>
               <IconPalette size={11} /> Ver otros estilos
             </button>
           </div>
@@ -539,7 +672,72 @@ function Toggle({ enabled, onToggle, icon: Icon, label, children }) {
   );
 }
 
-/* ── STEP 1 — NEGOCIO ───────────────────────────────────── */
+/* ── STEP 1 — ELEGIR PLANTILLA ──────────────────────────── */
+function StepPlantilla({ data, selectTemplate }) {
+  const listRef  = useRef(null);
+  const [cardScale, setCardScale] = useState(0.22);
+
+  useEffect(() => {
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) {
+        const w = e.contentRect.width;
+        const cardW = (w - 14) / 2;   /* 2-col grid, 14px gap */
+        setCardScale(cardW / 1440);
+      }
+    });
+    if (listRef.current) ro.observe(listRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const cardH = Math.round(900 * cardScale);
+
+  return (
+    <div className="ob-step">
+      <div className="ob-step-head">
+        <h2 className="ob-step-title">Elige tu diseño</h2>
+        <p className="ob-step-desc">Selecciona la plantilla que mejor encaja con tu negocio. Personalizarás los colores, textos y fotos en los siguientes pasos.</p>
+      </div>
+
+      <div className="ob-tpl-list" ref={listRef}>
+        {TPL_LIST.map(({ id, name, desc }) => {
+          const Tpl      = TEMPLATES[id].component;
+          const selected = data.selectedTemplate === id;
+          return (
+            <div
+              key={id}
+              className={`ob-tpl-bigcard${selected ? ' selected' : ''}`}
+              onClick={() => selectTemplate(id)}
+            >
+              <div className="ob-tpl-preview-wrap" style={{ height: cardH }}>
+                <div style={{ width: 1440, transform: `scale(${cardScale})`, transformOrigin: 'top left', pointerEvents: 'none' }}>
+                  <Tpl businessData={demoPreview(id)} />
+                </div>
+                <div className="ob-tpl-hover-overlay">
+                  <span className="ob-tpl-expand-btn"><IconEye size={13} /> Ver diseño</span>
+                </div>
+                {selected && (
+                  <div className="ob-tpl-selected-badge"><IconCheck size={13} /></div>
+                )}
+              </div>
+              <div className="ob-tpl-card-bar">
+                <div>
+                  <div className="ob-tpl-card-name">{name}</div>
+                  <div className="ob-tpl-card-desc">{desc}</div>
+                </div>
+                {selected
+                  ? <span className="ob-tpl-card-chosen"><IconCheck size={10} /> Elegida</span>
+                  : <span className="ob-tpl-card-pick">Elegir →</span>
+                }
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── STEP 2 — NEGOCIO ───────────────────────────────────── */
 function StepNegocio({ data, up, handleSector, upDay }) {
   return (
     <div className="ob-step">
@@ -617,10 +815,10 @@ function StepNegocio({ data, up, handleSector, upDay }) {
         <SectionHead icon={IconBrandInstagram} title="Redes sociales" />
         <div className="ob-fields">
           {[
-            { key: 'instagram', Icon: IconBrandInstagram, ph: '@tunegocio'               },
-            { key: 'facebook',  Icon: IconBrandFacebook,  ph: 'facebook.com/…'           },
-            { key: 'tiktok',    Icon: IconBrandTiktok,    ph: '@tunegocio'               },
-            { key: 'linkedin',  Icon: IconBrandLinkedin,  ph: 'linkedin.com/company/…'   },
+            { key: 'instagram', Icon: IconBrandInstagram, ph: '@tunegocio'             },
+            { key: 'facebook',  Icon: IconBrandFacebook,  ph: 'facebook.com/…'         },
+            { key: 'tiktok',    Icon: IconBrandTiktok,    ph: '@tunegocio'             },
+            { key: 'linkedin',  Icon: IconBrandLinkedin,  ph: 'linkedin.com/company/…' },
           ].map(({ key, Icon, ph }) => (
             <div key={key} className="ob-field">
               <label><Icon size={11} /> {key.charAt(0).toUpperCase() + key.slice(1)}</label>
@@ -633,7 +831,7 @@ function StepNegocio({ data, up, handleSector, upDay }) {
   );
 }
 
-/* ── STEP 2 — IDENTIDAD ─────────────────────────────────── */
+/* ── STEP 3 — IDENTIDAD ─────────────────────────────────── */
 function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor }) {
   return (
     <div className="ob-step">
@@ -642,7 +840,6 @@ function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor
         <p className="ob-step-desc">Personaliza los colores, tipografía y logo de tu web.</p>
       </div>
 
-      {/* Logo */}
       <div className="ob-section">
         <SectionHead icon={IconUpload} title="Logo" />
         <div className="ob-logo-area">
@@ -662,7 +859,6 @@ function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor
         </div>
       </div>
 
-      {/* Reference URLs + color extraction */}
       <div className="ob-section">
         <SectionHead icon={IconExternalLink} title="Webs de referencia" />
         <p className="ob-hint" style={{ marginBottom: 14 }}>
@@ -705,7 +901,6 @@ function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor
         </div>
       </div>
 
-      {/* Colors */}
       <div className="ob-section">
         <SectionHead icon={IconPalette} title="Colores corporativos" />
         <div className="ob-colors-row">
@@ -724,7 +919,6 @@ function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor
         </div>
       </div>
 
-      {/* Typography */}
       <div className="ob-section">
         <SectionHead icon={IconTypography} title="Tipografía" />
         <div className="ob-fonts-grid">
@@ -747,7 +941,7 @@ function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor
   );
 }
 
-/* ── STEP 3 — CONTENIDO ─────────────────────────────────── */
+/* ── STEP 4 — CONTENIDO ─────────────────────────────────── */
 function StepContenido({ data, up, gen, generate,
   addSvc, rmSvc, upSvc, svcPhoto,
   onHero, onGallery, rmGallery,
@@ -761,7 +955,6 @@ function StepContenido({ data, up, gen, generate,
         <p className="ob-step-desc">Textos, fotos y servicios. La IA te ayuda a escribir en segundos.</p>
       </div>
 
-      {/* Textos */}
       <div className="ob-section">
         <SectionHead icon={IconFileText} title="Textos principales" />
         <div className="ob-fields">
@@ -789,7 +982,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Foto hero */}
       <div className="ob-section">
         <SectionHead icon={IconPhoto} title="Foto de portada (hero)" />
         {data.heroPhotoPreview ? (
@@ -807,7 +999,6 @@ function StepContenido({ data, up, gen, generate,
         )}
       </div>
 
-      {/* Servicios */}
       <div className="ob-section">
         <SectionHead
           icon={IconBriefcase} title="Servicios / Productos"
@@ -846,7 +1037,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Galería */}
       <div className="ob-section">
         <SectionHead
           icon={IconPhoto} title="Galería de fotos"
@@ -873,7 +1063,6 @@ function StepContenido({ data, up, gen, generate,
         }
       </div>
 
-      {/* Equipo */}
       <div className="ob-section">
         <SectionHead
           icon={IconUsers} title="Nuestro equipo"
@@ -907,7 +1096,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Testimonios */}
       <div className="ob-section">
         <SectionHead
           icon={IconStar} title="Testimonios"
@@ -942,7 +1130,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* FAQs */}
       <div className="ob-section">
         <SectionHead
           icon={IconHelp} title="Preguntas frecuentes"
@@ -969,7 +1156,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Cobertura */}
       <div className="ob-section">
         <SectionHead icon={IconMapPin} title="Zona de cobertura" />
         <div className="ob-fields">
@@ -979,7 +1165,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Certificaciones */}
       <div className="ob-section">
         <SectionHead icon={IconAward} title="Certificaciones y premios" />
         <div className="ob-fields">
@@ -989,7 +1174,6 @@ function StepContenido({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Idiomas */}
       <div className="ob-section">
         <SectionHead icon={IconLanguage} title="Idiomas del servicio" />
         <div className="ob-lang-chips">
@@ -1009,7 +1193,7 @@ function StepContenido({ data, up, gen, generate,
   );
 }
 
-/* ── STEP 4 — SEO ───────────────────────────────────────── */
+/* ── STEP 5 — SEO ───────────────────────────────────────── */
 function StepSeo({ data, up, gen, generate }) {
   return (
     <div className="ob-step">
@@ -1094,8 +1278,8 @@ function StepSeo({ data, up, gen, generate }) {
           <Toggle enabled={data.whatsappEnabled} onToggle={() => up('whatsappEnabled', !data.whatsappEnabled)} icon={IconBrandWhatsapp} label="Botón de WhatsApp flotante">
             <input type="tel" value={data.whatsappNumber} onChange={e => up('whatsappNumber', e.target.value)} placeholder="34612345678 (sin + ni espacios)" className="ob-toggle-input" />
           </Toggle>
-          <Toggle enabled={data.chatEnabled}    onToggle={() => up('chatEnabled',    !data.chatEnabled)}    icon={IconMessage}      label="Chat en vivo" />
-          <Toggle enabled={data.cookieEnabled}  onToggle={() => up('cookieEnabled',  !data.cookieEnabled)}  icon={IconShield}       label="Banner de cookies (RGPD)" />
+          <Toggle enabled={data.chatEnabled}    onToggle={() => up('chatEnabled',    !data.chatEnabled)}    icon={IconMessage} label="Chat en vivo" />
+          <Toggle enabled={data.cookieEnabled}  onToggle={() => up('cookieEnabled',  !data.cookieEnabled)}  icon={IconShield}  label="Banner de cookies (RGPD)" />
         </div>
       </div>
 
