@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconArrowRight, IconArrowLeft, IconUpload, IconPlus, IconTrash,
   IconEye, IconCheck, IconBolt, IconX, IconMaximize,
-  IconLayout2, IconPalette, IconBuilding, IconFileText, IconSettings,
+  IconPalette, IconBuilding, IconFileText, IconSettings,
   IconPhone, IconMail, IconMapPin, IconClock, IconWorld,
   IconBrandInstagram, IconBrandFacebook, IconBrandTiktok, IconBrandLinkedin,
   IconBriefcase, IconUsers, IconStar, IconHelp, IconChartBar,
   IconBrandWhatsapp, IconMessage, IconShield, IconAward,
   IconLanguage, IconPhoto, IconSearch, IconBrandGoogle,
   IconToggleLeft, IconToggleRight, IconUser, IconTypography, IconLink,
+  IconColorPicker, IconSparkles, IconExternalLink, IconLoader2,
 } from '@tabler/icons-react';
 import ClinicaDentalTemplate from '../templates/ClinicaDental/Template';
 import FisioterapiaTemplate  from '../templates/Fisioterapia/Template';
@@ -24,8 +25,10 @@ import { config as restConfig    } from '../templates/Restaurante/config';
 import { config as abogConfig    } from '../templates/Abogados/config';
 import { config as genConfig     } from '../templates/Generica/config';
 import { generateDescription } from '../utils/generateContent';
+import { extractColorsFromUrl, makeLightVariant } from '../utils/colorExtract';
 import './Onboarding.css';
 
+/* ── Template registry (hidden from user) ── */
 const TEMPLATES = {
   ClinicaDental: { component: ClinicaDentalTemplate, config: clinicaConfig },
   Fisioterapia:  { component: FisioterapiaTemplate,  config: fisioConfig   },
@@ -35,6 +38,7 @@ const TEMPLATES = {
   Generica:      { component: GenericaTemplate,      config: genConfig     },
 };
 
+/* ── Sector → template mapping (auto-assigned) ── */
 const SECTORS = [
   { value: 'clinica-dental', label: 'Clínica Dental',      template: 'ClinicaDental' },
   { value: 'fisioterapia',   label: 'Fisioterapia',         template: 'Fisioterapia'  },
@@ -44,37 +48,77 @@ const SECTORS = [
   { value: 'otro',           label: 'Otro negocio',         template: 'Generica'      },
 ];
 
+/* ── Style variants per template (color + layout presets) ── */
+const STYLE_VARIANTS = {
+  ClinicaDental: [
+    { name: 'Azul clínico',   primary: '#1B6CA8', secondary: '#E8F4FD' },
+    { name: 'Teal moderno',   primary: '#0E7490', secondary: '#E0F7FA' },
+    { name: 'Verde salud',    primary: '#1A8A5A', secondary: '#E8F5F0' },
+    { name: 'Índigo premium', primary: '#4338CA', secondary: '#EEF2FF' },
+  ],
+  Fisioterapia: [
+    { name: 'Verde natural',   primary: '#2D9E4F', secondary: '#E8F5EC' },
+    { name: 'Naranja energía', primary: '#EA580C', secondary: '#FFF7ED' },
+    { name: 'Azul calma',      primary: '#2563EB', secondary: '#EFF6FF' },
+    { name: 'Teal vitalidad',  primary: '#0D9488', secondary: '#F0FDFA' },
+  ],
+  Psicologia: [
+    { name: 'Lavanda calma', primary: '#6B5B95', secondary: '#F5F0FF' },
+    { name: 'Azul sereno',   primary: '#3B82F6', secondary: '#EFF6FF' },
+    { name: 'Verde armonía', primary: '#059669', secondary: '#ECFDF5' },
+    { name: 'Rosa suave',    primary: '#BE185D', secondary: '#FDF2F8' },
+  ],
+  Restaurante: [
+    { name: 'Tierra cálida',  primary: '#C8935A', secondary: '#FFF8F2' },
+    { name: 'Rojo gourmet',   primary: '#DC2626', secondary: '#FEF2F2' },
+    { name: 'Negro elegante', primary: '#1C1917', secondary: '#F5F5F4' },
+    { name: 'Verde bistró',   primary: '#16A34A', secondary: '#F0FDF4' },
+  ],
+  Abogados: [
+    { name: 'Marino formal', primary: '#1A2744', secondary: '#F0EDE8' },
+    { name: 'Gris platino',  primary: '#374151', secondary: '#F9FAFB' },
+    { name: 'Burdeos',       primary: '#7F1D1D', secondary: '#FEF2F2' },
+    { name: 'Verde bufete',  primary: '#064E3B', secondary: '#ECFDF5' },
+  ],
+  Generica: [
+    { name: 'Violeta moderno', primary: '#6C63FF', secondary: '#F8F7FF' },
+    { name: 'Azul confianza',  primary: '#2563EB', secondary: '#EFF6FF' },
+    { name: 'Coral dinámico',  primary: '#EA580C', secondary: '#FFF7ED' },
+    { name: 'Esmeralda',       primary: '#059669', secondary: '#ECFDF5' },
+  ],
+};
+
 const DAYS = [
-  { key: 'lunes',     label: 'Lunes',     short: 'L' },
-  { key: 'martes',    label: 'Martes',    short: 'M' },
-  { key: 'miercoles', label: 'Miércoles', short: 'X' },
-  { key: 'jueves',    label: 'Jueves',    short: 'J' },
-  { key: 'viernes',   label: 'Viernes',   short: 'V' },
-  { key: 'sabado',    label: 'Sábado',    short: 'S' },
-  { key: 'domingo',   label: 'Domingo',   short: 'D' },
+  { key: 'lunes',     label: 'Lunes'     },
+  { key: 'martes',    label: 'Martes'    },
+  { key: 'miercoles', label: 'Miércoles' },
+  { key: 'jueves',    label: 'Jueves'    },
+  { key: 'viernes',   label: 'Viernes'   },
+  { key: 'sabado',    label: 'Sábado'    },
+  { key: 'domingo',   label: 'Domingo'   },
 ];
 
 const LANGUAGES = ['Español', 'English', 'Français', 'Deutsch', 'Italiano', 'Português', 'Català', 'Euskera'];
 
 const FONT_PAIRS = [
-  { id: 'inter',    name: 'Inter',            subtitle: 'Moderno y limpio',    css: 'Inter, sans-serif'                   },
-  { id: 'playfair', name: 'Playfair Display', subtitle: 'Elegante y premium',  css: '"Playfair Display", Georgia, serif'  },
-  { id: 'poppins',  name: 'Poppins',          subtitle: 'Amigable y cercano',  css: 'Poppins, sans-serif'                 },
+  { id: 'inter',    name: 'Inter',            subtitle: 'Moderno y limpio',   css: 'Inter, sans-serif'                  },
+  { id: 'playfair', name: 'Playfair Display', subtitle: 'Elegante y premium', css: '"Playfair Display", Georgia, serif' },
+  { id: 'poppins',  name: 'Poppins',          subtitle: 'Amigable y cercano', css: 'Poppins, sans-serif'                },
 ];
 
+/* 4 visible steps — template is assigned silently */
 const STEPS = [
-  { num: 1, label: 'Plantilla',  Icon: IconLayout2  },
-  { num: 2, label: 'Identidad',  Icon: IconPalette  },
-  { num: 3, label: 'Negocio',    Icon: IconBuilding },
-  { num: 4, label: 'Contenido',  Icon: IconFileText },
-  { num: 5, label: 'SEO',        Icon: IconSettings },
+  { num: 1, label: 'Negocio',    Icon: IconBuilding  },
+  { num: 2, label: 'Identidad',  Icon: IconPalette   },
+  { num: 3, label: 'Contenido',  Icon: IconFileText  },
+  { num: 4, label: 'SEO',        Icon: IconSettings  },
 ];
 
 const INITIAL_DATA = {
-  selectedTemplate: 'ClinicaDental',
-  logo: null, logoPreview: '',
-  primaryColor: '#1B6CA8', secondaryColor: '#E8F4FD',
-  fontPair: 'inter',
+  /* internal — never shown */
+  selectedTemplate: 'Generica',
+
+  /* Step 1 — Negocio */
   businessName: '', sector: '',
   phone: '', email: '', address: '', website: '',
   instagram: '', facebook: '', tiktok: '', linkedin: '',
@@ -87,6 +131,14 @@ const INITIAL_DATA = {
     sabado:    { open: false, from: '09:00', to: '14:00' },
     domingo:   { open: false, from: '',      to: ''      },
   },
+
+  /* Step 2 — Identidad */
+  logo: null, logoPreview: '',
+  primaryColor: '#2563EB', secondaryColor: '#EFF6FF',
+  fontPair: 'inter',
+  referenceUrls: ['', '', ''],
+
+  /* Step 3 — Contenido */
   heroTitle: '', description: '', about: '',
   heroPhoto: null, heroPhotoPreview: '',
   services: [
@@ -95,11 +147,11 @@ const INITIAL_DATA = {
     { id: 3, name: '', description: '', price: '', photoPreview: '' },
   ],
   gallery: [], galleryPreviews: [],
-  team: [],
-  testimonials: [],
-  faqs: [],
+  team: [], testimonials: [], faqs: [],
   coverageArea: '', certifications: '',
   languages: ['Español'],
+
+  /* Step 4 — SEO */
   seoTitle: '', seoDescription: '', seoKeyword: '',
   domainOption: 'new', domainSearch: '', domainExisting: '',
   gaId: '', fbPixel: '',
@@ -114,8 +166,8 @@ const slide = {
   exit:   d => ({ x: d > 0 ? -60 : 60, opacity: 0, transition: { duration: 0.25 } }),
 };
 
-let _idSeq = 100;
-const uid = () => ++_idSeq;
+let _seq = 100;
+const uid = () => ++_seq;
 
 function computeSchedule(sbd) {
   const labels = { lunes:'Lun', martes:'Mar', miercoles:'Mié', jueves:'Jue', viernes:'Vie', sabado:'Sáb', domingo:'Dom' };
@@ -133,14 +185,24 @@ function readFile(file) {
   });
 }
 
-/* ───────────────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════ */
 export default function Onboarding() {
   const [step, setStep]         = useState(1);
   const [dir,  setDir]          = useState(1);
   const [data, setData]         = useState(INITIAL_DATA);
   const [scale, setScale]       = useState(0.42);
-  const [modal, setModal]       = useState(null);
+  const [modal, setModal]       = useState(false);
+  const [showStyles, setShowStyles] = useState(false);
   const [gen,   setGen]         = useState({});
+
+  /* Reference URL color extraction state */
+  const [refState, setRefState] = useState([
+    { colors: [], loading: false },
+    { colors: [], loading: false },
+    { colors: [], loading: false },
+  ]);
+  const refTimers = useRef([null, null, null]);
+
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -153,61 +215,99 @@ export default function Onboarding() {
 
   const up = useCallback((k, v) => setData(p => ({ ...p, [k]: v })), []);
 
-  const goNext = () => { setDir(1);  setStep(s => Math.min(s + 1, 5)); };
+  const goNext = () => { setDir(1);  setStep(s => Math.min(s + 1, 4)); };
   const goPrev = () => { setDir(-1); setStep(s => Math.max(s - 1, 1)); };
 
-  const selectTemplate = id => {
-    const cfg = TEMPLATES[id]?.config;
-    setData(p => ({ ...p, selectedTemplate: id, primaryColor: cfg?.primaryColor || p.primaryColor, secondaryColor: cfg?.secondaryColor || p.secondaryColor }));
-  };
+  /* Auto-assign template when sector is chosen */
+  const handleSector = useCallback((value) => {
+    const tplId = SECTORS.find(s => s.value === value)?.template || 'Generica';
+    const cfg   = TEMPLATES[tplId]?.config;
+    setData(p => ({
+      ...p,
+      sector: value,
+      selectedTemplate: tplId,
+      primaryColor:   cfg?.primaryColor   || p.primaryColor,
+      secondaryColor: cfg?.secondaryColor || p.secondaryColor,
+    }));
+  }, []);
 
-  /* — file uploads — */
-  const uploadLogo     = async e => { const f = e.target.files[0]; if (!f) return; up('logoPreview', await readFile(f)); };
-  const uploadHero     = async e => { const f = e.target.files[0]; if (!f) return; up('heroPhotoPreview', await readFile(f)); };
-  const uploadGallery  = async e => {
+  /* Apply style variant from the preview panel */
+  const applyVariant = useCallback((v) => {
+    setData(p => ({ ...p, primaryColor: v.primary, secondaryColor: v.secondary }));
+    setShowStyles(false);
+  }, []);
+
+  /* Apply an extracted reference color */
+  const applyRefColor = useCallback((hex) => {
+    setData(p => ({ ...p, primaryColor: hex, secondaryColor: makeLightVariant(hex) }));
+  }, []);
+
+  /* Reference URL handler with debounced extraction */
+  const handleRefUrl = useCallback((i, value) => {
+    setData(p => {
+      const urls = [...p.referenceUrls];
+      urls[i] = value;
+      return { ...p, referenceUrls: urls };
+    });
+    /* Reset colors for this slot */
+    setRefState(s => s.map((v, j) => j === i ? { colors: [], loading: false } : v));
+    if (refTimers.current[i]) clearTimeout(refTimers.current[i]);
+    if (!value.trim()) return;
+
+    refTimers.current[i] = setTimeout(async () => {
+      setRefState(s => s.map((v, j) => j === i ? { ...v, loading: true } : v));
+      const colors = await extractColorsFromUrl(value);
+      setRefState(s => s.map((v, j) => j === i ? { colors: colors || [], loading: false } : v));
+    }, 1400);
+  }, []);
+
+  /* ── file uploads ── */
+  const uploadLogo    = async e => { const f = e.target.files[0]; if (!f) return; up('logoPreview', await readFile(f)); };
+  const uploadHero    = async e => { const f = e.target.files[0]; if (!f) return; up('heroPhotoPreview', await readFile(f)); };
+  const uploadGallery = async e => {
     const files = Array.from(e.target.files);
     const previews = await Promise.all(files.map(readFile));
     setData(p => ({
       ...p,
-      gallery:        [...p.gallery,        ...files   ].slice(0, 12),
-      galleryPreviews:[...p.galleryPreviews, ...previews].slice(0, 12),
+      gallery:         [...p.gallery,         ...files   ].slice(0, 12),
+      galleryPreviews: [...p.galleryPreviews,  ...previews].slice(0, 12),
     }));
   };
-  const removeGallery  = i => setData(p => ({
+  const rmGallery  = i => setData(p => ({
     ...p,
     gallery:         p.gallery.filter((_, j) => j !== i),
     galleryPreviews: p.galleryPreviews.filter((_, j) => j !== i),
   }));
 
-  /* — services — */
-  const addSvc    = () => { if (data.services.length >= 10) return; setData(p => ({ ...p, services: [...p.services, { id: uid(), name: '', description: '', price: '', photoPreview: '' }] })); };
-  const rmSvc     = id => setData(p => ({ ...p, services: p.services.length > 1 ? p.services.filter(s => s.id !== id) : p.services }));
-  const upSvc     = (id, k, v) => setData(p => ({ ...p, services: p.services.map(s => s.id === id ? { ...s, [k]: v } : s) }));
-  const svcPhoto  = async (id, e) => { const f = e.target.files[0]; if (!f) return; upSvc(id, 'photoPreview', await readFile(f)); };
+  /* ── services ── */
+  const addSvc   = () => { if (data.services.length >= 10) return; setData(p => ({ ...p, services: [...p.services, { id: uid(), name: '', description: '', price: '', photoPreview: '' }] })); };
+  const rmSvc    = id => setData(p => ({ ...p, services: p.services.length > 1 ? p.services.filter(s => s.id !== id) : p.services }));
+  const upSvc    = (id, k, v) => setData(p => ({ ...p, services: p.services.map(s => s.id === id ? { ...s, [k]: v } : s) }));
+  const svcPhoto = async (id, e) => { const f = e.target.files[0]; if (!f) return; upSvc(id, 'photoPreview', await readFile(f)); };
 
-  /* — team — */
+  /* ── team ── */
   const addTeam   = () => { if (data.team.length >= 6) return; setData(p => ({ ...p, team: [...p.team, { id: uid(), name: '', role: '', photoPreview: '' }] })); };
   const rmTeam    = id => setData(p => ({ ...p, team: p.team.filter(t => t.id !== id) }));
   const upTeam    = (id, k, v) => setData(p => ({ ...p, team: p.team.map(t => t.id === id ? { ...t, [k]: v } : t) }));
   const teamPhoto = async (id, e) => { const f = e.target.files[0]; if (!f) return; upTeam(id, 'photoPreview', await readFile(f)); };
 
-  /* — testimonials — */
-  const addTest   = () => { if (data.testimonials.length >= 5) return; setData(p => ({ ...p, testimonials: [...p.testimonials, { id: uid(), name: '', text: '', rating: 5 }] })); };
-  const rmTest    = id => setData(p => ({ ...p, testimonials: p.testimonials.filter(t => t.id !== id) }));
-  const upTest    = (id, k, v) => setData(p => ({ ...p, testimonials: p.testimonials.map(t => t.id === id ? { ...t, [k]: v } : t) }));
+  /* ── testimonials ── */
+  const addTest = () => { if (data.testimonials.length >= 5) return; setData(p => ({ ...p, testimonials: [...p.testimonials, { id: uid(), name: '', text: '', rating: 5 }] })); };
+  const rmTest  = id => setData(p => ({ ...p, testimonials: p.testimonials.filter(t => t.id !== id) }));
+  const upTest  = (id, k, v) => setData(p => ({ ...p, testimonials: p.testimonials.map(t => t.id === id ? { ...t, [k]: v } : t) }));
 
-  /* — faqs — */
-  const addFaq    = () => { if (data.faqs.length >= 8) return; setData(p => ({ ...p, faqs: [...p.faqs, { id: uid(), question: '', answer: '' }] })); };
-  const rmFaq     = id => setData(p => ({ ...p, faqs: p.faqs.filter(f => f.id !== id) }));
-  const upFaq     = (id, k, v) => setData(p => ({ ...p, faqs: p.faqs.map(f => f.id === id ? { ...f, [k]: v } : f) }));
+  /* ── faqs ── */
+  const addFaq = () => { if (data.faqs.length >= 8) return; setData(p => ({ ...p, faqs: [...p.faqs, { id: uid(), question: '', answer: '' }] })); };
+  const rmFaq  = id => setData(p => ({ ...p, faqs: p.faqs.filter(f => f.id !== id) }));
+  const upFaq  = (id, k, v) => setData(p => ({ ...p, faqs: p.faqs.map(f => f.id === id ? { ...f, [k]: v } : f) }));
 
-  /* — schedule — */
+  /* ── schedule ── */
   const upDay = (day, k, v) => setData(p => ({ ...p, scheduleByDay: { ...p.scheduleByDay, [day]: { ...p.scheduleByDay[day], [k]: v } } }));
 
-  /* — languages — */
+  /* ── languages ── */
   const toggleLang = lang => setData(p => ({ ...p, languages: p.languages.includes(lang) ? p.languages.filter(l => l !== lang) : [...p.languages, lang] }));
 
-  /* — AI generation — */
+  /* ── AI generation ── */
   const generate = async field => {
     setGen(g => ({ ...g, [field]: true }));
     try {
@@ -215,32 +315,32 @@ export default function Onboarding() {
         up('description', await generateDescription(data));
       } else if (field === 'heroTitle') {
         await new Promise(r => setTimeout(r, 700));
-        const sector = SECTORS.find(s => s.value === data.sector)?.label || 'servicios profesionales';
+        const sector = SECTORS.find(s => s.value === data.sector)?.label || 'servicios';
         const city = data.address?.split(',').slice(-1)[0]?.trim() || 'España';
         up('heroTitle', data.businessName ? `${data.businessName} — ${sector} de confianza en ${city}` : 'Tu web, tu identidad');
       } else if (field === 'about') {
         await new Promise(r => setTimeout(r, 900));
-        up('about', `Somos ${data.businessName || 'un negocio'} con una sólida trayectoria en el sector. Nuestro equipo de profesionales trabaja cada día con un único objetivo: ofrecer la mejor experiencia a nuestros clientes. Combinamos experiencia, dedicación y tecnología de vanguardia para que cada resultado supere tus expectativas.`);
+        up('about', `Somos ${data.businessName || 'un negocio'} con una sólida trayectoria en el sector. Nuestro equipo trabaja cada día para ofrecer la mejor experiencia a nuestros clientes, combinando profesionalidad, dedicación y resultados que superan las expectativas.`);
       } else if (field === 'faqs') {
         await new Promise(r => setTimeout(r, 1100));
         const items = [
-          { id: uid(), question: '¿Cómo puedo contactar con vosotros?', answer: `Puedes llamarnos al ${data.phone || 'nuestro teléfono'} o enviarnos un email a ${data.email || 'nuestro correo'}. También puedes usar el formulario de contacto de esta web.` },
-          { id: uid(), question: '¿Cuál es vuestro horario de atención?', answer: computeSchedule(data.scheduleByDay) || 'Lunes a Viernes 9:00–20:00.' },
+          { id: uid(), question: '¿Cómo puedo contactar con vosotros?', answer: `Puedes llamarnos al ${data.phone || 'nuestro teléfono'} o enviarnos un email. También puedes usar el formulario de contacto de nuestra web.` },
+          { id: uid(), question: '¿Cuál es vuestro horario de atención?', answer: computeSchedule(data.scheduleByDay) || 'Lunes a viernes de 9:00 a 20:00.' },
           { id: uid(), question: '¿Dónde estáis ubicados?', answer: data.address || 'Consulta nuestra dirección en el apartado de contacto.' },
         ];
         setData(p => ({ ...p, faqs: [...p.faqs, ...items].slice(0, 8) }));
       } else if (field === 'seoTitle') {
         await new Promise(r => setTimeout(r, 600));
-        const sector = SECTORS.find(s => s.value === data.sector)?.label || 'Servicios';
+        const sectorLabel = SECTORS.find(s => s.value === data.sector)?.label || 'Servicios';
         const city = data.address?.split(',').slice(-1)[0]?.trim() || 'España';
-        up('seoTitle', `${data.businessName || 'Tu negocio'} | ${sector} en ${city}`);
+        up('seoTitle', `${data.businessName || 'Tu negocio'} | ${sectorLabel} en ${city}`);
       } else if (field === 'seoDescription') {
         await new Promise(r => setTimeout(r, 600));
-        const base = data.description || `Servicios de ${SECTORS.find(s => s.value === data.sector)?.label?.toLowerCase() || 'calidad'} en ${data.address?.split(',').slice(-1)[0]?.trim() || 'España'}. Contacta con nosotros hoy.`;
+        const base = data.description || `Servicios de ${SECTORS.find(s => s.value === data.sector)?.label?.toLowerCase() || 'calidad'} en ${data.address?.split(',').slice(-1)[0]?.trim() || 'España'}. Contacta hoy.`;
         up('seoDescription', base.slice(0, 155));
       } else if (field === 'privacyPolicy') {
         await new Promise(r => setTimeout(r, 1400));
-        up('privacyPolicy', `POLÍTICA DE PRIVACIDAD\n\nResponsable: ${data.businessName || 'El Responsable'}\nDirección: ${data.address || 'España'}\nContacto: ${data.email || 'info@negocio.com'}\n\nDatos que recogemos: nombre, email y teléfono al rellenar formularios de contacto.\nFinalidad: gestión de consultas y prestación de servicios solicitados.\nBase legal: consentimiento del interesado (Art. 6.1.a RGPD).\nConservación: hasta que solicites su supresión.\nDestinatarios: no cedemos datos a terceros salvo obligación legal.\nDerechos: acceso, rectificación, supresión, oposición y portabilidad. Escríbenos a ${data.email || 'info@negocio.com'}.`);
+        up('privacyPolicy', `POLÍTICA DE PRIVACIDAD\n\nResponsable: ${data.businessName || 'El Responsable'}\nDirección: ${data.address || 'España'}\nEmail: ${data.email || 'info@negocio.com'}\n\nDatos que recogemos: nombre, email y teléfono al rellenar el formulario de contacto.\nFinalidad: gestión de consultas y prestación del servicio.\nBase legal: consentimiento del interesado (Art. 6.1.a RGPD).\nConservación: hasta que solicites la supresión.\nDerechos: acceso, rectificación, supresión, oposición y portabilidad. Escríbenos a ${data.email || 'info@negocio.com'}.`);
       }
     } finally {
       setGen(g => ({ ...g, [field]: false }));
@@ -252,12 +352,15 @@ export default function Onboarding() {
     schedule: computeSchedule(data.scheduleByDay),
     photosPreviews: [data.heroPhotoPreview, ...data.galleryPreviews].filter(Boolean),
   };
-  const CurrentTpl = TEMPLATES[data.selectedTemplate]?.component || ClinicaDentalTemplate;
-  const progress = ((step - 1) / 4) * 100;
+  const CurrentTpl = TEMPLATES[data.selectedTemplate]?.component || GenericaTemplate;
+  const progress   = ((step - 1) / 3) * 100;
+  const variants   = STYLE_VARIANTS[data.selectedTemplate] || STYLE_VARIANTS.Generica;
 
   return (
     <div className="ob-root">
-      <div className="ob-progress-bar"><div className="ob-progress-fill" style={{ width: `${progress}%` }} /></div>
+      <div className="ob-progress-bar">
+        <div className="ob-progress-fill" style={{ width: `${progress}%` }} />
+      </div>
 
       <header className="ob-header">
         <div className="ob-header-logo">
@@ -266,7 +369,7 @@ export default function Onboarding() {
         </div>
         <div className="ob-steps-bar">
           {STEPS.map(({ num, label, Icon }) => (
-            <div key={num} className={`ob-step-item ${step === num ? 'active' : ''} ${step > num ? 'done' : ''}`}>
+            <div key={num} className={`ob-step-item${step === num ? ' active' : ''}${step > num ? ' done' : ''}`}>
               <div className="ob-step-circle">
                 {step > num ? <IconCheck size={13} /> : <Icon size={14} />}
               </div>
@@ -274,27 +377,27 @@ export default function Onboarding() {
             </div>
           ))}
         </div>
-        <span className="ob-step-counter">Paso {step} de 5</span>
+        <span className="ob-step-counter">Paso {step} de 4</span>
       </header>
 
       <div className="ob-layout">
+        {/* ── FORM ── */}
         <div className="ob-form-panel">
           <AnimatePresence mode="wait" custom={dir}>
             <motion.div key={step} custom={dir} variants={slide} initial="enter" animate="center" exit="exit" className="ob-step-content">
-              {step === 1 && <Step1 data={data} selectTemplate={selectTemplate} setModal={setModal} />}
-              {step === 2 && <Step2 data={data} up={up} onLogo={uploadLogo} />}
-              {step === 3 && <Step3 data={data} up={up} upDay={upDay} />}
-              {step === 4 && <Step4
+              {step === 1 && <StepNegocio data={data} up={up} handleSector={handleSector} upDay={upDay} />}
+              {step === 2 && <StepIdentidad data={data} up={up} onLogo={uploadLogo} refState={refState} handleRefUrl={handleRefUrl} applyRefColor={applyRefColor} />}
+              {step === 3 && <StepContenido
                 data={data} up={up} gen={gen} generate={generate}
                 addSvc={addSvc} rmSvc={rmSvc} upSvc={upSvc} svcPhoto={svcPhoto}
                 onHero={uploadHero}
-                onGallery={uploadGallery} rmGallery={removeGallery}
+                onGallery={uploadGallery} rmGallery={rmGallery}
                 addTeam={addTeam} rmTeam={rmTeam} upTeam={upTeam} teamPhoto={teamPhoto}
                 addTest={addTest} rmTest={rmTest} upTest={upTest}
                 addFaq={addFaq} rmFaq={rmFaq} upFaq={upFaq}
                 toggleLang={toggleLang}
               />}
-              {step === 5 && <Step5 data={data} up={up} gen={gen} generate={generate} />}
+              {step === 4 && <StepSeo data={data} up={up} gen={gen} generate={generate} />}
             </motion.div>
           </AnimatePresence>
 
@@ -304,7 +407,7 @@ export default function Onboarding() {
                 <IconArrowLeft size={15} /> Anterior
               </button>
             )}
-            {step < 5 ? (
+            {step < 4 ? (
               <button className="ob-btn-next" onClick={goNext}>
                 Siguiente <IconArrowRight size={15} />
               </button>
@@ -316,33 +419,80 @@ export default function Onboarding() {
           </div>
         </div>
 
+        {/* ── LIVE PREVIEW ── */}
         <div className="ob-preview-panel">
           <div className="ob-preview-header">
             <div className="ob-preview-dots"><span /><span /><span /></div>
             <span className="ob-preview-label">Vista previa en tiempo real</span>
-            <button className="ob-preview-expand" onClick={() => setModal(data.selectedTemplate)}>
+            <button className="ob-preview-expand" onClick={() => setModal(true)}>
               <IconMaximize size={13} />
             </button>
           </div>
-          <div className="ob-preview-outer" ref={previewRef}>
-            <div className="ob-preview-inner" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 1440 }}>
-              <CurrentTpl businessData={templateData} />
+          {/* Preview body — position:relative so the styles panel can anchor inside */}
+          <div className="ob-preview-body">
+            <div className="ob-preview-outer" ref={previewRef}>
+              <div className="ob-preview-inner" style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: 1440 }}>
+                <CurrentTpl businessData={templateData} />
+              </div>
             </div>
-          </div>
+
+            {/* Styles panel slides up from the bottom of the preview body */}
+            <AnimatePresence>
+              {showStyles && (
+                <motion.div
+                  className="ob-styles-panel"
+                  initial={{ y: '100%', opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: '100%', opacity: 0 }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                >
+                <div className="ob-styles-header">
+                  <span>Variaciones de estilo</span>
+                  <button onClick={() => setShowStyles(false)}><IconX size={14} /></button>
+                </div>
+                <div className="ob-styles-grid">
+                  {variants.map((v, i) => (
+                    <button
+                      key={i}
+                      className={`ob-style-card${data.primaryColor === v.primary ? ' active' : ''}`}
+                      onClick={() => applyVariant(v)}
+                    >
+                      <div className="ob-style-swatches">
+                        <span style={{ background: v.primary }} />
+                        <span style={{ background: v.secondary }} />
+                      </div>
+                      <span className="ob-style-name">{v.name}</span>
+                      {data.primaryColor === v.primary && <IconCheck size={10} className="ob-style-check" />}
+                    </button>
+                  ))}
+                </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>{/* /ob-preview-body */}
+
           <div className="ob-preview-footer">
-            <span className="ob-preview-tag">{TEMPLATES[data.selectedTemplate]?.config.name}</span>
-            <button className="ob-preview-change" onClick={() => { setDir(-1); setStep(1); }}>Cambiar plantilla</button>
+            <span className="ob-preview-tag">
+              {TEMPLATES[data.selectedTemplate]?.config.name || 'Web personalizada'}
+            </span>
+            <button
+              className="ob-preview-styles-btn"
+              onClick={() => setShowStyles(s => !s)}
+            >
+              <IconPalette size={11} /> Ver otros estilos
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Full preview modal */}
       <AnimatePresence>
         {modal && (
-          <motion.div className="ob-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModal(null)}>
+          <motion.div className="ob-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModal(false)}>
             <motion.div className="ob-modal" initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }} transition={{ duration: 0.25 }} onClick={e => e.stopPropagation()}>
-              <button className="ob-modal-close" onClick={() => setModal(null)}><IconX size={18} /></button>
+              <button className="ob-modal-close" onClick={() => setModal(false)}><IconX size={18} /></button>
               <div className="ob-modal-scroll">
-                {(() => { const T = TEMPLATES[modal]?.component || ClinicaDentalTemplate; return <T businessData={templateData} />; })()}
+                <CurrentTpl businessData={templateData} />
               </div>
             </motion.div>
           </motion.div>
@@ -352,7 +502,7 @@ export default function Onboarding() {
   );
 }
 
-/* ──── SHARED COMPONENTS ──────────────────────────────────── */
+/* ── SHARED SMALL COMPONENTS ────────────────────────────── */
 
 function AiBtn({ field, gen, generate }) {
   const loading = gen[field];
@@ -389,111 +539,12 @@ function Toggle({ enabled, onToggle, icon: Icon, label, children }) {
   );
 }
 
-/* ──── STEP 1 — TEMPLATE ──────────────────────────────────── */
-function Step1({ data, selectTemplate, setModal }) {
+/* ── STEP 1 — NEGOCIO ───────────────────────────────────── */
+function StepNegocio({ data, up, handleSector, upDay }) {
   return (
     <div className="ob-step">
       <div className="ob-step-head">
-        <h2 className="ob-step-title">Elige tu plantilla</h2>
-        <p className="ob-step-desc">Selecciona el diseño que mejor represente tu negocio. Podrás personalizarlo a tu gusto en el siguiente paso.</p>
-      </div>
-      <div className="ob-templates-grid">
-        {Object.entries(TEMPLATES).map(([id, { config }]) => (
-          <div key={id} className={`ob-tpl-card${data.selectedTemplate === id ? ' selected' : ''}`} onClick={() => selectTemplate(id)}>
-            <div className="ob-tpl-thumb" style={{ background: `linear-gradient(135deg, ${config.primaryColor}, ${config.secondaryColor})` }}>
-              {data.selectedTemplate === id && <div className="ob-tpl-check"><IconCheck size={12} /></div>}
-              <button className="ob-tpl-preview-btn" onClick={e => { e.stopPropagation(); setModal(id); }}>
-                <IconEye size={13} /> Ver preview
-              </button>
-            </div>
-            <div className="ob-tpl-info">
-              <div className="ob-tpl-name">{config.name}</div>
-              <div className="ob-tpl-desc">{config.description}</div>
-              {data.selectedTemplate === id
-                ? <span className="ob-tpl-selected"><IconCheck size={11} /> Seleccionada</span>
-                : <span className="ob-tpl-use">Usar esta plantilla</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ──── STEP 2 — IDENTITY ──────────────────────────────────── */
-function Step2({ data, up, onLogo }) {
-  return (
-    <div className="ob-step">
-      <div className="ob-step-head">
-        <h2 className="ob-step-title">Identidad visual</h2>
-        <p className="ob-step-desc">Personaliza los colores, tipografía y logo de tu web.</p>
-      </div>
-
-      <div className="ob-section">
-        <SectionHead icon={IconUpload} title="Logo" />
-        <div className="ob-logo-area">
-          {data.logoPreview ? (
-            <div className="ob-logo-preview-wrap">
-              <img src={data.logoPreview} alt="logo" />
-              <button onClick={() => up('logoPreview', '')}><IconX size={13} /></button>
-            </div>
-          ) : (
-            <label className="ob-upload-btn">
-              <input type="file" accept="image/*" onChange={onLogo} hidden />
-              <IconUpload size={22} />
-              <span>Subir logo</span>
-              <small>PNG, SVG, JPG — hasta 2 MB</small>
-            </label>
-          )}
-        </div>
-      </div>
-
-      <div className="ob-section">
-        <SectionHead icon={IconPalette} title="Colores corporativos" />
-        <div className="ob-colors-row">
-          {[
-            { key: 'primaryColor',   label: 'Color principal'   },
-            { key: 'secondaryColor', label: 'Color secundario'  },
-          ].map(c => (
-            <div key={c.key} className="ob-color-picker">
-              <label>{c.label}</label>
-              <div className="ob-color-inputs">
-                <input type="color" value={data[c.key]} onChange={e => up(c.key, e.target.value)} />
-                <input type="text"  value={data[c.key]} onChange={e => up(c.key, e.target.value)} maxLength={7} className="ob-hex" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="ob-section">
-        <SectionHead icon={IconTypography} title="Tipografía" />
-        <div className="ob-fonts-grid">
-          {FONT_PAIRS.map(f => (
-            <div
-              key={f.id}
-              className={`ob-font-card${data.fontPair === f.id ? ' selected' : ''}`}
-              style={{ fontFamily: f.css }}
-              onClick={() => up('fontPair', f.id)}
-            >
-              {data.fontPair === f.id && <div className="ob-font-check"><IconCheck size={11} /></div>}
-              <div className="ob-font-sample">Aa Bb Cc</div>
-              <div className="ob-font-name">{f.name}</div>
-              <div className="ob-font-sub">{f.subtitle}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ──── STEP 3 — BUSINESS DATA ─────────────────────────────── */
-function Step3({ data, up, upDay }) {
-  return (
-    <div className="ob-step">
-      <div className="ob-step-head">
-        <h2 className="ob-step-title">Datos del negocio</h2>
+        <h2 className="ob-step-title">Tu negocio</h2>
         <p className="ob-step-desc">Información básica que aparecerá en tu web y ayudará a tus clientes a encontrarte.</p>
       </div>
 
@@ -506,7 +557,7 @@ function Step3({ data, up, upDay }) {
           </div>
           <div className="ob-field ob-full">
             <label>Sector</label>
-            <select value={data.sector} onChange={e => up('sector', e.target.value)}>
+            <select value={data.sector} onChange={e => handleSector(e.target.value)}>
               <option value="">Selecciona tu sector…</option>
               {SECTORS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
@@ -566,11 +617,11 @@ function Step3({ data, up, upDay }) {
         <SectionHead icon={IconBrandInstagram} title="Redes sociales" />
         <div className="ob-fields">
           {[
-            { key: 'instagram', icon: IconBrandInstagram, ph: '@tunegocio'          },
-            { key: 'facebook',  icon: IconBrandFacebook,  ph: 'facebook.com/…'      },
-            { key: 'tiktok',    icon: IconBrandTiktok,    ph: '@tunegocio'          },
-            { key: 'linkedin',  icon: IconBrandLinkedin,  ph: 'linkedin.com/company/…' },
-          ].map(({ key, icon: Icon, ph }) => (
+            { key: 'instagram', Icon: IconBrandInstagram, ph: '@tunegocio'               },
+            { key: 'facebook',  Icon: IconBrandFacebook,  ph: 'facebook.com/…'           },
+            { key: 'tiktok',    Icon: IconBrandTiktok,    ph: '@tunegocio'               },
+            { key: 'linkedin',  Icon: IconBrandLinkedin,  ph: 'linkedin.com/company/…'   },
+          ].map(({ key, Icon, ph }) => (
             <div key={key} className="ob-field">
               <label><Icon size={11} /> {key.charAt(0).toUpperCase() + key.slice(1)}</label>
               <input type="text" value={data[key]} onChange={e => up(key, e.target.value)} placeholder={ph} />
@@ -582,23 +633,135 @@ function Step3({ data, up, upDay }) {
   );
 }
 
-/* ──── STEP 4 — CONTENT ───────────────────────────────────── */
-function Step4({ data, up, gen, generate,
+/* ── STEP 2 — IDENTIDAD ─────────────────────────────────── */
+function StepIdentidad({ data, up, onLogo, refState, handleRefUrl, applyRefColor }) {
+  return (
+    <div className="ob-step">
+      <div className="ob-step-head">
+        <h2 className="ob-step-title">Identidad visual</h2>
+        <p className="ob-step-desc">Personaliza los colores, tipografía y logo de tu web.</p>
+      </div>
+
+      {/* Logo */}
+      <div className="ob-section">
+        <SectionHead icon={IconUpload} title="Logo" />
+        <div className="ob-logo-area">
+          {data.logoPreview ? (
+            <div className="ob-logo-preview-wrap">
+              <img src={data.logoPreview} alt="logo" />
+              <button onClick={() => up('logoPreview', '')}><IconX size={13} /></button>
+            </div>
+          ) : (
+            <label className="ob-upload-btn">
+              <input type="file" accept="image/*" onChange={onLogo} hidden />
+              <IconUpload size={22} />
+              <span>Subir logo</span>
+              <small>PNG, SVG, JPG — hasta 2 MB</small>
+            </label>
+          )}
+        </div>
+      </div>
+
+      {/* Reference URLs + color extraction */}
+      <div className="ob-section">
+        <SectionHead icon={IconExternalLink} title="Webs de referencia" />
+        <p className="ob-hint" style={{ marginBottom: 14 }}>
+          ¿Hay alguna web que te guste como referencia? Extraemos su paleta de colores automáticamente.
+        </p>
+        <div className="ob-ref-list">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="ob-ref-row">
+              <div className="ob-ref-input-wrap">
+                <IconWorld size={14} className="ob-ref-icon" />
+                <input
+                  type="text"
+                  placeholder={`URL referencia ${i + 1} (ej: apple.com)`}
+                  value={data.referenceUrls[i]}
+                  onChange={e => handleRefUrl(i, e.target.value)}
+                  className="ob-ref-input"
+                />
+                {refState[i].loading && <IconLoader2 size={14} className="ob-ref-spin" />}
+              </div>
+              {refState[i].colors.length > 0 && (
+                <div className="ob-ref-colors">
+                  <span className="ob-ref-colors-label">Colores extraídos — haz clic para aplicar:</span>
+                  <div className="ob-ref-swatches">
+                    {refState[i].colors.map((c, j) => (
+                      <button
+                        key={j}
+                        className={`ob-ref-swatch${data.primaryColor === c ? ' active' : ''}`}
+                        style={{ background: c }}
+                        title={c}
+                        onClick={() => applyRefColor(c)}
+                      >
+                        {data.primaryColor === c && <IconCheck size={10} />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Colors */}
+      <div className="ob-section">
+        <SectionHead icon={IconPalette} title="Colores corporativos" />
+        <div className="ob-colors-row">
+          {[
+            { key: 'primaryColor',   label: 'Color principal'  },
+            { key: 'secondaryColor', label: 'Color secundario' },
+          ].map(c => (
+            <div key={c.key} className="ob-color-picker">
+              <label>{c.label}</label>
+              <div className="ob-color-inputs">
+                <input type="color" value={data[c.key]} onChange={e => up(c.key, e.target.value)} />
+                <input type="text"  value={data[c.key]} onChange={e => up(c.key, e.target.value)} maxLength={7} className="ob-hex" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Typography */}
+      <div className="ob-section">
+        <SectionHead icon={IconTypography} title="Tipografía" />
+        <div className="ob-fonts-grid">
+          {FONT_PAIRS.map(f => (
+            <div
+              key={f.id}
+              className={`ob-font-card${data.fontPair === f.id ? ' selected' : ''}`}
+              style={{ fontFamily: f.css }}
+              onClick={() => up('fontPair', f.id)}
+            >
+              {data.fontPair === f.id && <div className="ob-font-check"><IconCheck size={11} /></div>}
+              <div className="ob-font-sample">Aa Bb Cc</div>
+              <div className="ob-font-name">{f.name}</div>
+              <div className="ob-font-sub">{f.subtitle}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── STEP 3 — CONTENIDO ─────────────────────────────────── */
+function StepContenido({ data, up, gen, generate,
   addSvc, rmSvc, upSvc, svcPhoto,
   onHero, onGallery, rmGallery,
   addTeam, rmTeam, upTeam, teamPhoto,
   addTest, rmTest, upTest,
-  addFaq, rmFaq, upFaq,
-  toggleLang }) {
-
+  addFaq, rmFaq, upFaq, toggleLang }) {
   return (
     <div className="ob-step">
       <div className="ob-step-head">
         <h2 className="ob-step-title">Contenido de tu web</h2>
-        <p className="ob-step-desc">Rellena los textos, fotos y servicios. La IA te ayuda a escribir en segundos.</p>
+        <p className="ob-step-desc">Textos, fotos y servicios. La IA te ayuda a escribir en segundos.</p>
       </div>
 
-      {/* Textos principales */}
+      {/* Textos */}
       <div className="ob-section">
         <SectionHead icon={IconFileText} title="Textos principales" />
         <div className="ob-fields">
@@ -611,7 +774,7 @@ function Step4({ data, up, gen, generate,
           </div>
           <div className="ob-field ob-full">
             <div className="ob-label-row">
-              <label>Descripción corta del negocio</label>
+              <label>Descripción corta</label>
               <AiBtn field="description" gen={gen} generate={generate} />
             </div>
             <textarea rows={3} value={data.description} onChange={e => up('description', e.target.value)} placeholder="Una frase que resume lo que haces y por qué eres diferente…" />
@@ -626,7 +789,7 @@ function Step4({ data, up, gen, generate,
         </div>
       </div>
 
-      {/* Foto de portada */}
+      {/* Foto hero */}
       <div className="ob-section">
         <SectionHead icon={IconPhoto} title="Foto de portada (hero)" />
         {data.heroPhotoPreview ? (
@@ -639,7 +802,7 @@ function Step4({ data, up, gen, generate,
             <input type="file" accept="image/*" onChange={onHero} hidden />
             <IconPhoto size={26} />
             <span>Subir foto de portada</span>
-            <small>Aparecerá en el banner principal · Mín. 1200×600px recomendado</small>
+            <small>Banner principal de tu web · Mín. 1200×600px recomendado</small>
           </label>
         )}
       </div>
@@ -675,7 +838,7 @@ function Step4({ data, up, gen, generate,
               </div>
               <div className="ob-service-fields">
                 <input type="text" placeholder="Nombre del servicio *" value={s.name} onChange={e => upSvc(s.id, 'name', e.target.value)} />
-                <input type="text" placeholder="Precio (ej: 50€, Desde 30€)" value={s.price} onChange={e => upSvc(s.id, 'price', e.target.value)} />
+                <input type="text" placeholder="Precio (ej: 50€)" value={s.price} onChange={e => upSvc(s.id, 'price', e.target.value)} />
                 <input type="text" placeholder="Descripción breve" value={s.description} onChange={e => upSvc(s.id, 'description', e.target.value)} className="ob-span2" />
               </div>
             </div>
@@ -706,7 +869,8 @@ function Step4({ data, up, gen, generate,
                 </div>
               ))}
             </div>
-          )}
+          )
+        }
       </div>
 
       {/* Equipo */}
@@ -746,11 +910,13 @@ function Step4({ data, up, gen, generate,
       {/* Testimonios */}
       <div className="ob-section">
         <SectionHead
-          icon={IconStar} title="Testimonios de clientes"
+          icon={IconStar} title="Testimonios"
           count={data.testimonials.length} max={5}
           action={
             <div className="ob-actions-row">
-              <button className="ob-ghost-btn" onClick={() => alert('Próximamente: importar desde Google My Business')}><IconBrandGoogle size={13} /> Importar de Google</button>
+              <button className="ob-ghost-btn" onClick={() => alert('Próximamente: importar desde Google My Business')}>
+                <IconBrandGoogle size={13} /> Importar de Google
+              </button>
               {data.testimonials.length < 5 && <button className="ob-add-btn" onClick={addTest}><IconPlus size={13} /> Añadir</button>}
             </div>
           }
@@ -788,7 +954,7 @@ function Step4({ data, up, gen, generate,
             </div>
           }
         />
-        {data.faqs.length === 0 && <p className="ob-hint">Opcional — responde las dudas más comunes de tus clientes.</p>}
+        {data.faqs.length === 0 && <p className="ob-hint">Opcional — responde las dudas más comunes.</p>}
         <div className="ob-faqs-list">
           {data.faqs.map((f, i) => (
             <div key={f.id} className="ob-faq-item">
@@ -808,7 +974,6 @@ function Step4({ data, up, gen, generate,
         <SectionHead icon={IconMapPin} title="Zona de cobertura" />
         <div className="ob-fields">
           <div className="ob-field ob-full">
-            <label>Ciudades o zonas donde trabajas</label>
             <input type="text" value={data.coverageArea} onChange={e => up('coverageArea', e.target.value)} placeholder="Ej: Madrid, Alcobendas, Pozuelo de Alarcón…" />
           </div>
         </div>
@@ -819,7 +984,7 @@ function Step4({ data, up, gen, generate,
         <SectionHead icon={IconAward} title="Certificaciones y premios" />
         <div className="ob-fields">
           <div className="ob-field ob-full">
-            <textarea rows={2} value={data.certifications} onChange={e => up('certifications', e.target.value)} placeholder="Ej: Colegio de Médicos de Madrid, ISO 9001, Premio Best Clinic 2024…" />
+            <textarea rows={2} value={data.certifications} onChange={e => up('certifications', e.target.value)} placeholder="Ej: Colegio de Médicos, ISO 9001, Premio Best Clinic 2024…" />
           </div>
         </div>
       </div>
@@ -844,13 +1009,13 @@ function Step4({ data, up, gen, generate,
   );
 }
 
-/* ──── STEP 5 — SEO & CONFIG ──────────────────────────────── */
-function Step5({ data, up, gen, generate }) {
+/* ── STEP 4 — SEO ───────────────────────────────────────── */
+function StepSeo({ data, up, gen, generate }) {
   return (
     <div className="ob-step">
       <div className="ob-step-head">
         <h2 className="ob-step-title">SEO y configuración</h2>
-        <p className="ob-step-desc">Optimiza tu web para Google y activa las funcionalidades que necesitas.</p>
+        <p className="ob-step-desc">Optimiza tu web para Google y activa las funcionalidades finales.</p>
       </div>
 
       <div className="ob-section">
@@ -868,7 +1033,7 @@ function Step5({ data, up, gen, generate }) {
               <label>Meta descripción <span className="ob-char-count">{data.seoDescription.length}/155</span></label>
               <AiBtn field="seoDescription" gen={gen} generate={generate} />
             </div>
-            <textarea rows={2} value={data.seoDescription} onChange={e => up('seoDescription', e.target.value)} placeholder="Descripción breve que aparece en Google (máx. 155 caracteres)" maxLength={155} />
+            <textarea rows={2} value={data.seoDescription} onChange={e => up('seoDescription', e.target.value)} placeholder="Descripción que aparece en Google (máx. 155 caracteres)" maxLength={155} />
           </div>
           <div className="ob-field ob-full">
             <label>Palabra clave principal</label>
@@ -881,12 +1046,12 @@ function Step5({ data, up, gen, generate }) {
         <SectionHead icon={IconWorld} title="Dominio" />
         <div className="ob-domain-toggle">
           {[
-            { val: 'new',      icon: IconSearch, label: 'Quiero comprar un dominio' },
-            { val: 'existing', icon: IconLink,   label: 'Ya tengo dominio'          },
+            { val: 'new',      Icon: IconSearch, label: 'Quiero comprar un dominio' },
+            { val: 'existing', Icon: IconLink,   label: 'Ya tengo dominio'          },
           ].map(opt => (
             <label key={opt.val} className={`ob-domain-opt${data.domainOption === opt.val ? ' selected' : ''}`}>
               <input type="radio" name="domain" value={opt.val} checked={data.domainOption === opt.val} onChange={() => up('domainOption', opt.val)} hidden />
-              <opt.icon size={16} />
+              <opt.Icon size={16} />
               <span>{opt.label}</span>
             </label>
           ))}
@@ -929,8 +1094,8 @@ function Step5({ data, up, gen, generate }) {
           <Toggle enabled={data.whatsappEnabled} onToggle={() => up('whatsappEnabled', !data.whatsappEnabled)} icon={IconBrandWhatsapp} label="Botón de WhatsApp flotante">
             <input type="tel" value={data.whatsappNumber} onChange={e => up('whatsappNumber', e.target.value)} placeholder="34612345678 (sin + ni espacios)" className="ob-toggle-input" />
           </Toggle>
-          <Toggle enabled={data.chatEnabled} onToggle={() => up('chatEnabled', !data.chatEnabled)} icon={IconMessage} label="Chat en vivo" />
-          <Toggle enabled={data.cookieEnabled} onToggle={() => up('cookieEnabled', !data.cookieEnabled)} icon={IconShield} label="Banner de cookies (RGPD)" />
+          <Toggle enabled={data.chatEnabled}    onToggle={() => up('chatEnabled',    !data.chatEnabled)}    icon={IconMessage}      label="Chat en vivo" />
+          <Toggle enabled={data.cookieEnabled}  onToggle={() => up('cookieEnabled',  !data.cookieEnabled)}  icon={IconShield}       label="Banner de cookies (RGPD)" />
         </div>
       </div>
 
@@ -941,7 +1106,7 @@ function Step5({ data, up, gen, generate }) {
         />
         {data.privacyPolicy
           ? <textarea rows={8} value={data.privacyPolicy} onChange={e => up('privacyPolicy', e.target.value)} className="ob-privacy-ta" />
-          : <p className="ob-hint">Pulsa "Generar con IA" para crear automáticamente la política de privacidad basada en los datos de tu negocio.</p>
+          : <p className="ob-hint">Pulsa "Generar con IA" para crear la política de privacidad basada en los datos de tu negocio.</p>
         }
       </div>
     </div>

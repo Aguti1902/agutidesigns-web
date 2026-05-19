@@ -8,8 +8,9 @@ const templates = {
 };
 
 export async function generateDescription(businessData) {
-  const { businessName, sector, services = [] } = businessData;
+  const { businessName, sector, services = [], referenceUrls = [] } = businessData;
   const name = businessName || 'nuestro negocio';
+  const refs = referenceUrls.filter(Boolean);
 
   const apiUrl = import.meta.env.VITE_AI_API_URL;
   if (apiUrl) {
@@ -17,7 +18,7 @@ export async function generateDescription(businessData) {
       const res = await fetch(`${apiUrl}/api/ai/generate-description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName: name, sector, services }),
+        body: JSON.stringify({ businessName: name, sector, services, referenceUrls: refs }),
       });
       if (res.ok) {
         const data = await res.json();
