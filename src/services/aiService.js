@@ -280,43 +280,30 @@ export async function qualifyLead(conversationHistory) {
   }
 }
 
-// ── Email Automation (simulated - en producción usar backend) ──
+// ── Email Automation ──
 export async function sendAutomatedEmail(type, data) {
-  // En producción esto iría a un backend que use SendGrid, Resend, etc.
-  console.log(`[AI Email] Tipo: ${type}`, data);
-  
-  const emailTemplates = {
-    welcome: {
-      subject: `¡Hola ${data.name}! Bienvenido/a a Agutidesigns`,
-      body: `Gracias por tu interés. En breve recibirás más información sobre nuestros servicios.`,
-    },
-    quote: {
-      subject: `Tu presupuesto personalizado de Agutidesigns`,
-      body: data.quoteContent,
-    },
-    followup: {
-      subject: `${data.name}, ¿pudiste revisar nuestra propuesta?`,
-      body: `Queríamos saber si tuviste oportunidad de revisar el presupuesto. Estamos aquí para resolver cualquier duda.`,
-    },
-    pack_confirmation: {
-      subject: `¡Genial ${data.name}! Tu solicitud del ${data.packName || 'pack'} está en marcha`,
-      body: `Hemos recibido tu solicitud para el ${data.packName || 'pack'} (${data.packPrice || ''}€). Te contactaremos en menos de 24h para empezar. ¡Esto va a ser genial!`,
-    },
-    new_lead: {
-      subject: `[Nuevo Lead] ${data.name} quiere el ${data.packName || 'un pack'}`,
-      body: `Nuevo lead:\n- Nombre: ${data.name}\n- Email: ${data.email}\n- Teléfono: ${data.phone || 'No proporcionado'}\n- Negocio: ${data.business || 'No indicado'}\n- Pack: ${data.packName || 'No definido'}`,
-    },
-    price_request: {
-      subject: `${data.name} quiere saber el precio del ${data.packName || 'pack'}`,
-      body: `Solicitud de precio:\n- Nombre: ${data.name}\n- Email: ${data.email}\n- WhatsApp: ${data.phone}\n- Negocio: ${data.business || 'No indicado'}\n- Pack: ${data.packName}\n- WhatsApp IA: ${data.whatsappPlan || 'No'}`,
-    },
-  };
+  if (type === 'quote') {
+    try {
+      const res = await fetch('/api/send-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('[send-quote] Error del servidor:', err);
+        return { success: false, error: err };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('[send-quote] Error de red:', err);
+      return { success: false, error: err.message };
+    }
+  }
 
-  return {
-    success: true,
-    template: emailTemplates[type],
-    message: `Email "${type}" preparado para ${data.email}`,
-  };
+  // Otros tipos — log por ahora
+  console.log(`[AI Email] Tipo: ${type}`, data);
+  return { success: true };
 }
 
 export default {

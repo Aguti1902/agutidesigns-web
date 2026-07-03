@@ -8,6 +8,7 @@ import {
   CreditCard, Image, Cpu, Package, Palette, Shield, Headphones, RotateCcw,
 } from 'lucide-react';
 import { calculatePrice, formatPrice } from '../services/priceCalculator';
+import { sendAutomatedEmail } from '../services/aiService';
 import { supabase } from '../lib/supabase';
 import './CalculadoraLanding.css';
 
@@ -265,6 +266,18 @@ export default function CalculadoraLanding() {
     setIsLoading(false);
     saveQuoteToSupabase(quoteData);
     sendLeadToN8N(quoteData);
+    sendAutomatedEmail('quote', {
+      name:            formData.name,
+      email:           formData.email,
+      webType:         formData.webType,
+      pages:           formData.pages,
+      functionalities: formData.functionalities,
+      seoExtras:       formData.seoExtras,
+      timeline:        formData.timeline,
+      total:           quoteData.total,
+      monthly:         quoteData.monthly,
+      breakdown:       quoteData.breakdown,
+    });
   };
 
   const reset = () => {
