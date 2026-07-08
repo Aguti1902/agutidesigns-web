@@ -105,30 +105,33 @@ const PROCESS = [
 const PRICING = [
   {
     name: 'Web + Mantenimiento',
-    monthly: '149',
-    setup: '990',
-    desc: 'Tu web profesional activa y mantenida mes a mes. Sin preocupaciones técnicas.',
+    monthly: '199',
+    setup: '1.199',
+    desc: 'Desarrollo web profesional desde cero, diseñada para convertir visitas en pacientes. Activa y creciendo mes a mes.',
     monthlyIncludes: [
       'Hosting y dominio incluido',
       'Actualizaciones y seguridad',
       'Copias de seguridad diarias',
       'Soporte técnico prioritario',
-      'Cambios de contenido incluidos',
+      'Cambios de contenido ilimitados',
+      'Informe mensual de rendimiento',
     ],
     setupIncludes: [
-      'Diseño web a medida',
-      'SEO básico on-page',
-      'Formulario de cita online',
-      'Google Analytics configurado',
+      'Web desarrollada desde 0 a medida',
+      'Diseño UI/UX orientado a conversión',
+      'Chatbot IA básico integrado',
+      'Formulario de cita inteligente',
+      'SEO on-page completo',
+      'Google Analytics + Search Console',
     ],
     cta: 'Empezar proyecto',
     color: '',
   },
   {
     name: 'Web + SEO + SEM',
-    monthly: '349',
-    setup: '1.490',
-    desc: 'Domina Google con SEO local continuo y campañas de publicidad gestionadas.',
+    monthly: '449',
+    setup: '1.990',
+    desc: 'Desarrollo web completo + domina Google con SEO local activo y publicidad gestionada desde el día 1.',
     monthlyIncludes: [
       'Todo lo de Mantenimiento',
       'SEO local mensual activo',
@@ -138,10 +141,12 @@ const PRICING = [
       'Estrategia de palabras clave',
     ],
     setupIncludes: [
-      'Web a medida completa',
-      'Auditoría SEO inicial',
-      'Configuración Google Ads',
-      'Integración Google Reviews',
+      'Web premium desarrollada desde 0',
+      'Arquitectura SEO técnica avanzada',
+      'Landing pages de tratamientos',
+      'Auditoría y estrategia SEO inicial',
+      'Configuración y estructura Google Ads',
+      'Integración Google Reviews + Schema',
     ],
     cta: 'Quiero ser el #1',
     color: 'popular',
@@ -149,21 +154,23 @@ const PRICING = [
   },
   {
     name: 'IA 360° Total',
-    monthly: '599',
-    setup: '1.990',
-    desc: 'La clínica más avanzada de tu zona: web, SEO, SEM e IA que trabaja sola.',
+    monthly: '699',
+    setup: '2.990',
+    desc: 'La clínica más avanzada de tu zona: desarrollo web IA-first, SEO, SEM y una IA que trabaja sola mientras tú duermes.',
     monthlyIncludes: [
       'Todo lo de SEO + SEM',
       'IA activa 24/7 en tu web',
-      'Citas automáticas sin intervención',
+      'Agendado automático de citas',
       'IA multiidioma personalizada',
       'Reportes IA + pacientes nuevos',
-      'Optimización continua de IA',
+      'Optimización y entrenamiento IA',
     ],
     setupIncludes: [
-      'Web premium a medida',
-      'Configuración completa IA',
-      'Integración con tu agenda',
+      'Desarrollo web IA-first desde 0',
+      'Asistente IA entrenado con tu clínica',
+      'Integración total con tu agenda',
+      'Flujos de captación automatizados',
+      'Panel de control IA personalizado',
       'Formación del equipo incluida',
     ],
     cta: 'Activar mi IA',
@@ -475,17 +482,20 @@ SOBRE LO QUE OFRECEMOS A CLÍNICAS DENTALES:
 - Informes mensuales de resultados
 
 PLANES DISPONIBLES:
-1. Web + Mantenimiento: 149€/mes + 990€ setup
-   - Hosting, actualizaciones, seguridad, soporte, cambios de contenido
-   - Web diseñada a medida, SEO básico, formulario de cita
+1. Web + Mantenimiento: 199€/mes + 1.199€ setup
+   - Web desarrollada desde 0 a medida con diseño orientado a conversión
+   - Chatbot IA básico integrado, formulario de cita inteligente, SEO on-page completo
+   - Hosting, actualizaciones, seguridad, soporte, cambios de contenido ilimitados
 
-2. Web + SEO + SEM: 349€/mes + 1.490€ setup (el más contratado)
+2. Web + SEO + SEM: 449€/mes + 1.990€ setup (el más contratado)
+   - Web premium desde 0 + arquitectura SEO técnica avanzada + landing pages por tratamiento
    - Todo lo anterior + SEO local mensual activo + Google Ads gestionado
    - Google My Business optimizado, informe mensual
 
-3. IA 360° Total: 599€/mes + 1.990€ setup
-   - Todo lo anterior + IA activa 24/7 personalizada para la clínica
-   - Citas automáticas, IA multiidioma, integración con agenda, optimización continua
+3. IA 360° Total: 699€/mes + 2.990€ setup
+   - Desarrollo web IA-first desde 0 + asistente IA entrenado con los datos de tu clínica
+   - Todo lo anterior + IA activa 24/7, agendado automático, panel de control IA, formación del equipo
+   - Flujos de captación automatizados, IA multiidioma, optimización continua
 
 PROCESO:
 1. Solicitar consulta gratuita — analizamos la clínica y la competencia local
@@ -539,11 +549,11 @@ const PAGE_SCHEMA = {
             '@type': 'Offer',
             name: 'Web + Mantenimiento',
             description: 'Tu web profesional activa y mantenida mes a mes. Sin preocupaciones técnicas.',
-            price: '149',
+            price: '199',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '149',
+              price: '199',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
@@ -551,12 +561,12 @@ const PAGE_SCHEMA = {
           {
             '@type': 'Offer',
             name: 'Web + SEO + SEM',
-            description: 'Domina Google con SEO local continuo y campañas de publicidad gestionadas.',
-            price: '349',
+            description: 'Desarrollo web completo + domina Google con SEO local activo y publicidad gestionada.',
+            price: '449',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '349',
+              price: '449',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
@@ -564,12 +574,12 @@ const PAGE_SCHEMA = {
           {
             '@type': 'Offer',
             name: 'IA 360° Total',
-            description: 'La clínica más avanzada de tu zona: web, SEO, SEM e IA que trabaja sola.',
-            price: '599',
+            description: 'Desarrollo web IA-first, SEO, SEM e IA que trabaja sola las 24h.',
+            price: '699',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '599',
+              price: '699',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
@@ -666,7 +676,7 @@ export default function ClinicasLanding() {
   /* ── SEO: dynamic meta tags for /clinicas-dentales ── */
   useEffect(() => {
     const TITLE = 'Diseño Web para Clínicas Dentales | AgutiDesigns';
-    const DESC = 'Agencia de marketing dental especializada en España. Web profesional, SEO local, chatbot IA y publicidad online para dentistas. Desde 149€/mes.';
+    const DESC = 'Agencia especializada en clínicas dentales en España. Desarrollo web desde 0, SEO local, IA 24/7 y publicidad online para dentistas. Setup desde 1.199€.';
     const CANONICAL = 'https://agutidesigns.io/clinicas-dentales';
     const OG_IMAGE = 'https://agutidesigns.io/images/og-clinicas-dentales.jpg';
 
@@ -1240,8 +1250,8 @@ export default function ClinicasLanding() {
           >
             <motion.div variants={fadeUp} className="cl-section-label">Planes y precios</motion.div>
             <motion.h2 variants={fadeUp} className="cl-section-title">
-              Precio web para dentistas —<br />
-              <span className="text-primary">desde 149€/mes, sin sorpresas</span>
+              Web + IA para clínicas dentales —<br />
+              <span className="text-primary">desde 1.199€, resultados garantizados</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="cl-pricing__sub">
               Setup único para lanzar tu proyecto + mensualidad que mantiene tu clínica creciendo cada mes.
