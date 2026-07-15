@@ -2,215 +2,219 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
-  LogOut, RefreshCw, Search, Filter, Eye, Send,
-  TrendingUp, Clock, CheckCircle2, XCircle, Euro, Megaphone, Users,
+  LayoutDashboard, Calculator, Users, LogOut, RefreshCw,
+  TrendingUp, Euro, Clock, Star, ArrowRight, AlertTriangle,
 } from 'lucide-react';
 import './Admin.css';
 
-const STATUS_LABELS = {
-  pending:     { label: 'Pendiente',    color: '#F59E0B' },
-  sent:        { label: 'Enviado',      color: '#3B82F6' },
-  approved:    { label: 'Aprobado',     color: '#10B981' },
-  in_progress: { label: 'En progreso',  color: '#8B5CF6' },
-  completed:   { label: 'Completado',   color: '#059669' },
-  rejected:    { label: 'Rechazado',    color: '#EF4444' },
+const STATUS_COLORS = {
+  pending:     '#F59E0B',
+  sent:        '#3B82F6',
+  approved:    '#10B981',
+  in_progress: '#8B5CF6',
+  completed:   '#059669',
+  rejected:    '#EF4444',
 };
+const STATUS_LABELS = {
+  pending: 'Pendiente', sent: 'Enviado', approved: 'Aprobado',
+  in_progress: 'En progreso', completed: 'Completado', rejected: 'Rechazado',
+};
+const LEAD_STATUS_COLORS = { nuevo: '#9CA3AF', contactado: '#3B82F6', 'reunión': '#10B981', cerrado: '#059669', descartado: '#EF4444' };
+const LEAD_STATUS_LABELS = { nuevo: 'Nuevo', contactado: 'Contactado', 'reunión': 'Reunión', cerrado: 'Cerrado', descartado: 'Descartado' };
+
+function Sidebar({ active }) {
+  const navigate = useNavigate();
+  const handleSignOut = () => { localStorage.removeItem('adminSession'); navigate('/admin'); };
+  const nav = [
+    { id: 'dashboard',     label: 'Dashboard',       icon: <LayoutDashboard size={16} />, path: '/admin/dashboard' },
+    { id: 'presupuestos',  label: 'Presupuestos',     icon: <Calculator size={16} />,      path: '/admin/presupuestos' },
+    { id: 'leads',         label: 'Leads clínicas',   icon: <Users size={16} />,           path: '/admin/leads' },
+  ];
+  return (
+    <aside className="adm-sidebar">
+      <img src="/images/logoazul.png" alt="Agutidesigns" className="adm-sidebar__logo" />
+      <nav className="adm-sidebar__section">
+        <span className="adm-sidebar__label">Menú</span>
+        {nav.map(item => (
+          <button key={item.id} className={`adm-sidebar__item ${active === item.id ? 'adm-sidebar__item--active' : ''}`} onClick={() => navigate(item.path)}>
+            {item.icon} {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className="adm-sidebar__footer">
+        <span className="adm-sidebar__email">agutierrezgomez00@gmail.com</span>
+        <button className="adm-sidebar__logout" onClick={handleSignOut}><LogOut size={14} /> Cerrar sesión</button>
+      </div>
+    </aside>
+  );
+}
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [quotes, setQuotes]   = useState([]);
+  const [leads, setLeads]     = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
-  const [filter, setFilter]   = useState('all');
-
-  const handleSignOut = () => {
-    localStorage.removeItem('adminSession');
-    navigate('/admin');
-  };
+  const [dbError, setDbError] = useState(false);
 
   useEffect(() => {
-    const session = localStorage.getItem('adminSession');
-    if (!session) { navigate('/admin'); return; }
-    fetchQuotes();
+    if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
+    fetchAll();
   }, []);
 
-  const fetchQuotes = async () => {
+  const fetchAll = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('quotes')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (!error) setQuotes(data || []);
+    setDbError(false);
+    const [qRes, lRes] = await Promise.all([
+      supabase.from('quotes').select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('clinicas_leads').select('*').order('created_at', { ascending: false }).limit(100),
+    ]);
+    if (qRes.error || lRes.error) setDbError(true);
+    setQuotes(qRes.data || []);
+    setLeads(lRes.data || []);
     setLoading(false);
   };
 
-  const filtered = quotes.filter(q => {
-    const matchSearch = !search || 
-      q.name?.toLowerCase().includes(search.toLowerCase()) ||
-      q.email?.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || q.status === filter;
-    return matchSearch && matchFilter;
-  });
-
+  const today = new Date().toDateString();
   const stats = {
-    total:       quotes.length,
-    pending:     quotes.filter(q => q.status === 'pending').length,
-    approved:    quotes.filter(q => q.status === 'approved' || q.status === 'in_progress').length,
-    revenue:     quotes.filter(q => q.status !== 'rejected').reduce((s, q) => s + (q.total || 0), 0),
+    totalQuotes: quotes.length,
+    totalLeads:  leads.length,
+    pipeline:    quotes.filter(q => q.status !== 'rejected').reduce((s, q) => s + (q.total || 0), 0),
+    hoy:         quotes.filter(q => new Date(q.created_at).toDateString() === today).length
+               + leads.filter(l => new Date(l.created_at).toDateString() === today).length,
+    pendientes:  quotes.filter(q => q.status === 'pending').length,
+    nuevosLeads: leads.filter(l => l.estado === 'nuevo').length,
   };
+
+  const recentQuotes = quotes.slice(0, 6);
+  const recentLeads  = leads.slice(0, 6);
 
   return (
     <div className="adm-layout">
-      {/* Sidebar */}
-      <aside className="adm-sidebar">
-        <img src="/images/logoazul.png" alt="Agutidesigns" className="adm-sidebar__logo" />
-        <nav className="adm-sidebar__nav">
-          <button className="adm-sidebar__item adm-sidebar__item--active">
-            <TrendingUp size={18} /> Presupuestos
-          </button>
-          <button
-            className="adm-sidebar__item"
-            onClick={() => navigate('/admin/campanas')}
-          >
-            <Megaphone size={18} /> Campañas dentales
-          </button>
-          <button
-            className="adm-sidebar__item"
-            onClick={() => navigate('/admin/leads')}
-          >
-            <Users size={18} /> Leads clínicas
-          </button>
-        </nav>
-        <div className="adm-sidebar__footer">
-          <span className="adm-sidebar__email">agutierrezgomez00@gmail.com</span>
-          <button className="adm-sidebar__logout" onClick={handleSignOut}>
-            <LogOut size={16} /> Salir
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
+      <Sidebar active="dashboard" />
       <main className="adm-main">
         <div className="adm-header">
           <div>
-            <h1 className="adm-header__title">Presupuestos</h1>
-            <p className="adm-header__sub">{quotes.length} presupuestos totales</p>
+            <h1 className="adm-header__title">Dashboard</h1>
+            <p className="adm-header__sub">Resumen de actividad — {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           </div>
-          <button className="adm-btn adm-btn--ghost" onClick={fetchQuotes}>
-            <RefreshCw size={15} /> Actualizar
+          <button className="adm-btn adm-btn--ghost" onClick={fetchAll} disabled={loading}>
+            <RefreshCw size={14} className={loading ? 'adm-loading__icon' : ''} /> Actualizar
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="adm-stats">
-          <div className="adm-stat-card">
-            <span className="adm-stat-card__label">Total presupuestos</span>
-            <span className="adm-stat-card__value">{stats.total}</span>
-          </div>
-          <div className="adm-stat-card">
-            <Clock size={16} className="adm-stat-card__icon" />
-            <span className="adm-stat-card__label">Pendientes</span>
-            <span className="adm-stat-card__value adm-stat-card__value--amber">{stats.pending}</span>
-          </div>
-          <div className="adm-stat-card">
-            <CheckCircle2 size={16} className="adm-stat-card__icon" />
-            <span className="adm-stat-card__label">Aprobados / En progreso</span>
-            <span className="adm-stat-card__value adm-stat-card__value--green">{stats.approved}</span>
-          </div>
-          <div className="adm-stat-card">
-            <Euro size={16} className="adm-stat-card__icon" />
-            <span className="adm-stat-card__label">Valor total pipeline</span>
-            <span className="adm-stat-card__value adm-stat-card__value--blue">
-              {stats.revenue.toLocaleString('es-ES')}€
-            </span>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="adm-filters">
-          <div className="adm-search">
-            <Search size={15} />
-            <input
-              type="text"
-              placeholder="Buscar por nombre o email..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="adm-search__input"
-            />
-          </div>
-          <div className="adm-filter-tabs">
-            {['all', 'pending', 'sent', 'approved', 'in_progress', 'completed', 'rejected'].map(s => (
-              <button
-                key={s}
-                className={`adm-filter-tab ${filter === s ? 'adm-filter-tab--active' : ''}`}
-                onClick={() => setFilter(s)}
-              >
-                {s === 'all' ? 'Todos' : STATUS_LABELS[s]?.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Table */}
-        {loading ? (
-          <div className="adm-loading"><RefreshCw size={24} className="adm-loading__icon" /> Cargando...</div>
-        ) : filtered.length === 0 ? (
-          <div className="adm-empty">
-            <XCircle size={40} />
-            <p>No hay presupuestos{filter !== 'all' ? ` con estado "${STATUS_LABELS[filter]?.label}"` : ''}</p>
-          </div>
-        ) : (
-          <div className="adm-table-wrap">
-            <table className="adm-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Tipo de web</th>
-                  <th>Total</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(q => (
-                  <tr key={q.id} className="adm-table__row">
-                    <td>
-                      <div className="adm-table__client">
-                        <div className="adm-table__avatar">{(q.name || '?')[0].toUpperCase()}</div>
-                        <div>
-                          <strong>{q.name || '—'}</strong>
-                          <span>{q.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="adm-table__type">{q.web_type || '—'}</td>
-                    <td className="adm-table__price">{q.total ? `${q.total.toLocaleString('es-ES')}€` : '—'}</td>
-                    <td>
-                      <span
-                        className="adm-badge"
-                        style={{ '--badge-color': STATUS_LABELS[q.status]?.color || '#9CA3AF' }}
-                      >
-                        {STATUS_LABELS[q.status]?.label || q.status}
-                      </span>
-                    </td>
-                    <td className="adm-table__date">
-                      {new Date(q.created_at).toLocaleDateString('es-ES')}
-                    </td>
-                    <td>
-                      <button
-                        className="adm-btn adm-btn--sm adm-btn--ghost"
-                        onClick={() => navigate(`/admin/presupuesto/${q.id}`)}
-                      >
-                        <Eye size={14} /> Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {dbError && (
+          <div className="adm-alert adm-alert--warn">
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+            <span>Supabase no disponible. Reactiva el proyecto en <strong>supabase.com</strong> y ejecuta el SQL de <code>scripts/migration-admin-rls.sql</code> para habilitar el acceso desde el panel.</span>
           </div>
         )}
+
+        {/* Stats */}
+        <div className="adm-stats">
+          <div className="adm-stat">
+            <div className="adm-stat__top">
+              <span className="adm-stat__label">Presupuestos</span>
+              <div className="adm-stat__icon adm-stat__icon--blue"><Calculator size={16} /></div>
+            </div>
+            <span className="adm-stat__value">{stats.totalQuotes}</span>
+            <span className="adm-stat__delta">{stats.pendientes} pendientes de revisión</span>
+          </div>
+          <div className="adm-stat">
+            <div className="adm-stat__top">
+              <span className="adm-stat__label">Leads clínicas</span>
+              <div className="adm-stat__icon adm-stat__icon--green"><Users size={16} /></div>
+            </div>
+            <span className="adm-stat__value">{stats.totalLeads}</span>
+            <span className="adm-stat__delta">{stats.nuevosLeads} sin gestionar</span>
+          </div>
+          <div className="adm-stat">
+            <div className="adm-stat__top">
+              <span className="adm-stat__label">Pipeline total</span>
+              <div className="adm-stat__icon adm-stat__icon--purple"><Euro size={16} /></div>
+            </div>
+            <span className="adm-stat__value">{stats.pipeline.toLocaleString('es-ES')}€</span>
+            <span className="adm-stat__delta">valor acumulado activo</span>
+          </div>
+          <div className="adm-stat">
+            <div className="adm-stat__top">
+              <span className="adm-stat__label">Recibidos hoy</span>
+              <div className="adm-stat__icon adm-stat__icon--amber"><Star size={16} /></div>
+            </div>
+            <span className="adm-stat__value">{stats.hoy}</span>
+            <span className="adm-stat__delta">entre presupuestos y leads</span>
+          </div>
+        </div>
+
+        {/* Recent */}
+        <div className="adm-grid-2">
+          {/* Presupuestos recientes */}
+          <div className="adm-card">
+            <div className="adm-card__head">
+              <span className="adm-card__title"><TrendingUp size={15} /> Últimos presupuestos</span>
+              <button className="adm-btn adm-btn--ghost adm-btn--sm" onClick={() => navigate('/admin/presupuestos')}>
+                Ver todos <ArrowRight size={13} />
+              </button>
+            </div>
+            {loading ? (
+              <div className="adm-loading"><RefreshCw size={18} className="adm-loading__icon" /></div>
+            ) : recentQuotes.length === 0 ? (
+              <div className="adm-empty"><Clock size={28} /><p>Sin presupuestos aún</p></div>
+            ) : (
+              <div className="adm-activity">
+                {recentQuotes.map(q => (
+                  <div key={q.id} className="adm-activity__row" onClick={() => navigate(`/admin/presupuesto/${q.id}`)}>
+                    <div className="adm-avatar">{(q.name || '?')[0].toUpperCase()}</div>
+                    <div className="adm-activity__info">
+                      <span className="adm-activity__name">{q.name || '—'}</span>
+                      <span className="adm-activity__sub">{q.web_type || '—'} · {q.email}</span>
+                    </div>
+                    <div className="adm-activity__right">
+                      <div className="adm-activity__price">{q.total ? `${q.total.toLocaleString('es-ES')}€` : '—'}</div>
+                      <div>
+                        <span className="adm-badge" style={{ '--badge-color': STATUS_COLORS[q.status] || '#9CA3AF', fontSize: '10px' }}>
+                          {STATUS_LABELS[q.status] || q.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Leads recientes */}
+          <div className="adm-card">
+            <div className="adm-card__head">
+              <span className="adm-card__title"><Users size={15} /> Últimos leads</span>
+              <button className="adm-btn adm-btn--ghost adm-btn--sm" onClick={() => navigate('/admin/leads')}>
+                Ver todos <ArrowRight size={13} />
+              </button>
+            </div>
+            {loading ? (
+              <div className="adm-loading"><RefreshCw size={18} className="adm-loading__icon" /></div>
+            ) : recentLeads.length === 0 ? (
+              <div className="adm-empty"><Users size={28} /><p>Sin leads aún</p></div>
+            ) : (
+              <div className="adm-activity">
+                {recentLeads.map(l => (
+                  <div key={l.id} className="adm-activity__row" onClick={() => navigate('/admin/leads')}>
+                    <div className="adm-avatar adm-avatar--green">{(l.nombre || '?')[0].toUpperCase()}</div>
+                    <div className="adm-activity__info">
+                      <span className="adm-activity__name">{l.nombre}</span>
+                      <span className="adm-activity__sub">{l.clinica} {l.ciudad ? `· ${l.ciudad}` : ''}</span>
+                    </div>
+                    <div className="adm-activity__right">
+                      <span className="adm-badge" style={{ '--badge-color': LEAD_STATUS_COLORS[l.estado] || '#9CA3AF', fontSize: '10px' }}>
+                        {LEAD_STATUS_LABELS[l.estado] || l.estado}
+                      </span>
+                      <div className="adm-activity__date">{new Date(l.created_at).toLocaleDateString('es-ES')}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );
