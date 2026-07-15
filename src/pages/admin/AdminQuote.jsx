@@ -66,12 +66,14 @@ function BV({ label, value, isLink }) {
 export default function AdminQuote() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quote, setQuote]     = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus]   = useState('');
-  const [notes, setNotes]     = useState('');
-  const [saving, setSaving]   = useState(false);
-  const [saved, setSaved]     = useState(false);
+  const [quote, setQuote]           = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [status, setStatus]         = useState('');
+  const [notes, setNotes]           = useState('');
+  const [saving, setSaving]         = useState(false);
+  const [saved, setSaved]           = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult]   = useState(null); // 'ok' | 'error'
 
   useEffect(() => {
     if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
@@ -96,6 +98,37 @@ export default function AdminQuote() {
 
   const openCalendly = () => {
     window.open('https://calendly.com/agutidesigns/reunion', '_blank');
+  };
+
+  const resendEmail = async () => {
+    if (!quote?.email) return;
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const res = await fetch('/api/send-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:      quote.name,
+          email:     quote.email,
+          webType:   quote.web_type,
+          pages:     quote.pages,
+          timeline:  quote.timeline,
+          total:     quote.total,
+          monthly:   quote.monthly,
+          breakdown: quote.breakdown,
+        }),
+      });
+      setEmailResult(res.ok ? 'ok' : 'error');
+      if (res.ok) {
+        await supabase.from('quotes').update({ status: 'sent' }).eq('id', id);
+        setStatus('sent');
+      }
+    } catch {
+      setEmailResult('error');
+    }
+    setEmailSending(false);
+    setTimeout(() => setEmailResult(null), 5000);
   };
 
   if (loading) return (
@@ -159,7 +192,7 @@ export default function AdminQuote() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', align: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {quote.phone && (
               <a
                 href={`https://wa.me/34${quote.phone.replace(/\D/g,'')}?text=${waMsg}`}
@@ -169,6 +202,19 @@ export default function AdminQuote() {
                 💬 WhatsApp
               </a>
             )}
+            <button
+              onClick={resendEmail}
+              disabled={emailSending}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px',
+                background: emailResult === 'ok' ? 'rgba(16,185,129,.25)' : emailResult === 'error' ? 'rgba(239,68,68,.25)' : 'rgba(255,255,255,.15)',
+                border: `1.5px solid ${emailResult === 'ok' ? 'rgba(16,185,129,.5)' : emailResult === 'error' ? 'rgba(239,68,68,.5)' : 'rgba(255,255,255,.35)'}`,
+                color: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13.5, cursor: emailSending ? 'default' : 'pointer', opacity: emailSending ? 0.7 : 1,
+              }}
+            >
+              <Mail size={14} />
+              {emailSending ? 'Enviando...' : emailResult === 'ok' ? '✓ Email enviado' : emailResult === 'error' ? '✗ Error al enviar' : 'Reenviar email'}
+            </button>
             <button
               onClick={openCalendly}
               style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: 'rgba(255,255,255,.15)', border: '1.5px solid rgba(255,255,255,.35)', color: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}
