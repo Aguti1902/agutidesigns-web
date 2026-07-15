@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft, Send, CheckCircle2, Clock, AlertCircle,
   Mail, Globe, FileText, Euro, Calendar, MessageSquare,
@@ -20,7 +19,6 @@ const STATUS_OPTIONS = [
 
 export default function AdminQuote() {
   const { id } = useParams();
-  const { isAdmin, signInClientMagicLink } = useAuth();
   const navigate = useNavigate();
   const [quote, setQuote]     = useState(null);
   const [briefing, setBriefing] = useState(null);
@@ -31,9 +29,9 @@ export default function AdminQuote() {
   const [linkSent, setLinkSent] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) { navigate('/admin'); return; }
+    if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
     fetchData();
-  }, [isAdmin, id]);
+  }, [id]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -56,7 +54,11 @@ export default function AdminQuote() {
 
   const sendClientLink = async () => {
     if (!quote?.email) return;
-    await signInClientMagicLink(quote.email, id);
+    // Magic link via Supabase OTP (requiere proyecto Supabase activo)
+    await supabase.auth.signInWithOtp({
+      email: quote.email,
+      options: { emailRedirectTo: `${window.location.origin}/cliente/briefing?quote=${id}` },
+    });
     await supabase.from('quotes').update({ status: 'sent' }).eq('id', id);
     setStatus('sent');
     setLinkSent(true);

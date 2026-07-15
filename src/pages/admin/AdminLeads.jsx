@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, RefreshCw, Search, TrendingUp, Users,
   Megaphone, X, ChevronRight, Globe, Phone, Mail,
@@ -152,7 +151,6 @@ function LeadPanel({ lead, onClose, onChange }) {
 
 /* ── Componente principal ─────────────────────────────── */
 export default function AdminLeads() {
-  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [leads, setLeads]       = useState([]);
@@ -163,9 +161,9 @@ export default function AdminLeads() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    if (!isAdmin) { navigate('/admin'); return; }
+    if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
     fetchLeads();
-  }, [isAdmin]);
+  }, []);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -190,7 +188,7 @@ export default function AdminLeads() {
     }
   };
 
-  const handleSignOut = async () => { await signOut(); navigate('/admin'); };
+  const handleSignOut = () => { localStorage.removeItem('adminSession'); navigate('/admin'); };
 
   const stats = useMemo(() => ({
     total:      leads.length,
@@ -229,7 +227,7 @@ export default function AdminLeads() {
           </button>
         </nav>
         <div className="adm-sidebar__footer">
-          <span className="adm-sidebar__email">{user?.email}</span>
+          <span className="adm-sidebar__email">agutierrezgomez00@gmail.com</span>
           <button className="adm-sidebar__logout" onClick={handleSignOut}>
             <LogOut size={16} /> Salir
           </button>

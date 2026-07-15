@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, RefreshCw, Search, TrendingUp, Mail,
   Calendar, Users, CheckCircle2, XCircle, AlertTriangle,
@@ -655,7 +654,6 @@ function BorradoresTab() {
 
 /* ── Componente principal ─────────────────────────────── */
 export default function AdminCampanas() {
-  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab]     = useState('clinicas'); // 'clinicas' | 'borradores'
@@ -667,9 +665,9 @@ export default function AdminCampanas() {
   const [selected, setSelected]       = useState(null);
 
   useEffect(() => {
-    if (!isAdmin) { navigate('/admin'); return; }
+    if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
     fetchClinicas();
-  }, [isAdmin]);
+  }, []);
 
   const fetchClinicas = async () => {
     setLoading(true);
@@ -715,7 +713,7 @@ export default function AdminCampanas() {
     }
   };
 
-  const handleSignOut = async () => { await signOut(); navigate('/admin'); };
+  const handleSignOut = () => { localStorage.removeItem('adminSession'); navigate('/admin'); };
 
   /* ── SEO score para la tabla ── */
   const getSeoLabel = (clinica) => {
@@ -743,7 +741,7 @@ export default function AdminCampanas() {
           </button>
         </nav>
         <div className="adm-sidebar__footer">
-          <span className="adm-sidebar__email">{user?.email}</span>
+          <span className="adm-sidebar__email">agutierrezgomez00@gmail.com</span>
           <button className="adm-sidebar__logout" onClick={handleSignOut}>
             <LogOut size={16} /> Salir
           </button>
