@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Zap } from 'lucide-react';
 import './Admin.css';
 
+const ADMIN_EMAIL    = 'agutierrezgomez00@gmail.com';
+const ADMIN_PASSWORD = 'Aguti2024!';
+
 export default function AdminLogin() {
-  const { signInWithEmail } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -16,10 +17,14 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const { error: err } = await signInWithEmail(email, password);
+    await new Promise(r => setTimeout(r, 400));
+    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      localStorage.setItem('adminSession', JSON.stringify({ email, ts: Date.now() }));
+      navigate('/admin/dashboard');
+    } else {
+      setError('Email o contraseña incorrectos');
+    }
     setLoading(false);
-    if (err) { setError('Email o contraseña incorrectos'); return; }
-    navigate('/admin/dashboard');
   };
 
   return (

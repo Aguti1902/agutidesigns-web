@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, RefreshCw, Search, Filter, Eye, Send,
   TrendingUp, Clock, CheckCircle2, XCircle, Euro, Megaphone, Users,
@@ -18,17 +17,22 @@ const STATUS_LABELS = {
 };
 
 export default function AdminDashboard() {
-  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [quotes, setQuotes]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
   const [filter, setFilter]   = useState('all');
 
+  const handleSignOut = () => {
+    localStorage.removeItem('adminSession');
+    navigate('/admin');
+  };
+
   useEffect(() => {
-    if (!isAdmin) { navigate('/admin'); return; }
+    const session = localStorage.getItem('adminSession');
+    if (!session) { navigate('/admin'); return; }
     fetchQuotes();
-  }, [isAdmin]);
+  }, []);
 
   const fetchQuotes = async () => {
     setLoading(true);
@@ -55,8 +59,6 @@ export default function AdminDashboard() {
     revenue:     quotes.filter(q => q.status !== 'rejected').reduce((s, q) => s + (q.total || 0), 0),
   };
 
-  const handleSignOut = async () => { await signOut(); navigate('/admin'); };
-
   return (
     <div className="adm-layout">
       {/* Sidebar */}
@@ -80,7 +82,7 @@ export default function AdminDashboard() {
           </button>
         </nav>
         <div className="adm-sidebar__footer">
-          <span className="adm-sidebar__email">{user?.email}</span>
+          <span className="adm-sidebar__email">agutierrezgomez00@gmail.com</span>
           <button className="adm-sidebar__logout" onClick={handleSignOut}>
             <LogOut size={16} /> Salir
           </button>
