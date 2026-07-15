@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import {
-  ArrowLeft, Send, CheckCircle2, Clock, AlertCircle, RefreshCw,
-  Mail, Globe, FileText, Euro, Calendar, MessageSquare, Phone,
+  ArrowLeft, Calendar, CheckCircle2, Clock, AlertCircle, RefreshCw,
+  Mail, Globe, FileText, Euro, MessageSquare, Phone,
   LayoutDashboard, Calculator, Users, LogOut, Zap, Package,
-  ExternalLink, ChevronDown, ChevronUp,
+  ExternalLink,
 } from 'lucide-react';
 import './Admin.css';
 
@@ -50,23 +50,6 @@ function Sidebar() {
   );
 }
 
-function BriefingSection({ title, children }) {
-  const [open, setOpen] = useState(true);
-  const hasContent = Array.isArray(children) ? children.some(c => c?.props?.value) : children?.props?.value;
-  if (!hasContent) return null;
-  return (
-    <div style={{ borderBottom: '1px solid #F3F4F6', paddingBottom: 16 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', color: '#6B7280', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em' }}
-      >
-        {title}
-        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>{children}</div>}
-    </div>
-  );
-}
 
 function BV({ label, value, isLink }) {
   if (!value) return null;
@@ -83,14 +66,12 @@ function BV({ label, value, isLink }) {
 export default function AdminQuote() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quote, setQuote]       = useState(null);
-  const [briefing, setBriefing] = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [status, setStatus]     = useState('');
-  const [notes, setNotes]       = useState('');
-  const [saving, setSaving]     = useState(false);
-  const [saved, setSaved]       = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  const [quote, setQuote]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus]   = useState('');
+  const [notes, setNotes]     = useState('');
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('adminSession')) { navigate('/admin'); return; }
@@ -99,11 +80,8 @@ export default function AdminQuote() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: q }, { data: b }] = await Promise.all([
-      supabase.from('quotes').select('*').eq('id', id).single(),
-      supabase.from('briefings').select('*').eq('quote_id', id).maybeSingle(),
-    ]);
-    setQuote(q); setBriefing(b);
+    const { data: q } = await supabase.from('quotes').select('*').eq('id', id).single();
+    setQuote(q);
     setStatus(q?.status || 'pending');
     setNotes(q?.admin_notes || '');
     setLoading(false);
@@ -116,14 +94,8 @@ export default function AdminQuote() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const sendClientLink = async () => {
-    if (!quote?.email) return;
-    await supabase.auth.signInWithOtp({
-      email: quote.email,
-      options: { emailRedirectTo: `${window.location.origin}/cliente/briefing?quote=${id}` },
-    });
-    await supabase.from('quotes').update({ status: 'sent' }).eq('id', id);
-    setStatus('sent'); setLinkSent(true);
+  const openCalendly = () => {
+    window.open('https://calendly.com/agutidesigns/reunion', '_blank');
   };
 
   if (loading) return (
@@ -197,18 +169,12 @@ export default function AdminQuote() {
                 💬 WhatsApp
               </a>
             )}
-            {!linkSent ? (
-              <button
-                onClick={sendClientLink}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: 'rgba(255,255,255,.15)', border: '1.5px solid rgba(255,255,255,.35)', color: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}
-              >
-                <Send size={14} /> Enviar briefing al cliente
-              </button>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: 'rgba(16,185,129,.2)', border: '1.5px solid rgba(16,185,129,.4)', color: '#fff', borderRadius: 10, fontSize: 13.5 }}>
-                <CheckCircle2 size={14} /> Link enviado
-              </div>
-            )}
+            <button
+              onClick={openCalendly}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: 'rgba(255,255,255,.15)', border: '1.5px solid rgba(255,255,255,.35)', color: '#fff', borderRadius: 10, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}
+            >
+              <Calendar size={14} /> Reservar reunión
+            </button>
           </div>
         </div>
 
@@ -328,97 +294,24 @@ export default function AdminQuote() {
               </div>
             </div>
 
-            {/* Briefing */}
-            {briefing ? (
-              <div className="adm-card">
-                <div className="adm-card__head">
-                  <span className="adm-card__title"><CheckCircle2 size={15} style={{ color: '#10B981' }} /> Briefing del cliente</span>
-                  <span className="adm-badge" style={{ '--badge-color': briefing.status === 'submitted' ? '#10B981' : '#F59E0B' }}>
-                    {briefing.status === 'submitted' ? 'Enviado' : 'Borrador'}
-                  </span>
-                </div>
-                <div className="adm-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <BriefingSection title="🏢 Empresa">
-                    <BV label="Nombre" value={briefing.company_name} />
-                    <BV label="Descripción" value={briefing.company_description} />
-                    <BV label="Sector" value={briefing.sector} />
-                    <BV label="Año fundación" value={briefing.founded_year} />
-                    <BV label="Equipo" value={briefing.team_size} />
-                    <BV label="Logo" value={briefing.logo_url} isLink />
-                  </BriefingSection>
-                  <BriefingSection title="🎯 Público y propuesta">
-                    <BV label="Público objetivo" value={briefing.target_audience} />
-                    <BV label="Problema que resuelve" value={briefing.customer_pain} />
-                    <BV label="Propuesta de valor" value={briefing.unique_value} />
-                    <BV label="CTA principal" value={briefing.main_cta} />
-                  </BriefingSection>
-                  <BriefingSection title="⚙️ Servicios y contenido">
-                    <BV label="Servicios" value={briefing.services_list} />
-                    <BV label="Equipo" value={briefing.team_members} />
-                    <BV label="Proyectos / portfolio" value={briefing.projects_list} />
-                    <BV label="Proceso de trabajo" value={briefing.process_info} />
-                    <BV label="Páginas y contenido" value={briefing.pages_content} />
-                    <BV label="Mensajes clave" value={briefing.key_messages} />
-                    <BV label="Testimonios" value={briefing.testimonials} />
-                  </BriefingSection>
-                  <BriefingSection title="🛒 Tienda (si aplica)">
-                    <BV label="Categorías" value={briefing.product_categories} />
-                    <BV label="Rango de precios" value={briefing.price_range} />
-                    <BV label="Métodos de pago" value={briefing.payment_methods} />
-                    <BV label="Política de envíos" value={briefing.shipping_info} />
-                    <BV label="Devoluciones" value={briefing.return_policy} />
-                  </BriefingSection>
-                  <BriefingSection title="🎨 Marca y estilo">
-                    <BV label="Colores" value={briefing.brand_colors} />
-                    <BV label="Tipografía" value={briefing.typography} />
-                    <BV label="Tono" value={briefing.tone} />
-                    <BV label="Webs de referencia" value={briefing.reference_sites} />
-                    <BV label="Qué le gusta" value={briefing.style_likes} />
-                    <BV label="Qué NO quiere" value={briefing.style_dislikes} />
-                    <BV label="Competidores" value={briefing.competitors} />
-                  </BriefingSection>
-                  <BriefingSection title="📱 Contacto">
-                    <BV label="Teléfono" value={briefing.phone} />
-                    <BV label="Dirección" value={briefing.address} />
-                    <BV label="Redes sociales" value={briefing.social_links} />
-                  </BriefingSection>
-                  {briefing.additional_notes && (
-                    <BriefingSection title="📝 Notas adicionales">
-                      <BV label="Notas" value={briefing.additional_notes} />
-                    </BriefingSection>
-                  )}
-                  {briefing.image_urls?.length > 0 && (
-                    <BriefingSection title={`📸 Imágenes (${briefing.image_urls.length})`}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 8 }}>
-                        {briefing.image_urls.map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                            style={{ display: 'block', borderRadius: 8, overflow: 'hidden', aspectRatio: '1', border: '1px solid #E5E7EB' }}>
-                            <img src={url} alt={`Imagen ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </a>
-                        ))}
-                      </div>
-                    </BriefingSection>
-                  )}
-                </div>
+            {/* Acciones rápidas */}
+            <div className="adm-card">
+              <div className="adm-card__head">
+                <span className="adm-card__title">🚀 Próximos pasos</span>
               </div>
-            ) : (
-              <div className="adm-card" style={{ textAlign: 'center' }}>
-                <div className="adm-card-body" style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: '#FEF9C3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <AlertCircle size={22} style={{ color: '#F59E0B' }} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#111827', marginBottom: 4 }}>Sin briefing aún</div>
-                    <div style={{ fontSize: 13, color: '#6B7280' }}>El cliente todavía no ha rellenado el formulario de briefing.</div>
-                  </div>
-                  {!linkSent && (
-                    <button className="adm-btn adm-btn--primary" onClick={sendClientLink}>
-                      <Send size={14} /> Enviar link de briefing
-                    </button>
-                  )}
-                </div>
+              <div className="adm-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#6B7280', lineHeight: 1.6 }}>
+                  El cliente ya ha recibido su presupuesto por email con las opciones de contacto. Puedes programar una llamada o escribirle directamente.
+                </p>
+                <a
+                  href="https://calendly.com/agutidesigns/reunion"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#EFF6FF', border: '1.5px solid #BFDBFE', borderRadius: 10, color: '#1D4ED8', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
+                >
+                  <Calendar size={14} /> Ver disponibilidad en Calendly
+                </a>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Right col — Gestión */}

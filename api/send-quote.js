@@ -1,156 +1,211 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM   = 'Alejandro de Agutidesigns <info@agutidesigns.io>';
+const CALENDLY = 'https://calendly.com/agutidesigns/reunion';
+const WA_NUM   = '34625204337';
 
-const FROM = 'Agutidesigns <info@agutidesigns.io>';
+function buildQuoteHtml({ name, webType, pages, timeline, total, monthly, breakdown }) {
+  const WEB_LABELS  = { landing: 'Landing page', corporativa: 'Web corporativa', ecommerce: 'Tienda online', portfolio: 'Portfolio' };
+  const TIME_LABELS = { urgente: 'Urgente (1 sem.)', normal: 'Estándar (2–3 sem.)', flexible: 'Flexible (1 mes)', 'sin-prisa': 'Sin prisa' };
+  const PAGE_LABELS = { '1': '1 pág.', '1-3': '1–3 págs.', '3-5': '3–5 págs.', '5-10': '5–10 págs.', '+10': '+10 págs.' };
 
-function buildQuoteHtml({ name, email, webType, pages, timeline, total, monthly, breakdown }) {
-  const WEB_LABELS = { landing: 'Landing Page', corporativa: 'Web Corporativa', ecommerce: 'Tienda Online', portfolio: 'Portfolio' };
-  const TIMELINE_LABELS = { urgente: 'Urgente (1 semana)', normal: 'Estándar (2–3 semanas)', flexible: 'Flexible (1 mes)', 'sin-prisa': 'Sin prisa' };
+  const totalFmt   = (total || 0).toLocaleString('es-ES');
+  const monthlyFmt = (monthly || 0).toLocaleString('es-ES');
+  const waText     = encodeURIComponent(`Hola Alejandro, he recibido mi presupuesto de ${totalFmt}€ y me gustaría hablar sobre mi proyecto.`);
 
-  const breakdownRows = (breakdown || [])
-    .map(b => `
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;color:#444;font-size:14px;">${b.label}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:14px;color:${b.price < 0 ? '#16a34a' : '#0047FF'};">
-          ${b.price >= 0 ? '+' : ''}${b.price.toLocaleString('es-ES')}€
-        </td>
-      </tr>`)
-    .join('');
+  const rows = (breakdown || []).map(b => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #F3F4F6;color:#374151;font-size:14px;">${b.label}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #F3F4F6;text-align:right;font-weight:700;font-size:14px;color:${b.price < 0 ? '#059669' : b.price === 0 ? '#9CA3AF' : '#111827'};">
+        ${b.price >= 0 ? '+' : ''}${(b.price || 0).toLocaleString('es-ES')}€
+      </td>
+    </tr>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f6fa;font-family:'Helvetica Neue',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6fa;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tu presupuesto — Agutidesigns</title></head>
+<body style="margin:0;padding:0;background:#F4F6FA;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
 
-        <tr>
-          <td style="background:#0047FF;padding:36px 40px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:800;letter-spacing:-0.5px;">agutidesigns</h1>
-            <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Tu presupuesto personalizado</p>
-          </td>
-        </tr>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6FA;padding:40px 20px;">
+<tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.09);">
 
-        <tr>
-          <td style="padding:36px 40px 20px;">
-            <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1a1d2e;">¡Hola, ${name}! 👋</p>
-            <p style="margin:0;font-size:15px;color:#6b7694;line-height:1.6;">
-              Aquí tienes el resumen de tu presupuesto calculado para tu proyecto de <strong>${WEB_LABELS[webType] || webType}</strong>.
-              Es una estimación orientativa — si quieres ajustar algo, escríbeme sin compromiso.
-            </p>
-          </td>
-        </tr>
+  <!-- Header -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#0047FF 0%,#1a6bff 100%);padding:32px 40px;text-align:center;">
+      <div style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">agutidesigns</div>
+      <div style="margin-top:6px;font-size:13px;color:rgba(255,255,255,0.75);font-weight:500;">Diseño web · IA · Automatizaciones</div>
+    </td>
+  </tr>
 
-        <tr>
-          <td style="padding:0 40px 24px;">
-            <div style="background:linear-gradient(135deg,rgba(0,71,255,0.07),rgba(0,71,255,0.02));border:1.5px solid rgba(0,71,255,0.2);border-radius:14px;padding:28px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#6b7694;">Precio total del proyecto</p>
-              <p style="margin:0;font-size:52px;font-weight:900;color:#0047FF;line-height:1;">${(total || 0).toLocaleString('es-ES')}<span style="font-size:24px;color:#9ca3af;">€</span></p>
-              <p style="margin:10px 0 0;font-size:13px;color:#9ca3af;">+ ${(monthly || 0).toLocaleString('es-ES')}€/mes mantenimiento opcional</p>
-            </div>
-          </td>
-        </tr>
+  <!-- Saludo -->
+  <tr>
+    <td style="padding:36px 40px 24px;">
+      <p style="margin:0 0 12px;font-size:24px;font-weight:800;color:#111827;line-height:1.2;">¡Hola, ${name}! 👋</p>
+      <p style="margin:0;font-size:15px;color:#6B7280;line-height:1.7;">
+        Aquí tienes tu presupuesto personalizado para tu <strong style="color:#111827;">${WEB_LABELS[webType] || webType}</strong>.
+        Es una estimación orientativa basada en lo que has configurado — si quieres ajustar algo, estoy a un mensaje.
+      </p>
+    </td>
+  </tr>
 
-        ${breakdownRows ? `
-        <tr>
-          <td style="padding:0 40px 28px;">
-            <p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;">Desglose</p>
-            <table width="100%" cellpadding="0" cellspacing="0">${breakdownRows}</table>
-          </td>
-        </tr>` : ''}
+  <!-- Precio destacado -->
+  <tr>
+    <td style="padding:0 40px 28px;">
+      <div style="background:linear-gradient(135deg,rgba(0,71,255,0.06) 0%,rgba(0,71,255,0.02) 100%);border:2px solid rgba(0,71,255,0.15);border-radius:16px;padding:28px;text-align:center;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#9CA3AF;margin-bottom:8px;">Total del proyecto</div>
+        <div style="font-size:56px;font-weight:900;color:#0047FF;line-height:1;letter-spacing:-2px;">${totalFmt}<span style="font-size:28px;color:#9CA3AF;letter-spacing:0;">€</span></div>
+        ${monthly > 0 ? `<div style="margin-top:10px;font-size:14px;color:#9CA3AF;">+ ${monthlyFmt}€/mes mantenimiento <span style="color:#10B981;font-weight:600;">(opcional)</span></div>` : ''}
+      </div>
+    </td>
+  </tr>
 
-        <tr>
-          <td style="padding:0 40px 28px;">
-            <div style="background:#f8f9fc;border-radius:12px;padding:20px;">
-              <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#3d4560;">Detalles de tu proyecto</p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="font-size:13px;color:#6b7694;padding:4px 0;">Tipo de web</td>
-                  <td style="font-size:13px;color:#1a1d2e;font-weight:600;text-align:right;">${WEB_LABELS[webType] || webType}</td>
-                </tr>
-                <tr>
-                  <td style="font-size:13px;color:#6b7694;padding:4px 0;">Páginas estimadas</td>
-                  <td style="font-size:13px;color:#1a1d2e;font-weight:600;text-align:right;">${pages}</td>
-                </tr>
-                <tr>
-                  <td style="font-size:13px;color:#6b7694;padding:4px 0;">Plazo de entrega</td>
-                  <td style="font-size:13px;color:#1a1d2e;font-weight:600;text-align:right;">${TIMELINE_LABELS[timeline] || timeline}</td>
-                </tr>
-              </table>
-            </div>
-          </td>
-        </tr>
+  <!-- Desglose -->
+  ${rows ? `
+  <tr>
+    <td style="padding:0 40px 28px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#9CA3AF;margin-bottom:12px;">Desglose del presupuesto</div>
+      <table width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+    </td>
+  </tr>` : ''}
 
+  <!-- Detalles proyecto -->
+  <tr>
+    <td style="padding:0 40px 28px;">
+      <div style="background:#F9FAFB;border-radius:12px;padding:20px;">
+        <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:14px;">📋 Detalles de tu proyecto</div>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:13px;color:#9CA3AF;padding:5px 0;">Tipo de web</td>
+            <td style="font-size:13px;color:#111827;font-weight:600;text-align:right;">${WEB_LABELS[webType] || webType}</td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#9CA3AF;padding:5px 0;">Páginas</td>
+            <td style="font-size:13px;color:#111827;font-weight:600;text-align:right;">${PAGE_LABELS[pages] || pages}</td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#9CA3AF;padding:5px 0;">Plazo</td>
+            <td style="font-size:13px;color:#111827;font-weight:600;text-align:right;">${TIME_LABELS[timeline] || timeline}</td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+
+  <!-- Divider -->
+  <tr><td style="padding:0 40px;"><div style="height:1px;background:#F3F4F6;"></div></td></tr>
+
+  <!-- Próximos pasos -->
+  <tr>
+    <td style="padding:28px 40px 20px;">
+      <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:6px;">¿Qué hacemos ahora?</div>
+      <p style="margin:0 0 20px;font-size:14px;color:#6B7280;line-height:1.7;">
+        Si el presupuesto te encaja, el siguiente paso es una <strong style="color:#111827;">videollamada de 20 minutos</strong> conmigo para definir los detalles, resolver tus dudas y arrancar el proyecto.
+      </p>
+      <table cellpadding="0" cellspacing="0" width="100%">
         <tr>
-          <td style="padding:0 40px 36px;text-align:center;">
-            <p style="margin:0 0 20px;font-size:15px;color:#6b7694;line-height:1.6;">
-              ¿Quieres ajustar algo o tienes preguntas? Estoy disponible por WhatsApp o email.
-            </p>
-            <a href="https://wa.me/34625204337?text=${encodeURIComponent(`Hola Alejandro, he recibido mi presupuesto de ${(total || 0).toLocaleString('es-ES')}€ y quiero hablar sobre mi proyecto.`)}"
-               style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:99px;font-size:15px;font-weight:700;margin-right:12px;">
-              💬 WhatsApp
+          <td style="padding-right:8px;">
+            <a href="${CALENDLY}?name=${encodeURIComponent(name)}"
+               style="display:block;background:#0047FF;color:#ffffff;text-decoration:none;padding:15px 24px;border-radius:12px;font-size:15px;font-weight:700;text-align:center;">
+              📅 Reservar videollamada gratis
             </a>
-            <a href="mailto:info@agutidesigns.io"
-               style="display:inline-block;background:#0047FF;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:99px;font-size:15px;font-weight:700;">
-              ✉️ Email
+          </td>
+          <td style="padding-left:8px;">
+            <a href="https://wa.me/${WA_NUM}?text=${waText}"
+               style="display:block;background:#25D366;color:#ffffff;text-decoration:none;padding:15px 24px;border-radius:12px;font-size:15px;font-weight:700;text-align:center;">
+              💬 Escribir por WhatsApp
             </a>
           </td>
         </tr>
-
-        <tr>
-          <td style="background:#f8f9fc;padding:20px 40px;text-align:center;border-top:1px solid #e8eaf0;">
-            <p style="margin:0;font-size:12px;color:#9ca3af;">© ${new Date().getFullYear()} Agutidesigns · <a href="https://agutidesigns.io" style="color:#0047FF;text-decoration:none;">agutidesigns.io</a></p>
-            <p style="margin:6px 0 0;font-size:11px;color:#b0b8cc;">Presupuesto orientativo, puede variar según los detalles definitivos del proyecto.</p>
-          </td>
-        </tr>
-
       </table>
-    </td></tr>
-  </table>
+    </td>
+  </tr>
+
+  <!-- Proceso -->
+  <tr>
+    <td style="padding:0 40px 32px;">
+      <div style="background:#F9FAFB;border-radius:12px;padding:20px;">
+        <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:14px;">⚡ Cómo funciona</div>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          ${[['1', 'Videollamada sin compromiso', 'Definimos tu proyecto, tus objetivos y resolvemos todas tus dudas.'],
+             ['2', 'Propuesta definitiva en 24h', 'Recibes el presupuesto final y el contrato para revisar.'],
+             ['3', 'Diseño y desarrollo', 'Tu web lista en 1–3 semanas. Con revisiones hasta que quede perfecta.'],
+             ['4', 'Lanzamiento y soporte', 'Publicamos tu web y te acompaño en los primeros pasos.']].map(([n,t,d]) => `
+          <tr>
+            <td style="padding:8px 0;vertical-align:top;">
+              <table cellpadding="0" cellspacing="0"><tr>
+                <td style="vertical-align:top;padding-right:12px;">
+                  <div style="width:24px;height:24px;border-radius:6px;background:rgba(0,71,255,0.1);color:#0047FF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center;line-height:24px;">${n}</div>
+                </td>
+                <td>
+                  <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:2px;">${t}</div>
+                  <div style="font-size:12px;color:#9CA3AF;line-height:1.5;">${d}</div>
+                </td>
+              </tr></table>
+            </td>
+          </tr>`).join('')}
+        </table>
+      </div>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td style="background:#F9FAFB;padding:20px 40px;text-align:center;border-top:1px solid #E5E7EB;">
+      <p style="margin:0 0 4px;font-size:13px;color:#6B7280;">
+        <strong style="color:#111827;">Alejandro Gutiérrez</strong> · Agutidesigns
+      </p>
+      <p style="margin:0;font-size:12px;color:#9CA3AF;">
+        <a href="https://agutidesigns.io" style="color:#0047FF;text-decoration:none;">agutidesigns.io</a>
+        &nbsp;·&nbsp;
+        <a href="mailto:info@agutidesigns.io" style="color:#0047FF;text-decoration:none;">info@agutidesigns.io</a>
+      </p>
+      <p style="margin:12px 0 0;font-size:11px;color:#D1D5DB;">Este presupuesto es orientativo y puede ajustarse según los detalles definitivos del proyecto.</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+
 </body>
 </html>`;
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { name, email, webType, pages, functionalities, seoExtras, timeline, total, monthly, breakdown } = req.body;
-
-  if (!email || !name) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
-  }
+  const { name, email, webType, pages, timeline, total, monthly, breakdown } = req.body;
+  if (!email || !name) return res.status(400).json({ error: 'Faltan campos obligatorios' });
 
   try {
-    const html = buildQuoteHtml({ name, email, webType, pages, functionalities, seoExtras, timeline, total, monthly, breakdown });
+    const html = buildQuoteHtml({ name, webType, pages, timeline, total, monthly, breakdown });
 
     await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: `Tu presupuesto personalizado de Agutidesigns — ${(total || 0).toLocaleString('es-ES')}€`,
+      from:    FROM,
+      to:      email,
+      subject: `Tu presupuesto de Agutidesigns — ${(total || 0).toLocaleString('es-ES')}€`,
       html,
     });
 
+    // Notificación interna
     await resend.emails.send({
-      from: FROM,
-      to: 'info@agutidesigns.io',
-      subject: `[Nuevo lead] ${name} — ${(total || 0).toLocaleString('es-ES')}€`,
-      html: `<p><strong>Nuevo presupuesto calculado:</strong></p>
-             <ul>
-               <li>Nombre: ${name}</li>
-               <li>Email: ${email}</li>
-               <li>Web: ${webType} (${pages} páginas)</li>
-               <li>Total: ${(total || 0).toLocaleString('es-ES')}€</li>
-               <li>Plazo: ${timeline}</li>
-             </ul>`,
+      from:    FROM,
+      to:      'info@agutidesigns.io',
+      subject: `[Nuevo presupuesto] ${name} — ${(total || 0).toLocaleString('es-ES')}€`,
+      html: `<p style="font-family:sans-serif;font-size:14px;">
+               <strong>${name}</strong> (${email}) ha calculado un presupuesto.<br><br>
+               <strong>Web:</strong> ${webType} · ${pages} páginas · ${timeline}<br>
+               <strong>Total:</strong> ${(total || 0).toLocaleString('es-ES')}€
+               ${monthly > 0 ? ` + ${(monthly || 0).toLocaleString('es-ES')}€/mes` : ''}
+             </p>`,
     });
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('[send-quote] Error:', err);
+    console.error('[send-quote]', err);
     return res.status(500).json({ error: 'Error enviando email', detail: err.message });
   }
 }

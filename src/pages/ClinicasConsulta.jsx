@@ -74,6 +74,8 @@ export default function ClinicasConsulta() {
     if (!validate()) return;
     setSubmitting(true);
     setError('');
+
+    // Guardar en Supabase (silencioso si falla)
     try {
       await supabase.from('clinicas_leads').insert({
         nombre, clinica, ciudad, email, telefono,
@@ -82,10 +84,21 @@ export default function ClinicasConsulta() {
         situacion: servicios,
         fuente: 'landing-clinicas',
       });
-    } catch (_) { /* continúa aunque falle */ }
+    } catch (_) {}
+
+    // Email de confirmación al lead
+    try {
+      const serviciosLabel = servicios.map(id => SERVICIOS.find(s => s.id === id)?.label || id);
+      await fetch('/api/send-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, clinica, email, servicios: serviciosLabel }),
+      });
+    } catch (_) {}
+
     setSubmitting(false);
 
-    // Conversión Google Ads — envío de formulario para clientes potenciales
+    // Conversión Google Ads
     if (typeof window.gtag === 'function') {
       window.gtag('event', 'conversion', {
         send_to: 'AW-18145697321/xhZPCNfgk6kcEKm8xcxD',
@@ -94,13 +107,7 @@ export default function ClinicasConsulta() {
       });
     }
 
-    // Navegar a la misma página con params para que el refresco no pierda el estado
-    const params = new URLSearchParams({
-      reserva: '1',
-      nombre,
-      clinica,
-      email,
-    });
+    const params = new URLSearchParams({ reserva: '1', nombre, clinica, email });
     navigate(`/clinicas-dentales/consulta?${params.toString()}`, { replace: true });
     setDone(true);
     setStep(4);
