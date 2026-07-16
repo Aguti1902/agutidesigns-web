@@ -694,6 +694,70 @@ const CASO_TIMELINE = [
   { phase: 'Hoy',     title: '+40% facturación',        desc: 'La clínica ha más que doblado la captación de nuevos pacientes respecto al año anterior.' },
 ];
 
+/* ── Mini panel de métricas ── */
+const CHART_BARS = [18, 25, 22, 35, 42, 38, 55, 62, 58, 74, 85, 100];
+const MONTHS     = ['E','F','M','A','M','J','J','A','S','O','N','D'];
+
+function MetricsPanel({ inView }) {
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => { if (inView) { const t = setTimeout(() => setAnimated(true), 400); return () => clearTimeout(t); } }, [inView]);
+
+  return (
+    <div className="cl-caso__metrics">
+      {/* Header del panel */}
+      <div className="cl-caso__metrics-header">
+        <div className="cl-caso__metrics-dot" style={{ background: '#10B981' }} />
+        <span className="cl-caso__metrics-title">Panel de métricas — Vela-Segalà</span>
+        <span className="cl-caso__metrics-period">Últimos 12 meses</span>
+      </div>
+
+      {/* KPI row */}
+      <div className="cl-caso__metrics-kpis">
+        {[
+          { label: 'Visitas/mes',   value: '4.280',  delta: '+320%', color: '#10B981' },
+          { label: 'Nuevos pac.',   value: '68',      delta: '+3x',   color: '#0047FF' },
+          { label: 'Pos. Google',   value: '#1',      delta: '↑ 47',  color: '#8B5CF6' },
+        ].map((k, i) => (
+          <div key={i} className="cl-caso__metrics-kpi">
+            <div className="cl-caso__metrics-kpi-val">{k.value}</div>
+            <div className="cl-caso__metrics-kpi-lbl">{k.label}</div>
+            <div className="cl-caso__metrics-kpi-delta" style={{ color: k.color }}>{k.delta}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bar chart */}
+      <div className="cl-caso__chart">
+        {CHART_BARS.map((h, i) => (
+          <div key={i} className="cl-caso__chart-col">
+            <div
+              className="cl-caso__chart-bar"
+              style={{
+                height: animated ? `${h}%` : '4%',
+                background: i >= 9
+                  ? 'linear-gradient(180deg,#0047FF,#3b82f6)'
+                  : 'linear-gradient(180deg,#C7D7FF,#E8EFFE)',
+                transitionDelay: `${i * 60}ms`,
+              }}
+            />
+            <div className="cl-caso__chart-label">{MONTHS[i]}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="cl-caso__metrics-footer">
+        <span className="cl-caso__metrics-src">
+          <BarChart2 size={11} /> Google Analytics · Search Console
+        </span>
+        <span className="cl-caso__metrics-tag">
+          <Activity size={10} /> En tiempo real
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CasoExito({ openForm }) {
   const [ref, inView] = useReveal(0.08);
   return (
@@ -764,6 +828,9 @@ function CasoExito({ openForm }) {
             <div className="cl-caso__badge cl-caso__badge--br">
               <Star size={13} style={{ fill: '#F59E0B', color: '#F59E0B' }} /> 4.9 · 150+ reseñas
             </div>
+
+            {/* Panel de métricas */}
+            <MetricsPanel inView={inView} />
           </motion.div>
 
           {/* Timeline */}

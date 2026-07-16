@@ -2496,6 +2496,128 @@
 }
 .cl-caso__cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,71,255,0.4); }
 
+/* ── Metrics panel ── */
+.cl-caso__metrics {
+  margin-top: 12px;
+  background: #fff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+}
+.cl-caso__metrics-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.cl-caso__metrics-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cl-caso__metrics-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111827;
+  flex: 1;
+}
+.cl-caso__metrics-period {
+  font-size: 10px;
+  color: #9CA3AF;
+  background: #F3F4F6;
+  border-radius: 99px;
+  padding: 2px 8px;
+}
+
+/* KPIs */
+.cl-caso__metrics-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cl-caso__metrics-kpi {
+  background: #F9FAFB;
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.cl-caso__metrics-kpi-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.cl-caso__metrics-kpi-lbl {
+  font-size: 10px;
+  color: #9CA3AF;
+  margin-bottom: 3px;
+}
+.cl-caso__metrics-kpi-delta {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Bar chart */
+.cl-caso__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 70px;
+  padding: 0 2px;
+  margin-bottom: 8px;
+}
+.cl-caso__chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.cl-caso__chart-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-height: 4px;
+}
+.cl-caso__chart-label {
+  font-size: 8.5px;
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+/* Footer */
+.cl-caso__metrics-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #F3F4F6;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+.cl-caso__metrics-src {
+  font-size: 10px;
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cl-caso__metrics-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #10B981;
+  background: #D1FAE5;
+  border-radius: 99px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .cl-caso__stats { grid-template-columns: repeat(2, 1fr); }
