@@ -27,6 +27,25 @@ function useReveal(threshold = 0.1) {
   return [ref, inView];
 }
 
+/* ── Animated counter ── */
+function AnimCounter({ to, suffix = '', prefix = '', duration = 1800 }) {
+  const [val, setVal] = useState(0);
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 });
+  useEffect(() => {
+    if (!inView) return;
+    let start = null;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.floor(eased * to));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [inView, to, duration]);
+  return <span ref={ref}>{prefix}{val}{suffix}</span>;
+}
+
 /* ── Data ── */
 const MARQUEE_ITEMS = [
   'Más citas online', 'Top Google', 'IA 24/7', 'Carga en 1s',
@@ -659,6 +678,135 @@ const PAGE_SCHEMA = {
     },
   ],
 };
+
+/* ── Caso de éxito ── */
+const CASO_STATS = [
+  { value: 40,  suffix: '%', label: 'Más facturación',        icon: '📈', color: '#10B981', desc: 'Incremento en ingresos en 6 meses' },
+  { value: 3,   suffix: 'x', label: 'Más pacientes nuevos',   icon: '🦷', color: '#0047FF', desc: 'Captación orgánica desde Google' },
+  { value: 320, suffix: '%', label: 'Más visitas web',        icon: '🚀', color: '#8B5CF6', desc: 'Crecimiento de tráfico SEO' },
+  { value: 4.9, suffix: '★', label: 'Valoración en Google',   icon: '⭐', color: '#F59E0B', desc: '150+ reseñas verificadas', isDecimal: true },
+];
+
+const CASO_TIMELINE = [
+  { phase: 'Mes 1',   title: 'Web desde 0 + SEO',       desc: 'Diseñamos y lanzamos la web en 2 semanas. Optimización SEO local en Viladecans desde el día 1.' },
+  { phase: 'Mes 2–3', title: 'Chatbot IA + Reseñas',    desc: 'Instalamos el asistente IA que responde 24/7. Estrategia de captación de reseñas en Google.' },
+  { phase: 'Mes 4–6', title: 'Ads + Panel de métricas', desc: 'Campañas de Google Ads segmentadas. Dashboard en tiempo real para la clínica.' },
+  { phase: 'Hoy',     title: '+40% facturación',        desc: 'La clínica ha más que doblado la captación de nuevos pacientes respecto al año anterior.' },
+];
+
+function CasoExito({ openForm }) {
+  const [ref, inView] = useReveal(0.08);
+  return (
+    <section className="cl-caso section" ref={ref} id="caso-exito">
+      <div className="container">
+        {/* Header */}
+        <motion.div
+          variants={stagger} initial="hidden" animate={inView ? 'visible' : 'hidden'}
+          style={{ textAlign: 'center', marginBottom: 56 }}
+        >
+          <motion.span variants={fadeUp} className="cl-badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669', marginBottom: 14 }}>
+            ✅ Caso de éxito real
+          </motion.span>
+          <motion.h2 variants={fadeUp} className="cl-section-title">
+            De 0 a la clínica más visible<br />de Viladecans en 6 meses
+          </motion.h2>
+          <motion.p variants={fadeUp} className="cl-section-sub">
+            Cómo transformamos la presencia digital de <strong>Clínica Dental Vela-Segalà</strong> y disparamos su captación de pacientes.
+          </motion.p>
+        </motion.div>
+
+        {/* Stats animadas */}
+        <motion.div
+          variants={stagger} initial="hidden" animate={inView ? 'visible' : 'hidden'}
+          className="cl-caso__stats"
+        >
+          {CASO_STATS.map((s, i) => (
+            <motion.div key={i} variants={fadeUp} className="cl-caso__stat">
+              <div className="cl-caso__stat-icon">{s.icon}</div>
+              <div className="cl-caso__stat-num" style={{ color: s.color }}>
+                {s.isDecimal
+                  ? <span>{s.value}{s.suffix}</span>
+                  : <AnimCounter to={s.value} suffix={s.suffix} duration={1600 + i * 200} />}
+              </div>
+              <div className="cl-caso__stat-label">{s.label}</div>
+              <div className="cl-caso__stat-desc">{s.desc}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Web showcase + timeline */}
+        <motion.div
+          variants={stagger} initial="hidden" animate={inView ? 'visible' : 'hidden'}
+          className="cl-caso__body"
+        >
+          {/* Screenshot */}
+          <motion.div variants={fadeUp} className="cl-caso__preview">
+            <div className="cl-caso__browser">
+              <div className="cl-caso__browser-bar">
+                <span /><span /><span />
+                <div className="cl-caso__browser-url">🔒 velasegalaviladecans.com</div>
+              </div>
+              <a href="https://www.velasegalaviladecans.com/" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="/velasegala-screenshot.png"
+                  alt="Web Clínica Dental Vela-Segalà — Caso de éxito Agutidesigns"
+                  className="cl-caso__img"
+                />
+                <div className="cl-caso__img-overlay">
+                  <span><ExternalLink size={16} /> Ver web en vivo</span>
+                </div>
+              </a>
+            </div>
+            {/* Floating badges */}
+            <div className="cl-caso__badge cl-caso__badge--tl">
+              <TrendingUp size={14} /> SEO #1 Viladecans
+            </div>
+            <div className="cl-caso__badge cl-caso__badge--br">
+              <Star size={13} style={{ fill: '#F59E0B', color: '#F59E0B' }} /> 4.9 · 150+ reseñas
+            </div>
+          </motion.div>
+
+          {/* Timeline */}
+          <motion.div variants={fadeUp} className="cl-caso__timeline">
+            <div className="cl-caso__timeline-title">
+              <Zap size={16} style={{ color: '#0047FF' }} /> Cómo lo conseguimos
+            </div>
+            {CASO_TIMELINE.map((t, i) => (
+              <div key={i} className="cl-caso__tl-item">
+                <div className="cl-caso__tl-dot">
+                  <div className="cl-caso__tl-line" />
+                </div>
+                <div className="cl-caso__tl-content">
+                  <span className="cl-caso__tl-phase">{t.phase}</span>
+                  <div className="cl-caso__tl-ttl">{t.title}</div>
+                  <div className="cl-caso__tl-desc">{t.desc}</div>
+                </div>
+              </div>
+            ))}
+
+            {/* Quote del cliente */}
+            <div className="cl-caso__quote">
+              <div className="cl-caso__quote-text">
+                "Antes apenas nos encontraban en Google. Ahora llenamos agenda cada semana gracias a la web y al chatbot. Ha sido una inversión que se paga sola."
+              </div>
+              <div className="cl-caso__quote-author">
+                <div className="cl-caso__quote-avatar">VS</div>
+                <div>
+                  <strong>Dr. Xavier Vela & Dra. Maribel Segalà</strong>
+                  <div style={{ fontSize: 12, color: '#9CA3AF' }}>Clínica Dental Vela-Segalà · Viladecans</div>
+                </div>
+              </div>
+            </div>
+
+            <button className="cl-caso__cta" onClick={openForm}>
+              Quiero resultados como estos <ArrowRight size={16} />
+            </button>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
 export default function ClinicasLanding() {
   const [heroRef, heroInView] = useReveal();
@@ -1335,6 +1483,9 @@ export default function ClinicasLanding() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── CASO DE ÉXITO ── */}
+      <CasoExito openForm={openForm} />
 
       {/* ── REVIEWS (Trustpilot style) ── */}
       <section className="cl-reviews section" id="testimonios" aria-label="Testimonios de clínicas dentales">
