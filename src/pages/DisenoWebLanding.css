@@ -1105,3 +1105,54 @@
 @media (max-width: 768px) {
   .dw-video__frame { border-radius: var(--radius-xl); }
 }
+
+/* ══════════════════════════════════════
+   Apple visual system — home
+══════════════════════════════════════ */
+.dw-landing {
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-mono: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", sans-serif;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  -webkit-font-smoothing: antialiased;
+}
+.dw-landing .noise-overlay { display: none; }
+.dw-landing .dw-section-title,
+.dw-landing .dw-hero__title {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #1d1d1f;
+}
+.dw-landing .dw-hero__title .text-primary { color: #0047FF; }
+.dw-landing .dw-service-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  box-shadow: none;
+}
+.dw-landing .dw-service-card::before { display: none; }
+.dw-landing .dw-service-card:hover {
+  transform: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.dw-landing .dw-service-card__icon--primary,
+.dw-landing .dw-service-card__icon--accent {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  box-shadow: none;
+  border-radius: 12px;
+}
+.dw-landing .dw-service-card--popular {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.dw-landing .badge {
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  background: #fff;
+  color: #1d1d1f;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}

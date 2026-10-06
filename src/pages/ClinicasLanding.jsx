@@ -681,10 +681,10 @@ const PAGE_SCHEMA = {
 
 /* ── Caso de éxito ── */
 const CASO_STATS = [
-  { value: 40,  suffix: '%', label: 'Más facturación',        icon: '📈', color: '#10B981', desc: 'Incremento en ingresos en 6 meses' },
-  { value: 3,   suffix: 'x', label: 'Más pacientes nuevos',   icon: '🦷', color: '#0047FF', desc: 'Captación orgánica desde Google' },
-  { value: 320, suffix: '%', label: 'Más visitas web',        icon: '🚀', color: '#8B5CF6', desc: 'Crecimiento de tráfico SEO' },
-  { value: 4.9, suffix: '★', label: 'Valoración en Google',   icon: '⭐', color: '#F59E0B', desc: '150+ reseñas verificadas', isDecimal: true },
+  { value: 40,  suffix: '%', label: 'Más facturación',      Icon: TrendingUp, desc: 'Incremento en ingresos en 6 meses' },
+  { value: 3,   suffix: '×', label: 'Más pacientes nuevos', Icon: Users,      desc: 'Captación orgánica desde Google' },
+  { value: 320, suffix: '%', label: 'Más visitas web',      Icon: BarChart2,  desc: 'Crecimiento de tráfico SEO' },
+  { value: 4.9, suffix: '',  label: 'Valoración en Google', Icon: Star,       desc: '150+ reseñas verificadas', isDecimal: true },
 ];
 
 const CASO_TIMELINE = [
@@ -768,8 +768,8 @@ function CasoExito({ openForm }) {
           variants={stagger} initial="hidden" animate={inView ? 'visible' : 'hidden'}
           style={{ textAlign: 'center', marginBottom: 56 }}
         >
-          <motion.span variants={fadeUp} className="cl-badge" style={{ background: 'rgba(16,185,129,0.1)', color: '#059669', marginBottom: 14 }}>
-            ✅ Caso de éxito real
+          <motion.span variants={fadeUp} className="cl-badge" style={{ marginBottom: 14 }}>
+            <CheckCircle size={14} strokeWidth={2} /> Caso de éxito real
           </motion.span>
           <motion.h2 variants={fadeUp} className="cl-section-title">
             De 0 a la clínica más visible<br />de Viladecans en 6 meses
@@ -786,11 +786,14 @@ function CasoExito({ openForm }) {
         >
           {CASO_STATS.map((s, i) => (
             <motion.div key={i} variants={fadeUp} className="cl-caso__stat">
-              <div className="cl-caso__stat-icon">{s.icon}</div>
-              <div className="cl-caso__stat-num" style={{ color: s.color }}>
+              <div className="cl-caso__stat-icon" aria-hidden="true">
+                <s.Icon size={20} strokeWidth={1.75} />
+              </div>
+              <div className="cl-caso__stat-num">
                 {s.isDecimal
-                  ? <span>{s.value}{s.suffix}</span>
+                  ? <span>{s.value}</span>
                   : <AnimCounter to={s.value} suffix={s.suffix} duration={1600 + i * 200} />}
+                {s.isDecimal && <Star size={16} fill="currentColor" strokeWidth={0} aria-hidden="true" />}
               </div>
               <div className="cl-caso__stat-label">{s.label}</div>
               <div className="cl-caso__stat-desc">{s.desc}</div>
@@ -808,7 +811,7 @@ function CasoExito({ openForm }) {
             <div className="cl-caso__browser">
               <div className="cl-caso__browser-bar">
                 <span /><span /><span />
-                <div className="cl-caso__browser-url">🔒 velasegalaviladecans.com</div>
+                <div className="cl-caso__browser-url">velasegalaviladecans.com</div>
               </div>
               <a href="https://www.velasegalaviladecans.com/" target="_blank" rel="noopener noreferrer">
                 <img

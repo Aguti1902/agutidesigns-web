@@ -2209,19 +2209,11 @@
    CASO DE ÉXITO
 ══════════════════════════════════════ */
 .cl-caso {
-  background: #F8FAFF;
+  background: transparent;
   position: relative;
   overflow: hidden;
 }
-.cl-caso::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 50% at 10% 20%, rgba(0,71,255,0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(139,92,246,0.05) 0%, transparent 70%);
-  pointer-events: none;
-}
+.cl-caso::before { display: none; }
 
 /* Stats grid */
 .cl-caso__stats {
@@ -2232,33 +2224,39 @@
 }
 .cl-caso__stat {
   background: #fff;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 20px;
-  padding: 28px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  padding: 28px 18px 24px;
   text-align: center;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.05);
-  transition: transform .25s, box-shadow .25s;
+  box-shadow: none;
+  transition: box-shadow .25s;
   position: relative;
   overflow: hidden;
 }
-.cl-caso__stat::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #0047FF, #8B5CF6);
-  opacity: 0;
-  transition: opacity .25s;
+.cl-caso__stat::before { display: none; }
+.cl-caso__stat:hover { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06); }
+.cl-caso__stat-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.cl-caso__stat:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-.cl-caso__stat:hover::before { opacity: 1; }
-.cl-caso__stat-icon { font-size: 28px; margin-bottom: 10px; line-height: 1; }
 .cl-caso__stat-num {
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 2.75rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  color: #1d1d1f;
 }
 .cl-caso__stat-label {
   font-size: 13.5px;
@@ -2267,8 +2265,9 @@
   margin-bottom: 4px;
 }
 .cl-caso__stat-desc {
-  font-size: 11.5px;
-  color: #9CA3AF;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6e6e73;
   line-height: 1.4;
 }
 
@@ -2632,4 +2631,50 @@
   .cl-caso__stat  { padding: 20px 12px; }
   .cl-caso__stat-num { font-size: 2.2rem; }
   .cl-caso__badge { display: none; }
+}
+
+/* ══════════════════════════════════════
+   Apple visual system — clínicas
+   System type for UI, brand blue only on the primary action.
+══════════════════════════════════════ */
+.cl-landing {
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", sans-serif;
+  --font-mono: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", sans-serif;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  -webkit-font-smoothing: antialiased;
+}
+.cl-landing .noise-overlay { display: none; }
+.cl-landing .cl-section-title {
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  color: #1d1d1f;
+}
+.cl-landing .cl-section-title--light { color: #f5f5f7; }
+.cl-landing .cl-section-sub,
+.cl-landing .cl-section-label {
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-weight: 500;
+}
+.cl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: #1d1d1f;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+.cl-landing .cl-hero__h1 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
