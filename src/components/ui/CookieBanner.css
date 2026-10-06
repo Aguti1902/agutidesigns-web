@@ -1,19 +1,19 @@
 .cookie-banner {
   position: fixed;
-  bottom: var(--space-5);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
+  right: 0;
   z-index: 9999;
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-6);
-  background: #1B1B1B;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 16px 48px rgba(0,0,0,.3), 0 4px 12px rgba(0,0,0,.2);
-  max-width: 680px;
-  width: calc(100vw - var(--space-8));
+  padding: 12px 24px;
+  background: rgba(27, 27, 27, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 -8px 32px rgba(0,0,0,.18);
+  width: 100%;
 }
 
 .cookie-banner__icon {
@@ -77,15 +77,10 @@
 
 @media (max-width: 600px) {
   .cookie-banner {
-    left: var(--space-3);
-    right: var(--space-3);
-    transform: none;
-    width: auto;
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
-    bottom: var(--space-3);
-    padding: var(--space-4);
+    padding: 14px 16px;
   }
   .cookie-banner__actions {
     width: 100%;
