@@ -312,7 +312,7 @@ export default function DisenoWebLanding() {
               </div>
               <div className="dw-hero__stat-divider" />
               <div className="dw-hero__stat">
-                <span className="dw-hero__stat-num"><Star size={15} className="dw-hero__star" />4.9</span>
+                <span className="dw-hero__stat-num"><Star size={15} className="dw-hero__star" fill="#F59E0B" />4.9</span>
                 <span className="dw-hero__stat-label">Valoración media</span>
               </div>
               <div className="dw-hero__stat-divider" />
@@ -406,7 +406,6 @@ export default function DisenoWebLanding() {
                 <motion.div key={i} variants={fadeUp} className={`dw-service-card ${s.popular ? 'dw-service-card--popular' : ''}`}>
                   {s.popular && <div className="dw-service-card__popular-badge">Más popular</div>}
                   <div className="dw-service-card__top">
-                    <span className="dw-service-card__num">{s.num}</span>
                     <div className={`dw-service-card__icon dw-service-card__icon--${s.color}`}>{s.icon}</div>
                   </div>
                   <h3 className="dw-service-card__title">{s.title}</h3>

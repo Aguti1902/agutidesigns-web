@@ -1181,7 +1181,7 @@ export default function ClinicasLanding() {
                   reciban más citas y nunca más pierdan un paciente por falta de respuesta.
                 </p>
                 <a href="#soluciones">
-                  <button className="cl-btn-primary">Ver cómo lo hacemos <ArrowRight size={16} /></button>
+                  <button className="cl-btn-ghost">Ver cómo lo hacemos <ArrowRight size={16} /></button>
                 </a>
               </div>
             </motion.div>
