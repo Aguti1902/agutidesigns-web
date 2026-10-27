@@ -1,0 +1,69 @@
+{
+  "slug": "peluquerias-barcelona",
+  "nicho": "peluqueria",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-10-27",
+  "metaTitle": "Diseño web para peluquerías en Barcelona | Agutidesigns",
+  "metaDescription": "Webs para peluquerías en Barcelona: reserva online por servicio y estilista, galería de trabajos, Google Maps y recordatorios por WhatsApp.",
+  "h1": "Diseño web para peluquerías en Barcelona",
+  "intro": "Creamos la web de tu peluquería para que la clienta que busca “peluquería en el Eixample” o “mechas balayage en Barcelona” vea tus trabajos, elija servicio y estilista y reserve sola, sin esperar a que contestes un mensaje entre cliente y cliente.",
+  "nota": "En peluquería se reserva desde el móvil y por impulso. Si reservar contigo cuesta más que en el salón de la esquina, la cita se va a otro sitio.",
+  "problemas": [
+    {
+      "t": "Reservas por WhatsApp e Instagram que no puedes atender",
+      "d": "Con las manos ocupadas en un color o un corte, los mensajes se acumulan. Cuando contestas, la clienta ya ha reservado en otro salón."
+    },
+    {
+      "t": "Tu trabajo solo se ve en Instagram",
+      "d": "Instagram enseña, pero no posiciona en Google ni deja reservar bien. Quien busca “peluquería cerca de mí” llega a la ficha de Maps y a la web, no a tu perfil."
+    },
+    {
+      "t": "Huecos vacíos y clientas que no se presentan",
+      "d": "Una cancelación de última hora en un servicio largo, como un color completo o un recogido, deja la agenda con un agujero difícil de recuperar."
+    },
+    {
+      "t": "Depender de plataformas de reservas de terceros",
+      "d": "Los marketplaces de belleza dan visibilidad, pero la clienta es suya, te comparan con el salón de al lado y no controlas cómo se presenta tu marca."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Reserva online por servicio, duración y estilista",
+      "d": "La clienta elige qué se hace y con quién, ve los huecos reales y confirma en un minuto desde el móvil. Tú decides qué servicios necesitan consulta previa."
+    },
+    {
+      "t": "Galería de trabajos que vende",
+      "d": "Cortes, colores y recogidos organizados por estilo, con fotos optimizadas para que la web cargue rápido y Google las entienda."
+    },
+    {
+      "t": "Google Maps y SEO local por barrio",
+      "d": "Ficha de Google Business Profile cuidada y páginas para tus servicios estrella, para aparecer cuando buscan peluquería en tu barrio de Barcelona."
+    },
+    {
+      "t": "Recordatorios y aviso de huecos libres por WhatsApp",
+      "d": "Mensaje automático antes de cada cita y la opción de avisar a clientas habituales cuando se libera un hueco."
+    },
+    {
+      "t": "Asistente IA para las preguntas de siempre",
+      "d": "Responde a cualquier hora sobre servicios, horarios o cómo prepararse para un color, y lleva a la reserva sin que tengas que soltar las tijeras."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "Ya uso una app de reservas, ¿tengo que cambiarla?",
+      "a": "No necesariamente. Si tu herramienta lo permite, integramos la reserva en la web; si no, te proponemos una alternativa sencilla y migramos tus servicios."
+    },
+    {
+      "q": "¿Puedo conectar mi Instagram con la web?",
+      "a": "Sí. Podemos mostrar tus últimas publicaciones y, sobre todo, enlazar desde Instagram a la reserva para que el interés se convierta en cita."
+    },
+    {
+      "q": "¿Sirve también para barberías o salones con varios estilistas?",
+      "a": "Sí. La web se adapta a tu equipo y tu carta de servicios, con agenda por profesional si trabajáis varias personas."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, preparamos una propuesta con una demo de cómo quedaría la web de tu peluquería y te la enseñamos en una llamada corta."
+    }
+  ]
+}
