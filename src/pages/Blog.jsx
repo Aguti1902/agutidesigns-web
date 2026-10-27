@@ -1,6 +1,7 @@
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import PostCover from '../components/site/PostCover';
+import Photo from '../components/site/Photo';
 import { LeadSection } from '../components/site/Sections';
 import { allPosts } from '../data/posts';
 import useSeo from '../hooks/useSeo';
@@ -28,10 +29,13 @@ export default function Blog() {
       <Navbar />
       <main>
         <header className="ag-hero ag-hero--short">
-          <div className="ag-wrap blog-head">
-            <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Blog</span></nav>
-            <h1 className="ag-h1">Blog de marketing digital para clínicas y negocios locales</h1>
-            <p className="ag-lead">Guías prácticas sobre diseño web, Google Maps, SEO local e IA para conseguir más pacientes y clientes. Sin humo.</p>
+          <div className="ag-wrap ag-hero__grid">
+            <div className="blog-head">
+              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Blog</span></nav>
+              <h1 className="ag-h1">Blog de marketing digital para clínicas y negocios locales</h1>
+              <p className="ag-lead">Guías prácticas sobre diseño web, Google Maps, SEO local e IA para conseguir más pacientes y clientes. Sin humo.</p>
+            </div>
+            <div className="ag-hero__photo"><Photo name="escritorio" alt="Escritorio con portátil, móvil y agenda de citas" priority /></div>
           </div>
         </header>
         <section className="ag-section ag-section--white" style={{ paddingTop: 'clamp(40px,6vw,72px)' }}>

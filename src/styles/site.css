@@ -98,6 +98,8 @@
 .ag-crumbs { font-size: 0.85rem; color: var(--ag-muted); display: flex; gap: 8px; flex-wrap: wrap; }
 .ag-crumbs a { text-decoration: none; }
 .ag-crumbs a:hover { color: var(--ag-blue); }
+.ag-hero__photo { border-radius: var(--ag-r-xl); overflow: hidden; aspect-ratio: 4 / 3; box-shadow: 0 40px 80px -40px rgba(7, 13, 36, 0.4); }
+.ag-hero__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 @media (max-width: 920px) { .ag-hero__grid { grid-template-columns: 1fr; } }
 
 /* ── Tarjetas y listas ── */

@@ -4,6 +4,7 @@ import AIChatbot from '../components/chat/LazyChatbot';
 import { CaseVela, Portfolio, Reviews, LeadSection } from '../components/site/Sections';
 import { REVIEWS_GENERAL } from '../data/site';
 import useSeo from '../hooks/useSeo';
+import Photo from '../components/site/Photo';
 import './DisenoWebIndex.css';
 
 const CASOS_SEO = {
@@ -18,10 +19,13 @@ export default function Casos() {
       <Navbar />
       <main>
         <header className="ag-hero ag-hero--short">
-          <div className="ag-wrap">
-            <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Casos</span></nav>
-            <h1 className="ag-h1 dwi__title">Casos de éxito y webs reales</h1>
-            <p className="ag-lead">Resultados de negocios reales, con webs que puedes visitar ahora mismo.</p>
+          <div className="ag-wrap ag-hero__grid">
+            <div className="dwi__copy">
+              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Casos</span></nav>
+              <h1 className="ag-h1 dwi__title">Casos de éxito y webs reales</h1>
+              <p className="ag-lead">Resultados de negocios reales, con webs que puedes visitar ahora mismo.</p>
+            </div>
+            <div className="ag-hero__photo"><Photo name="negocio" alt="Dueña de un negocio local recibiendo una reserva en el móvil" priority /></div>
           </div>
         </header>
         <CaseVela full />
