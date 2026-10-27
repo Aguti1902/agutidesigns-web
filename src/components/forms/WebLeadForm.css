@@ -1,0 +1,36 @@
+.wlf {
+  background: #fff;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 24px;
+  padding: clamp(24px, 4vw, 40px);
+  box-shadow: 0 30px 60px -30px rgba(0, 71, 255, .25);
+  text-align: left;
+}
+.wlf__title { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); line-height: 1.05; margin: 0 0 8px; letter-spacing: -.01em; }
+.wlf__sub { color: var(--color-gray-600); margin: 0 0 24px; font-size: .95rem; }
+.wlf__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.wlf__grid label { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--color-gray-700); }
+.wlf__full { grid-column: 1 / -1; }
+.wlf input, .wlf textarea {
+  font: inherit; font-size: .95rem; font-weight: 400; color: var(--color-black);
+  border: 1px solid var(--color-gray-300); border-radius: 12px; padding: 12px 14px; background: var(--color-white);
+  transition: border-color .2s, box-shadow .2s; width: 100%;
+}
+.wlf input:focus, .wlf textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0, 71, 255, .15); }
+.wlf__hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.wlf__error { color: var(--color-error); font-size: .85rem; margin: 14px 0 0; }
+.wlf__btn {
+  margin-top: 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--color-primary); color: #fff; border: 0; border-radius: 999px; padding: 14px 26px;
+  font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; transition: background .2s, transform .2s;
+}
+.wlf__btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); color: #fff; }
+.wlf__btn:disabled { opacity: .6; cursor: wait; }
+.wlf__btn--ghost { background: transparent; color: var(--color-black); border: 1px solid var(--color-gray-300); }
+.wlf__btn--ghost:hover { background: var(--color-gray-100); color: var(--color-black); }
+.wlf__legal { font-size: .72rem; color: var(--color-gray-500); margin: 12px 0 0; }
+.wlf--done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--color-check); }
+.wlf--done h3 { font-family: var(--font-display); font-size: 2rem; color: var(--color-black); margin: 6px 0 0; }
+.wlf--done p { color: var(--color-gray-600); max-width: 420px; margin: 0; }
+.wlf__done-ctas { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+@media (max-width: 640px) { .wlf__grid { grid-template-columns: 1fr; } .wlf__btn { width: 100%; } }

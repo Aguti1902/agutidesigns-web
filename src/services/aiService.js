@@ -102,7 +102,7 @@ Devuelve un JSON con esta estructura:
   "budget_range": "bajo" | "medio" | "alto",
   "web_type": "landing" | "corporativa" | "ecommerce" | "portfolio" | "webapp" | "sin_definir",
   "key_needs": ["necesidad1", "necesidad2"],
-  "contact_info": { "name": "", "email": "", "business": "" },
+  "contact_info": { "name": "", "email": "", "phone": "", "business": "" },
   "next_action": "descripción de la siguiente acción recomendada (ej: enviar calculadora, agendar llamada, seguimiento en 3 días)"
 }`;
 

@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Packs', href: '#packs' },
   { label: 'Proceso', href: '#proceso' },
   { label: 'FAQ', href: '#faq' },
+  { label: 'Casos', href: '/casos' },
   { label: 'Blog', href: '/blog' },
 ];
 
@@ -39,6 +40,8 @@ export default function Navbar({ dark = false, cta }) {
     const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.location.href = '/' + href; // sección de la home desde otra página
     }
   };
 
@@ -51,7 +54,7 @@ export default function Navbar({ dark = false, cta }) {
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <div className="container navbar__container">
-          <a href="#" className="navbar__logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <a href="/" className="navbar__logo" onClick={(e) => { if (window.location.pathname === '/') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}>
             <img src="/images/logoazul.png" alt="Agutidesigns" className="navbar__logo-img" />
           </a>
 

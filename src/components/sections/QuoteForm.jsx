@@ -250,7 +250,7 @@ export default function QuoteForm() {
                   Pagar y empezar — {formatPrice(quote.total)}€
                 </Button>
                 <a
-                  href={`https://wa.me/34600000000?text=${encodeURIComponent(`¡Hola Guti! He recibido mi presupuesto de ${formatPrice(quote.total)}€ para "${formData.business}" y me gustaría hablar antes de empezar.`)}`}
+                  href={`https://wa.me/34625204337?text=${encodeURIComponent(`¡Hola Guti! He recibido mi presupuesto de ${formatPrice(quote.total)}€ para "${formData.business}" y me gustaría hablar antes de empezar.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="quote__result-whatsapp"

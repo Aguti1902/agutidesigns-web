@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { blogPosts } from '../data/blogPosts';
+import { allPosts as blogPosts } from '../data/content';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import './Blog.css';

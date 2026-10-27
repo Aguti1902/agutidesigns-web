@@ -5,10 +5,9 @@ import {
   BarChart2, Megaphone, Sparkles, User, Building,
   Phone, Mail, CheckCircle, Loader2,
 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import './ClinicasLeadForm.css';
 
-const CALENDLY_URL = 'https://calendly.com/alejandro-agutidesigns/reunion';
+const CALENDLY_URL = 'https://calendly.com/agutidesigns/reunion';
 
 const SERVICIOS = [
   { value: 'web',       label: 'Web profesional',         desc: 'Diseño + desarrollo',   icon: Globe },
@@ -60,19 +59,21 @@ export default function ClinicasLeadForm({ onClose }) {
     if (!validate()) return;
     setSubmitting(true);
     setError('');
-    const { error: dbErr } = await supabase.from('clinicas_leads').insert({
-      nombre,
-      clinica,
-      ciudad,
-      email,
-      telefono,
-      web_actual:         webActual,
-      pacientes_objetivo: null,
-      situacion:          servicios,
-      fuente:             'landing-clinicas',
-    });
+    let ok = false;
+    try {
+      const r = await fetch('/api/web-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre, negocio: clinica, ciudad, email, telefono, web: webActual,
+          situacion: Array.isArray(servicios) ? servicios.join(', ') : servicios,
+          fuente: 'landing-clinicas',
+        }),
+      });
+      ok = r.ok;
+    } catch { ok = false; }
     setSubmitting(false);
-    if (dbErr) { setError('Algo salió mal. Inténtalo de nuevo.'); return; }
+    if (!ok) { setError('Algo salió mal. Inténtalo de nuevo.'); return; }
     setDone(true);
     setStep(4);
   };

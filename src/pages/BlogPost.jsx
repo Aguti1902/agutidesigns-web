@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { blogPosts } from '../data/blogPosts';
+import { allPosts as blogPosts } from '../data/content';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import WebLeadForm from '../components/forms/WebLeadForm';
 import './BlogPost.css';
 
 function formatDate(dateStr) {
@@ -99,10 +100,14 @@ export default function BlogPost() {
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
+        <section style={{ margin: '56px 0' }}>
+          <WebLeadForm fuente={`web:blog:${post.slug}`} title="¿Quieres que lo hagamos por ti?" />
+        </section>
+
         <section className="blogpost-related">
           <h2 className="blogpost-related__title">Otros artículos que te pueden interesar</h2>
           <div className="blogpost-related__list">
-            {otherPosts.map((other) => (
+            {otherPosts.slice(0, 6).map((other) => (
               <Link key={other.slug} to={`/blog/${other.slug}`} className="blogpost-related__card">
                 <span className="blogpost-related__category">{other.category} · {other.readTime}</span>
                 <p className="blogpost-related__post-title">{other.title}</p>

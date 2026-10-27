@@ -19,14 +19,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, '../dist');
 const indexHtml = path.join(distDir, 'index.html');
 
 // Route configurations: each entry gets its own dist/<path>/index.html
-const ROUTES = [
+const STATIC_ROUTES = [
   {
     dir: 'clinicas-dentales',
     title: 'Diseño Web para Clínicas Dentales | AgutiDesigns',
@@ -85,6 +85,56 @@ const ROUTES = [
   },
 ];
 
+
+// ─────────────────────────────────────────────────────────────
+// Contenido generado por agentes: landings nicho+ciudad y blog
+// ─────────────────────────────────────────────────────────────
+const SITE = 'https://agutidesigns.io';
+const OG_DEFAULT = `${SITE}/images/og-agutidesigns.jpg`;
+const dataDir = path.resolve(__dirname, '../src/data');
+const readJsonDir = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(d, f), 'utf-8'))) : []);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const landings = readJsonDir(path.join(dataDir, 'landings'));
+const { blogPosts: legacyPosts } = await import(pathToFileURL(path.join(dataDir, 'blogPosts.js')).href);
+const newPosts = readJsonDir(path.join(dataDir, 'blog'));
+const posts = [...newPosts, ...legacyPosts].filter((p, i, a) => a.findIndex((q) => q.slug === p.slug) === i);
+
+const landingBody = (l) => `<main><nav><a href="/">Inicio</a> / <a href="/diseno-web">Diseño web</a></nav>
+<h1>${esc(l.h1)}</h1><p>${esc(l.intro)}</p>
+<h2>Lo que está frenando a tu negocio</h2>${l.problemas.map((p) => `<h3>${esc(p.t)}</h3><p>${esc(p.d)}</p>`).join('')}
+<h2>Lo que montamos para ti</h2><p>${esc(l.nota)}</p><ol>${l.solucion.map((s) => `<li><strong>${esc(s.t)}</strong>: ${esc(s.d)}</li>`).join('')}</ol>
+<h2>Caso real: Clínica Dental Vela-Segalà</h2><p>Más de 20.000 € facturados en solo 3 meses (+80 % de facturación). <a href="/casos">Ver el caso</a></p>
+<h2>Preguntas frecuentes</h2>${l.faqs.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}
+<p><a href="/diseno-web">Ver todos los sectores</a></p></main>`;
+
+const landingLd = (l) => {
+  const url = `${SITE}/diseno-web/${l.slug}`;
+  return { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'Service', name: l.h1, serviceType: 'Diseño web y marketing digital', areaServed: { '@type': 'City', name: l.ciudad }, provider: { '@type': 'Organization', name: 'Agutidesigns', url: SITE }, url, description: l.metaDescription },
+    { '@type': 'FAQPage', mainEntity: l.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'Diseño web', item: `${SITE}/diseno-web` },
+      { '@type': 'ListItem', position: 3, name: l.h1, item: url }] },
+  ] };
+};
+
+const postLd = (p) => ({ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: p.title, description: p.metaDescription,
+  datePublished: p.publishDate, dateModified: p.updatedDate || p.publishDate, author: { '@type': 'Person', name: p.author || 'Alejandro Gutiérrez' },
+  publisher: { '@type': 'Organization', name: 'AgutiDesigns', url: SITE }, mainEntityOfPage: `${SITE}/blog/${p.slug}`, keywords: (p.keywords || []).join(', ') });
+
+const ROUTES = [
+  ...STATIC_ROUTES.filter((r) => !r.dir.startsWith('blog/')),
+  ...posts.map((p) => ({ dir: `blog/${p.slug}`, title: p.metaTitle || p.title, description: p.metaDescription, canonical: `${SITE}/blog/${p.slug}`, ogImage: p.ogImage || OG_DEFAULT,
+    body: `<main><article><h1>${esc(p.title)}</h1><p>Por ${esc(p.author)} · ${esc(p.publishDate)}</p>${p.content}</article><p><a href="/blog">Más artículos</a></p></main>`, jsonLd: postLd(p), lastmod: p.updatedDate || p.publishDate })),
+  { dir: 'diseno-web', title: 'Diseño web por sector y ciudad | Agutidesigns', description: 'Webs con asistente IA, Google Maps y citas online para clínicas y negocios locales. Elige tu sector y tu ciudad.', canonical: `${SITE}/diseno-web`, ogImage: OG_DEFAULT,
+    body: `<main><h1>Diseño web para negocios que viven de sus clientes locales</h1><ul>${landings.map((l) => `<li><a href="/diseno-web/${l.slug}">${esc(l.h1)}</a></li>`).join('')}</ul></main>` },
+  ...landings.map((l) => ({ dir: `diseno-web/${l.slug}`, title: l.metaTitle, description: l.metaDescription, canonical: `${SITE}/diseno-web/${l.slug}`, ogImage: OG_DEFAULT, body: landingBody(l), jsonLd: landingLd(l), lastmod: l.updatedDate || l.publishDate })),
+  { dir: 'casos', title: 'Casos de éxito y webs reales | Agutidesigns', description: 'Clínica Dental Vela-Segalà: más de 20.000 € facturados en 3 meses (+80 %). Mira el antes y después y las webs que hemos diseñado.', canonical: `${SITE}/casos`, ogImage: OG_DEFAULT,
+    body: '<main><h1>Casos y webs reales</h1><h2>Clínica Dental Vela-Segalà: más de 20.000 € facturados en solo 3 meses</h2><p>Web nueva, asistente IA, Google y recordatorios automáticos: +80 % de facturación.</p></main>' },
+];
+
 if (!fs.existsSync(indexHtml)) {
   console.error('[postbuild-seo] dist/index.html not found. Run vite build first.');
   process.exit(1);
@@ -94,63 +144,34 @@ const baseHtml = fs.readFileSync(indexHtml, 'utf-8');
 
 for (const route of ROUTES) {
   let html = baseHtml;
+  const t = esc(route.title), d = esc(route.description);
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${t}</title>`);
+  html = html.replace(/<meta name="description" content="[^"]*"/, `<meta name="description" content="${d}"`);
+  html = html.replace(/<link rel="canonical" href="[^"]*"/, `<link rel="canonical" href="${route.canonical}"`);
+  html = html.replace(/<meta property="og:title" content="[^"]*"/, `<meta property="og:title" content="${t}"`);
+  html = html.replace(/<meta property="og:description" content="[^"]*"/, `<meta property="og:description" content="${d}"`);
+  html = html.replace(/<meta property="og:url" content="[^"]*"/, `<meta property="og:url" content="${route.canonical}"`);
+  html = html.replace(/<meta property="og:image" content="[^"]*"/, `<meta property="og:image" content="${route.ogImage}"`);
+  html = html.replace(/<meta name="twitter:title" content="[^"]*"/, `<meta name="twitter:title" content="${t}"`);
+  html = html.replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${d}"`);
+  html = html.replace(/<meta name="twitter:image" content="[^"]*"/, `<meta name="twitter:image" content="${route.ogImage}"`);
+  if (route.jsonLd) html = html.replace('</head>', `<script type="application/ld+json">${JSON.stringify(route.jsonLd).replace(/</g, '\\u003c')}</script>\n</head>`);
+  // Contenido real en el HTML para buscadores (React lo reemplaza al arrancar)
+  if (route.body) html = html.replace('<div id="root"></div>', `<div id="root">${route.body}</div>`);
 
-  // Replace <title>
-  html = html.replace(
-    /<title>[^<]*<\/title>/,
-    `<title>${route.title}</title>`
-  );
-
-  // Replace meta description
-  html = html.replace(
-    /<meta name="description" content="[^"]*"/,
-    `<meta name="description" content="${route.description}"`
-  );
-
-  // Replace canonical
-  html = html.replace(
-    /<link rel="canonical" href="[^"]*"/,
-    `<link rel="canonical" href="${route.canonical}"`
-  );
-
-  // Replace OG tags
-  html = html.replace(
-    /<meta property="og:title" content="[^"]*"/,
-    `<meta property="og:title" content="${route.title}"`
-  );
-  html = html.replace(
-    /<meta property="og:description" content="[^"]*"/,
-    `<meta property="og:description" content="${route.description}"`
-  );
-  html = html.replace(
-    /<meta property="og:url" content="[^"]*"/,
-    `<meta property="og:url" content="${route.canonical}"`
-  );
-  html = html.replace(
-    /<meta property="og:image" content="[^"]*"/,
-    `<meta property="og:image" content="${route.ogImage}"`
-  );
-
-  // Replace Twitter tags
-  html = html.replace(
-    /<meta name="twitter:title" content="[^"]*"/,
-    `<meta name="twitter:title" content="${route.title}"`
-  );
-  html = html.replace(
-    /<meta name="twitter:description" content="[^"]*"/,
-    `<meta name="twitter:description" content="${route.description}"`
-  );
-  html = html.replace(
-    /<meta name="twitter:image" content="[^"]*"/,
-    `<meta name="twitter:image" content="${route.ogImage}"`
-  );
-
-  // Write to dist/<route>/index.html
   const outDir = path.join(distDir, route.dir);
   fs.mkdirSync(outDir, { recursive: true });
-  const outFile = path.join(outDir, 'index.html');
-  fs.writeFileSync(outFile, html, 'utf-8');
-  console.log(`[postbuild-seo] Written: dist/${route.dir}/index.html`);
+  fs.writeFileSync(path.join(outDir, 'index.html'), html, 'utf-8');
 }
+console.log(`[postbuild-seo] ${ROUTES.length} páginas estáticas (${landings.length} landings, ${posts.length} posts).`);
 
-console.log('[postbuild-seo] Done. Static SEO shells created for all routes.');
+// Sitemap automático
+const today = new Date().toISOString().slice(0, 10);
+const urls = [{ loc: `${SITE}/`, pr: '1.0' }, ...ROUTES.map((r) => ({ loc: r.canonical, lastmod: r.lastmod, pr: r.dir.startsWith('diseno-web/') ? '0.8' : r.dir.startsWith('blog/') ? '0.7' : '0.8' }))];
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `  <url><loc>${u.loc}</loc><lastmod>${u.lastmod || today}</lastmod><priority>${u.pr}</priority></url>`).join('\n')}
+</urlset>
+`;
+fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemap, 'utf-8');
+console.log(`[postbuild-seo] sitemap.xml con ${urls.length} URLs.`);

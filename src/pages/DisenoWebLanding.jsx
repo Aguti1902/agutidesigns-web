@@ -14,6 +14,7 @@ import Button from '../components/ui/Button';
 import AIChatbot from '../components/chat/AIChatbot';
 import CookieBanner from '../components/ui/CookieBanner';
 import './DisenoWebLanding.css';
+import { PORTFOLIO } from '../data/portfolio';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -34,16 +35,7 @@ const SERVICES = [
   { num: '04', icon: <Smartphone size={26} />, title: 'Portfolio', desc: 'Muestra tu trabajo de forma impactante y consigue más clientes.', features: ['Galería de proyectos', 'Sección de servicios', 'Formulario de contacto', 'Animaciones'], color: 'accent' },
 ];
 
-const PORTFOLIO = [
-  { id: 'stay4days', img: '/portfolio/stay4days.png', label: 'Stay4Days', url: 'stay4days.com', type: 'Alquiler Vacacional', href: 'https://stay4days.com' },
-  { id: 'spaorganic', img: '/portfolio/spaorganic.png', label: 'Spa Organic', url: 'spaorganic.es', type: 'Spa & Belleza', href: 'https://spaorganic.es' },
-  { id: 'lgolegal', img: '/portfolio/lgolegal.png', label: 'LGO Legal', url: 'lgolegal.com', type: 'Asesoría Legal', href: 'https://lgolegal.com' },
-  { id: 'rusinol', img: '/portfolio/rusinol.png', label: 'Gestoría Rusiñol', url: 'gestoriarusinol.com', type: 'Gestoría Online', href: 'https://gestoriarusinol.com' },
-  { id: 'lagraciosavins', img: '/portfolio/lagraciosavins.png', label: 'La Graciosa Vins', url: 'lagraciosavins.com', type: 'Club de Vino', href: 'https://lagraciosavins.com' },
-  { id: 'nexgent', img: '/portfolio/nexgent.png', label: 'NexGent', url: 'nexgent.io', type: 'Startup IA', href: 'https://nexgent.io' },
-  { id: 'hellonails', img: '/portfolio/hellonails.png', label: 'Hello Nails', url: 'hellonails.com', type: 'Belleza & Franquicia', href: 'https://hellonails.com' },
-  { id: 'meinzerandmoray', img: '/portfolio/meinzerandmoray.png', label: 'Meinzer & Moray', url: 'meinzerandmoray.com', type: 'Inversiones', href: 'https://www.meinzerandmoray.com' },
-];
+
 
 const PROCESS = [
   { step: '01', icon: <MessageCircle size={24} />, title: 'Briefing', desc: 'Hablamos sobre tu negocio, tus objetivos y lo que necesitas. Entendemos tu proyecto antes de diseñar.' },

@@ -15,6 +15,9 @@ import ClienteBriefing from './pages/cliente/ClienteBriefing.jsx';
 import Blog from './pages/Blog.jsx';
 import BlogPost from './pages/BlogPost.jsx';
 import Onboarding from './pages/Onboarding.jsx';
+import NichoLanding from './pages/NichoLanding.jsx';
+import DisenoWebIndex from './pages/DisenoWebIndex.jsx';
+import Casos from './pages/Casos.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
@@ -27,6 +30,11 @@ createRoot(document.getElementById('root')).render(
           <Route path="/calculadora" element={<CalculadoraLanding />} />
           <Route path="/clinicas-dentales" element={<ClinicasLanding />} />
           <Route path="/clinicas-dentales/consulta" element={<ClinicasConsulta />} />
+          <Route path="/casos" element={<Casos />} />
+
+          {/* SEO por nicho + ciudad (src/data/landings/*.json) */}
+          <Route path="/diseno-web" element={<DisenoWebIndex />} />
+          <Route path="/diseno-web/:slug" element={<NichoLanding />} />
 
           {/* Admin */}
           <Route path="/admin" element={<AdminLogin />} />

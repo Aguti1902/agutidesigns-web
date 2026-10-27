@@ -383,7 +383,7 @@ export default function CalculadoraLanding() {
 
               <div className="calc-result__actions">
                 <a
-                  href={`https://wa.me/34600000000?text=${encodeURIComponent(`¡Hola Guti! He calculado mi presupuesto (${formatPrice(quote.total)}€) y me gustaría hablar sobre mi proyecto web.`)}`}
+                  href={`https://wa.me/34625204337?text=${encodeURIComponent(`¡Hola Guti! He calculado mi presupuesto (${formatPrice(quote.total)}€) y me gustaría hablar sobre mi proyecto web.`)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="calc-btn calc-btn--whatsapp"
                 >
