@@ -47,7 +47,6 @@ export const REVIEWS_GENERAL = [
   { name: 'Carlos Lardón', role: 'Socio, LGO Legal', text: 'Necesitábamos una web que transmitiera confianza y seriedad. Guti lo entendió a la primera. El proceso fue rápido, claro y el resultado superó nuestras expectativas.' },
   { name: 'Ramón Rusiñol', role: 'Gerente, Gestoría Rusiñol', text: 'Teníamos una web antigua que no convertía nada. Ahora recibimos consultas cada semana gracias al formulario y al posicionamiento en Google. Excelente trabajo.' },
   { name: 'Marc Bosch', role: 'CEO, NexGent', text: 'Para una startup de IA era clave tener una web que impresionara. Guti nos entregó algo que enseñamos con orgullo a inversores y clientes. Muy recomendable.' },
-  { name: 'Sofía Torres', role: 'Franquiciada, Hello Nails', text: 'Rapidez, profesionalidad y un resultado espectacular. La web de mi franquicia se ve increíble en móvil y ya tenemos citas online funcionando perfectamente.' },
 ];
 
 export const REVIEWS_CLINICAS = [

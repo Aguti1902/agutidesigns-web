@@ -425,7 +425,6 @@ export default function CalculadoraLanding() {
                 </div>
                 <div className="calc-reviews__grid">
                   {[
-                    { name: 'Ana M.', role: 'Hello Nails · Franquicia', text: 'Guti nos entregó la web en tiempo récord. Las reservas online aumentaron un 60% el primer mes. Totalmente recomendable.', stars: 5 },
                     { name: 'Carlos R.', role: 'Stay4Days · Alquiler vacacional', text: 'Profesional, rápido y con mucho criterio de diseño. Nuestra web convierte muchísimo mejor que la anterior.', stars: 5 },
                     { name: 'Laura V.', role: 'Spa Organic · Bienestar', text: 'El diseño superó todas mis expectativas. Los clientes nos dicen constantemente que la web es preciosa.', stars: 5 },
                   ].map((r, i) => (

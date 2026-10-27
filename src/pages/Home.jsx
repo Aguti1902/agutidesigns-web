@@ -66,7 +66,7 @@ export default function Home() {
           </div>
           <div className="ag-wrap sx-clients">
             <p>Negocios que ya trabajan con nosotros</p>
-            <ul>{['Vela-Segalà', 'Stay4Days', 'Spa Organic', 'LGO Legal', 'Gestoría Rusiñol', 'La Graciosa Vins', 'NexGent', 'Hello Nails'].map((c) => <li key={c}>{c}</li>)}</ul>
+            <ul>{['Vela-Segalà', 'Estética Segalà', 'Stay4Days', 'Lanzarote Experience Tours', 'Spa Organic', 'LGO Legal', 'Gestoría Rusiñol', 'La Graciosa Vins', 'Black AI', 'NexGent', 'DEPRO'].map((c) => <li key={c}>{c}</li>)}</ul>
           </div>
         </header>
 

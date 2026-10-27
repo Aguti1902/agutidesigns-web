@@ -20,7 +20,7 @@ const BRIEFINGS = {
         title: '¿A qué te dedicas?',
         sub: 'Cuéntame sobre tu negocio y el objetivo principal de la landing.',
         fields: [
-          { key: 'company_name',        label: 'Nombre de tu negocio o proyecto *', placeholder: 'Ej. Hello Nails Barcelona' },
+          { key: 'company_name',        label: 'Nombre de tu negocio o proyecto *', placeholder: 'Ej. Clínica Dental Sonrisa' },
           { key: 'company_description', label: '¿Qué haces exactamente?', multiline: true, placeholder: 'Describe tu negocio en 2-3 frases. ¿Qué vendes? ¿A quién? ¿Qué te diferencia?' },
           { key: 'sector',              label: 'Sector / industria', placeholder: 'Ej. Estética, Hostelería, Consultoría...' },
         ],
