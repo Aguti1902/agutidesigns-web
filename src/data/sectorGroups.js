@@ -20,6 +20,7 @@ export const SECTOR_GROUPS = [
     points: ['Reservas y bonos online', 'Fotos y textos que venden la experiencia', 'Reseñas de Google visibles en la web'],
     proof: { label: 'Opinión real', text: '“Desde que estrenamos la nueva web, las reservas online han aumentado un 40 %.” Lucía Fernández, Spa Organic.' },
     clients: ['spaorganic', 'hellonails'],
+    nichos: ['peluqueria'],
   },
   {
     id: 'despachos',
@@ -29,6 +30,7 @@ export const SECTOR_GROUPS = [
     points: ['Servicios explicados con claridad', 'Formularios de consulta que filtran casos', 'SEO local por especialidad'],
     proof: { label: 'Opinión real', text: '“Ahora recibimos consultas cada semana gracias al formulario y al posicionamiento en Google.” Ramón Rusiñol, Gestoría Rusiñol.' },
     clients: ['lgolegal', 'rusinol'],
+    nichos: ['abogados'],
   },
   {
     id: 'turismo',

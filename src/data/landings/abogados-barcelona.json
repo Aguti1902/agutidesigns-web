@@ -1,0 +1,69 @@
+{
+  "slug": "abogados-barcelona",
+  "nicho": "abogados",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-10-27",
+  "metaTitle": "Diseño web para abogados en Barcelona | Agutidesigns",
+  "metaDescription": "Webs para despachos de abogados en Barcelona: una página por especialidad, SEO local, formulario que filtra consultas y asistente IA fuera de horario.",
+  "h1": "Diseño web para abogados en Barcelona",
+  "intro": "Diseñamos la web de tu despacho para que quien busca “abogado laboralista en Barcelona” o “abogado de familia en Gràcia” te encuentre, entienda en qué le puedes ayudar y te deje una consulta bien explicada, sin que tengas que coger el teléfono para cada duda.",
+  "nota": "Quien busca abogado suele tener prisa y un problema concreto. La web tiene que darle confianza en segundos y llevarle a una consulta clara, no a una lista genérica de servicios.",
+  "problemas": [
+    {
+      "t": "Una sola página de “servicios” para todas las especialidades",
+      "d": "Laboral, familia, extranjería, herencias o penal se buscan por separado. Si todo cabe en un listado, Google no sabe para qué búsqueda mostrarte y el cliente no ve que llevas su tipo de caso."
+    },
+    {
+      "t": "Consultas que llegan sin datos o que no son de tu área",
+      "d": "Un formulario de “nombre, email y mensaje” trae casos fuera de tu especialidad o mensajes sin la información mínima, y pierdes tiempo respondiendo uno a uno."
+    },
+    {
+      "t": "Competir con directorios y grandes bufetes en Google",
+      "d": "En Barcelona las primeras posiciones para “abogado + especialidad” las ocupan directorios y firmas grandes. Sin SEO local por área y barrio, el despacho pequeño o mediano queda fuera de la vista."
+    },
+    {
+      "t": "Una web que no transmite la seriedad del despacho",
+      "d": "Plantillas antiguas, fotos de stock de mazos y balanzas, y textos llenos de tecnicismos. El cliente potencial compara varios despachos y se queda con el que le explica las cosas con claridad."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Una página por área de práctica",
+      "d": "Cada especialidad con su propia página, escrita en lenguaje claro: qué casos lleváis, cómo es el proceso y qué documentación conviene traer a la primera reunión."
+    },
+    {
+      "t": "Formulario de consulta que filtra y ordena",
+      "d": "El cliente elige el área, describe su caso y deja los datos que necesitas. Te llega ordenado y puedes priorizar sin hacer una llamada previa para cada consulta."
+    },
+    {
+      "t": "SEO local en Barcelona y Google Business Profile",
+      "d": "Trabajamos la ficha del despacho, las páginas por especialidad y las búsquedas con barrio o municipio del área metropolitana para que aparezcas cuando buscan abogado cerca."
+    },
+    {
+      "t": "Asistente IA para las primeras preguntas",
+      "d": "Responde dudas generales sobre cómo trabajáis, horarios y cómo pedir una primera consulta, en castellano y catalán. No da asesoramiento jurídico: deriva cada caso a tu equipo."
+    },
+    {
+      "t": "Textos legales y protección de datos en orden",
+      "d": "Aviso legal, política de privacidad y consentimientos en el formulario bien planteados, algo que en un despacho se mira con lupa."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿La web puede estar en castellano y catalán?",
+      "a": "Sí. En Barcelona recomendamos tener las dos versiones, cada una bien indexada para que Google la muestre en el idioma en que busca el cliente."
+    },
+    {
+      "q": "¿El asistente IA puede dar respuestas legales a los clientes?",
+      "a": "No, y está configurado para no hacerlo. Atiende preguntas generales sobre el despacho, recoge el caso y lo pasa a vuestro equipo para que lo valore un abogado."
+    },
+    {
+      "q": "Somos un despacho pequeño, ¿tiene sentido competir en Google?",
+      "a": "Sí, si se elige bien dónde: especialidades concretas y búsquedas con barrio o municipio suelen ser más alcanzables que términos genéricos como “abogado Barcelona”."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, revisamos tu web actual y las especialidades que más os interesan, y te enseñamos una propuesta con una demo de cómo quedaría en una llamada corta."
+    }
+  ]
+}
