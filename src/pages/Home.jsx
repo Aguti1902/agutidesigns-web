@@ -84,7 +84,7 @@ export default function Home() {
         <CaseVela />
         <Portfolio limit={4} lead="Cada web es distinta porque cada negocio lo es. Estas están online y puedes visitarlas." />
         <Plans />
-        <Process />
+        <Process photo="reunion" photoAlt="Revisando el diseño de la nueva web de una clínica con su responsable" />
         <AboutGuti />
         <Reviews items={REVIEWS_GENERAL} />
         <Faq items={FAQ_GENERAL} white />

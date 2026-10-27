@@ -1,5 +1,6 @@
 import { CheckCheck, TrendingUp, CalendarCheck, Star } from 'lucide-react';
 import { sectorOf } from '../../data/sectors';
+import Photo from './Photo';
 import './Visuals.css';
 
 /** Portátil con captura real de una web. */
@@ -52,14 +53,14 @@ export function HeroGuti() {
   );
 }
 
-/** Hero de clínicas: web real + WhatsApp con IA. */
+/** Hero de clínicas: foto de clínica + WhatsApp con IA + resultado real. */
 export function HeroClinic() {
   return (
     <div className="vx-stage vx-stage--clinic">
       <div className="vx-glow" aria-hidden="true" />
-      <Laptop className="vx-stage__laptop vx-stage__laptop--big" src="/img/vela-800.webp" srcSet="/img/vela-800.webp 800w, /img/vela-1600.webp 1600w" url="velasegalaviladecans.com" alt="Web de la Clínica Dental Vela-Segalà, caso real de Agutidesigns" />
+      <div className="vx-photo"><Photo name="dental" alt="Dentista enseñando el plan de tratamiento a una paciente en una clínica dental moderna" priority /></div>
       <ChatPhone className="vx-stage__phone" business="Clínica Dental" ask="Hola, ¿tenéis hueco para una limpieza esta semana?" reply="¡Hola! Sí, el jueves a las 17:30 o el viernes a las 10:00. ¿Cuál te va mejor?" />
-      <div className="vx-chip vx-chip--result vx-chip--low">
+      <div className="vx-chip vx-chip--result vx-chip--top">
         <Star size={18} />
         <div><b>+80 % facturación</b><span>caso real en Viladecans</span></div>
       </div>
@@ -78,6 +79,7 @@ export function SectorMock({ nicho, ciudad }) {
         <div className="vx-site__page">
           <div className="vx-site__nav"><b>{s.brand} {ciudad.split(' ')[0]}</b><span>Servicios</span><span>Equipo</span><em>Pedir cita</em></div>
           <div className="vx-site__hero">
+            <Photo name={s.photo} alt="" className="vx-site__bg" sizes="(max-width: 900px) 92vw, 520px" priority />
             <small>{s.label} en {ciudad}</small>
             <strong>{s.hero}</strong>
             <div className="vx-site__btns"><em>Reservar online</em><span>WhatsApp</span></div>

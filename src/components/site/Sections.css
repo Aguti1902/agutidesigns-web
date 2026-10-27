@@ -119,3 +119,11 @@
 .sx-clients ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px 40px; align-items: center; }
 .sx-clients p { margin: 0 0 14px; font-size: 0.9rem; color: var(--ag-muted); }
 .sx-clients li { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; color: #86868b; }
+
+/* ── Fotos en secciones ── */
+.sx-band { border-radius: var(--ag-r-xl); overflow: hidden; aspect-ratio: 21 / 8; margin-bottom: clamp(36px, 5vw, 56px); }
+.sx-band img, .sx-split__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sx-split { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; margin-bottom: clamp(36px, 5vw, 56px); }
+.sx-split .ag-head { margin-bottom: 0; }
+.sx-split__photo { border-radius: var(--ag-r-xl); overflow: hidden; aspect-ratio: 4 / 3; }
+@media (max-width: 860px) { .sx-split { grid-template-columns: 1fr; } .sx-band { aspect-ratio: 16 / 9; } }

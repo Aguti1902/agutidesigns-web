@@ -63,6 +63,7 @@ export default function NichoLanding() {
         </header>
 
         <Problems title={`Lo que frena hoy a tu ${sectorOf(l.nicho).label.toLowerCase()} en ${l.ciudad}`} items={l.problemas} />
+
         <Pillars title="Lo que montamos para ti" lead={l.nota} items={pillars} />
         <CaseVela />
         <Plans audience="tu negocio" />

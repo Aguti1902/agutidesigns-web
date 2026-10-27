@@ -5,6 +5,7 @@ import { PLANS, PARTNER, PROCESS, CONTACT } from '../../data/site';
 import { PORTFOLIO } from '../../data/portfolio';
 import { VELA } from '../../data/caseStudy';
 import { Laptop } from './Visuals';
+import Photo from './Photo';
 import './Sections.css';
 
 /* ── Planes y precios ── */
@@ -124,11 +125,12 @@ export function Reviews({ items, title = 'Lo que dicen nuestros clientes', white
 }
 
 /* ── Proceso (es una secuencia real: numerado) ── */
-export function Process({ title = 'Cómo trabajamos', items = PROCESS, white = false }) {
+export function Process({ title = 'Cómo trabajamos', items = PROCESS, white = false, photo, photoAlt = '' }) {
   return (
     <section className={`ag-section ${white ? 'ag-section--white' : ''}`} id="proceso">
       <div className="ag-wrap">
         <div className="ag-head"><h2 className="ag-h2">{title}</h2></div>
+        {photo && <div className="sx-band"><Photo name={photo} alt={photoAlt} sizes="(max-width: 1200px) 94vw, 1150px" /></div>}
         <ol className="sx-steps">
           {items.map((s, i) => (
             <li key={s.t}>
@@ -241,13 +243,16 @@ export function Pillars({ id = 'servicios', title, lead, items, children }) {
 }
 
 /* ── Problemas (lo que frena al negocio) ── */
-export function Problems({ title, lead, items }) {
+export function Problems({ title, lead, items, photo, photoAlt = '' }) {
   return (
     <section className="ag-section" id="problemas">
       <div className="ag-wrap">
-        <div className="ag-head">
-          <h2 className="ag-h2">{title}</h2>
-          {lead && <p className="ag-lead">{lead}</p>}
+        <div className={photo ? 'sx-split' : undefined}>
+          <div className="ag-head">
+            <h2 className="ag-h2">{title}</h2>
+            {lead && <p className="ag-lead">{lead}</p>}
+          </div>
+          {photo && <div className="sx-split__photo"><Photo name={photo} alt={photoAlt} sizes="(max-width: 900px) 92vw, 540px" /></div>}
         </div>
         <ol className="sx-problems">
           {items.map((p) => (

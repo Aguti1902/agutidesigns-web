@@ -3,6 +3,7 @@ import Footer from '../components/layout/Footer';
 import { LeadSection } from '../components/site/Sections';
 import { landings } from '../data/content';
 import { sectorOf } from '../data/sectors';
+import Photo from '../components/site/Photo';
 import useSeo from '../hooks/useSeo';
 import './DisenoWebIndex.css';
 
@@ -21,8 +22,17 @@ export default function DisenoWebIndex() {
         <header className="ag-hero ag-hero--short">
           <div className="ag-wrap">
             <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Sectores</span></nav>
-            <h1 className="ag-h1 dwi__title">Diseño web por sector y ciudad</h1>
-            <p className="ag-lead">Cada sector tiene sus búsquedas, sus dudas y su forma de pedir cita. Elige el tuyo y mira cómo lo trabajamos en tu ciudad.</p>
+            <div className="dwi__hero">
+              <div className="dwi__copy">
+                <h1 className="ag-h1 dwi__title">Diseño web por sector y ciudad</h1>
+                <p className="ag-lead">Cada sector tiene sus búsquedas, sus dudas y su forma de pedir cita. Elige el tuyo y mira cómo lo trabajamos en tu ciudad.</p>
+              </div>
+              <div className="dwi__mosaic" aria-hidden="true">
+                <Photo name="podologia" alt="" sizes="300px" priority />
+                <Photo name="fisio" alt="" sizes="300px" priority />
+                <Photo name="estetica" alt="" sizes="300px" priority />
+              </div>
+            </div>
           </div>
         </header>
         <section className="ag-section ag-section--white">

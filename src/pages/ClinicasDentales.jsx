@@ -76,7 +76,7 @@ export default function ClinicasDentales() {
           </div>
         </header>
 
-        <Problems title="Lo que hace perder pacientes a una clínica dental" lead="No es la calidad de tu trabajo. Es lo que pasa antes de que el paciente llegue a la silla." items={PROBLEMS} />
+        <Problems title="Lo que hace perder pacientes a una clínica dental" lead="No es la calidad de tu trabajo. Es lo que pasa antes de que el paciente llegue a la silla." items={PROBLEMS} photo="dental-recepcion" photoAlt="Recepción de una clínica dental atendiendo a una paciente" />
 
         <Pillars id="servicios" title="Marketing dental completo, en un solo equipo" lead="Todo conectado: la web lleva a la cita, Google lleva a la web y el asistente no deja ninguna consulta sin respuesta." items={PILLARS}>
           {dentalCities.length > 0 && (
