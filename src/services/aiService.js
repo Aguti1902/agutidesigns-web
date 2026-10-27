@@ -4,14 +4,8 @@
    presupuestos automáticos y cualificación de leads
    ============================================= */
 
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
-
-// ── Configuración ──
-// IMPORTANTE: En producción, usa variables de entorno del servidor (backend)
-// Nunca expongas la API key en el frontend en producción
-const getApiKey = () => {
-  return import.meta.env.VITE_OPENAI_API_KEY || '';
-};
+// La clave de OpenAI vive solo en el servidor: el navegador llama a /api/chat.
+const CHAT_API_URL = '/api/chat';
 
 // ── System Prompts ──
 const CHATBOT_SYSTEM_PROMPT = `Eres Guti AI, el asistente virtual de Agutidesigns — estudio de diseño web freelance dirigido por Alejandro (Guti), basado en Barcelona.
@@ -30,13 +24,19 @@ PERSONALIDAD Y TONO:
 - Optimista y resolutivo
 - Hablas siempre en español
 - Evitas tecnicismos innecesarios
-- Jamás menciones "packs", "planes" ni precios cerrados — cada proyecto es único
 
 TU OBJETIVO:
 1. Entender qué necesita el usuario y ayudarle a clarificarlo
 2. Resolver dudas honestas sobre diseño web, plazos, procesos
 3. Guiarle para que use la calculadora de precios (disponible en la web) para obtener un presupuesto personalizado
-4. Si muestra interés claro, invitarle a hablar con Guti directamente por WhatsApp o email
+4. Si muestra interés claro, pídele de forma natural su nombre, el nombre de su negocio y un email o teléfono para que Alejandro le prepare una propuesta personalizada con una demo de su web (gratis). También puede escribir por WhatsApp (+34 625 204 337) o reservar llamada en https://calendly.com/agutidesigns/reunion
+
+PLANES MENSUALES PARA CLÍNICAS Y NEGOCIOS LOCALES (cuota mensual + puesta en marcha única):
+- Base: 190 €/mes + 990 € de alta — web nueva a medida, hosting, mantenimiento y cambios
+- Crecimiento: 590 €/mes + 1.490 € de alta — Base + SEO local, ficha de Google y reseñas (el recomendado)
+- IA: 1.490 €/mes + 2.490 € de alta — Crecimiento + asistente IA en web y WhatsApp, citas y automatizaciones
+- Partner: 2.900 €/mes + 3.900 € de alta — se explica en una llamada
+Caso real: Clínica Dental Vela-Segalà (Viladecans) facturó más de 20.000 € en 3 meses (+80 % de facturación) tras la digitalización.
 
 PROCESO DE TRABAJO:
 1. Hablamos sobre el proyecto (gratis, sin compromiso)
@@ -52,8 +52,9 @@ TIPOS DE WEB MÁS FRECUENTES (orientativo, sin precios fijos):
 - Portfolio: mostrar trabajos y conseguir clientes
 
 REGLAS IMPORTANTES:
-- NUNCA menciones "packs", "Pack Starter", "Pack Business", "Pack Premium" ni precios cerrados
-- Si preguntan por el precio, explica que cada proyecto es personalizado y dirígeles a la calculadora de la web o a hablar con Guti
+- Para webs puntuales (proyecto sin cuota), el precio es a medida: dirígeles a la calculadora de la web
+- Para negocios que quieren captar clientes cada mes, explica los planes mensuales de arriba
+- No inventes cifras, clientes ni resultados distintos del caso Vela-Segalà
 - Sé honesto: si algo está fuera de tu conocimiento, dilo
 - Respuestas cortas y útiles (máximo 2-3 párrafos)
 - Usa emojis con moderación
@@ -102,43 +103,24 @@ Devuelve un JSON con esta estructura:
   "budget_range": "bajo" | "medio" | "alto",
   "web_type": "landing" | "corporativa" | "ecommerce" | "portfolio" | "webapp" | "sin_definir",
   "key_needs": ["necesidad1", "necesidad2"],
-  "contact_info": { "name": "", "email": "", "business": "" },
+  "contact_info": { "name": "", "email": "", "phone": "", "business": "" },
   "next_action": "descripción de la siguiente acción recomendada (ej: enviar calculadora, agendar llamada, seguimiento en 3 días)"
 }`;
 
 // ── API Call Helper ──
 async function callOpenAI(messages, options = {}) {
-  const apiKey = getApiKey();
-  
-  if (!apiKey) {
-    // Modo demo sin API key - respuestas simuladas
-    return generateDemoResponse(messages);
-  }
-
   try {
-    const response = await fetch(OPENAI_API_URL, {
+    const response = await fetch(CHAT_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: options.model || 'gpt-4o-mini',
-        messages,
-        temperature: options.temperature || 0.7,
-        max_tokens: options.maxTokens || 1000,
-        ...options.extra,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, temperature: options.temperature, maxTokens: options.maxTokens }),
     });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`chat ${response.status}`);
     const data = await response.json();
-    return data.choices[0].message.content;
+    if (!data.content) throw new Error('empty');
+    return data.content;
   } catch (error) {
-    console.error('Error calling OpenAI:', error);
+    // Sin clave configurada o error: respuestas de respaldo
     return generateDemoResponse(messages);
   }
 }

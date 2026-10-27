@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './WhatsAppButton.css';
 
-const WA_NUMBER = '34600000000'; // ← cambia por tu número real (sin + ni espacios)
+const WA_NUMBER = '34625204337'; 
 const WA_MESSAGE = '¡Hola! Te escribo desde vuestra web. Me gustaría pedir información sobre vuestros servicios de diseño web.';
 
 export default function WhatsAppButton() {

@@ -1,0 +1,101 @@
+/* ── Escenarios visuales de las cabeceras ── */
+.vx-stage { position: relative; min-height: clamp(380px, 44vw, 560px); isolation: isolate; }
+.vx-glow { position: absolute; inset: 6% 2% 4% 8%; z-index: -1; border-radius: 48% 52% 44% 56% / 50% 44% 56% 50%;
+  background: radial-gradient(60% 60% at 40% 40%, rgba(0, 71, 255, 0.22), transparent 70%), radial-gradient(50% 50% at 75% 70%, rgba(0, 71, 255, 0.12), transparent 70%);
+  filter: blur(10px); }
+.vx-stage--sector .vx-glow { background: radial-gradient(60% 60% at 40% 40%, color-mix(in srgb, var(--hue) 28%, transparent), transparent 70%), radial-gradient(50% 50% at 75% 70%, rgba(0, 71, 255, 0.12), transparent 70%); }
+
+/* Barra de navegador */
+.vx-bar { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; background: #f1f1f4; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+.vx-bar i { width: 8px; height: 8px; border-radius: 50%; background: #d6d6dc; }
+.vx-bar span { margin-left: 10px; font-size: 11px; color: #6e6e73; background: #fff; border-radius: 6px; padding: 3px 10px; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Portátil */
+.vx-laptop { margin: 0; width: 100%; }
+.vx-laptop__screen { border-radius: 14px 14px 4px 4px; overflow: hidden; background: #fff; border: 8px solid #1d1d1f; border-bottom-width: 10px; box-shadow: 0 40px 80px -30px rgba(7, 13, 36, 0.45); }
+.vx-laptop__screen img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: top; }
+.vx-laptop__base { height: 12px; margin: 0 -4%; background: linear-gradient(#d8d8dd, #b9b9c0); border-radius: 0 0 14px 14px; position: relative; }
+.vx-laptop__base::before { content: ''; position: absolute; left: 50%; top: 0; width: 16%; height: 5px; transform: translateX(-50%); background: #a9a9b1; border-radius: 0 0 6px 6px; }
+
+/* Móvil con chat */
+.vx-phone { margin: 0; width: 248px; border-radius: 34px; background: #0b141a; padding: 10px; box-shadow: 0 30px 60px -20px rgba(7, 13, 36, 0.5); font-family: var(--font-body); }
+.vx-phone__head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px; color: #fff; background: #1f2c34; border-radius: 26px 26px 0 0; }
+.vx-phone__head b { display: block; font-size: 13px; font-weight: 600; }
+.vx-phone__head small { font-size: 11px; color: #8fd9a8; }
+.vx-phone__avatar { width: 32px; height: 32px; border-radius: 50%; background: #0047ff; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.vx-phone__body { background: #e7ddd3; padding: 12px 10px 16px; border-radius: 0 0 26px 26px; display: grid; gap: 8px; }
+.vx-msg { margin: 0; max-width: 86%; font-size: 12.5px; line-height: 1.38; padding: 7px 9px 5px; border-radius: 10px; color: #111b21; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); }
+.vx-msg time { display: flex; justify-content: flex-end; align-items: center; gap: 3px; font-size: 10px; color: #667781; margin-top: 2px; }
+.vx-msg time svg { color: #53bdeb; }
+.vx-msg--in { background: #fff; justify-self: start; border-top-left-radius: 2px; }
+.vx-msg--out { background: #d9fdd3; justify-self: end; border-top-right-radius: 2px; }
+
+/* Chips flotantes */
+.vx-chip { position: absolute; display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.06); border-radius: 16px; padding: 10px 14px; box-shadow: 0 18px 40px -18px rgba(7, 13, 36, 0.35); font-family: var(--font-body); z-index: 3; }
+.vx-chip svg { color: #0047ff; flex-shrink: 0; }
+.vx-chip b { display: block; font-size: 15px; letter-spacing: -0.02em; color: #1d1d1f; }
+.vx-chip span { display: block; font-size: 12px; color: #6e6e73; }
+
+/* Composición: home */
+.vx-stage--guti .vx-guti { position: absolute; right: 0; bottom: 0; width: 66%; max-width: 430px; height: auto; z-index: 1; filter: drop-shadow(0 30px 40px rgba(7, 13, 36, 0.18)); }
+.vx-stage--guti .vx-stage__laptop { position: absolute; left: 0; bottom: 6%; width: 64%; z-index: 2; }
+.vx-stage--guti .vx-chip--result { left: 2%; top: 8%; }
+.vx-stage--guti .vx-chip--cita { right: 2%; bottom: 10%; }
+
+/* Composición: clínicas */
+.vx-photo { position: absolute; left: 0; top: 4%; width: 84%; aspect-ratio: 4 / 3.4; border-radius: 28px; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(7, 13, 36, 0.45); }
+.vx-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vx-stage--clinic .vx-chip--top { left: -2%; top: 10%; }
+.vx-stage--clinic .vx-stage__phone { position: absolute; right: 0; bottom: 0; z-index: 2; }
+
+/* Composición: sector */
+.vx-site { margin: 0; position: absolute; left: 0; top: 6%; width: 84%; border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 40px 80px -30px rgba(7, 13, 36, 0.4); font-family: var(--font-body); }
+.vx-site__page { padding: 0 0 18px; }
+.vx-site__nav { display: flex; align-items: center; gap: 14px; padding: 12px 18px; font-size: 11px; color: #6e6e73; }
+.vx-site__nav b { color: var(--hue); font-size: 13px; margin-right: auto; letter-spacing: -0.01em; }
+.vx-site__nav em, .vx-site__btns em { font-style: normal; background: var(--hue); color: #fff; padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+.vx-site__hero { position: relative; overflow: hidden; margin: 4px 18px 0; padding: 32px 24px; border-radius: 14px; background: var(--soft); display: grid; gap: 10px; isolation: isolate; }
+.vx-site__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.vx-site__hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.1) 100%); }
+.vx-site__hero small { font-size: 11px; font-weight: 600; color: var(--hue); }
+.vx-site__hero strong { font-size: clamp(20px, 2.3vw, 28px); line-height: 1.08; letter-spacing: -0.03em; color: #1d1d1f; max-width: 15ch; }
+.vx-site__btns { display: flex; gap: 8px; font-size: 11px; margin-top: 4px; }
+.vx-site__btns span { border: 1px solid rgba(0, 0, 0, 0.12); padding: 6px 12px; border-radius: 999px; color: #1d1d1f; }
+.vx-site__services { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 18px 0; }
+.vx-site__services span { font-size: 10.5px; font-weight: 600; color: #1d1d1f; background: #f5f5f7; border-radius: 10px; padding: 14px 8px 10px; border-top: 3px solid var(--hue); }
+.vx-stage--sector .vx-stage__phone { position: absolute; right: 0; bottom: 0; z-index: 2; }
+.vx-stage--sector .vx-site__services { margin-right: 36%; }
+.vx-stage--sector .vx-site__hero { padding-right: 40%; }
+.vx-stage--sector .vx-site__services { grid-template-columns: repeat(2, 1fr); }
+.vx-stage--sector .vx-phone__avatar { background: var(--hue); }
+.vx-note { position: absolute; left: 0; bottom: -4px; margin: 0; font-size: 12px; color: #6e6e73; }
+
+/* Entrada de la cabecera (única animación de carga) */
+@media (prefers-reduced-motion: no-preference) {
+  .vx-stage > * { animation: vx-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .vx-stage > :nth-child(2) { animation-delay: 0.05s; }
+  .vx-stage > :nth-child(3) { animation-delay: 0.18s; }
+  .vx-stage > :nth-child(4) { animation-delay: 0.32s; }
+  .vx-stage > :nth-child(5) { animation-delay: 0.45s; }
+  @keyframes vx-in { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+}
+
+@media (max-width: 920px) {
+  .vx-stage { min-height: 0; aspect-ratio: 1 / 0.86; max-width: 600px; width: 100%; margin: 0 auto; }
+}
+@media (max-width: 560px) {
+  .vx-phone { width: 200px; border-radius: 28px; padding: 8px; }
+  .vx-msg { font-size: 11px; }
+  .vx-msg:nth-child(n + 3) { display: none; }
+  .vx-stage--sector .vx-site__services { margin-right: 18px; }
+  .vx-stage--sector .vx-site__hero { padding-right: 24px; }
+  .vx-site__hero::before { background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7)); }
+  .vx-photo { width: 100%; }
+  .vx-site__nav span { display: none; }
+  .vx-stage--sector .vx-site { width: 100%; }
+  .vx-stage--sector, .vx-stage--clinic { aspect-ratio: 1 / 1.05; }
+  .vx-chip { padding: 8px 10px; }
+  .vx-note { bottom: -26px; }
+  .vx-chip b { font-size: 13px; }
+  .vx-stage--guti .vx-chip--cita { display: none; }
+}

@@ -2,7 +2,7 @@ export const blogPosts = [
   {
     slug: 'como-conseguir-mas-pacientes-clinica-dental',
     title: 'Cómo conseguir más pacientes en una clínica dental: 6 estrategias que funcionan',
-    metaTitle: 'Cómo conseguir más pacientes clínica dental | AgutiDesigns',
+    metaTitle: 'Cómo conseguir más pacientes clínica dental | Agutidesigns',
     metaDescription: 'Descubre las estrategias más efectivas para conseguir más pacientes en tu clínica dental: SEO local, Google Maps, web que convierte y redes sociales para dentistas.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -78,7 +78,7 @@ export const blogPosts = [
   {
     slug: 'precio-pagina-web-clinica-dental-espana-2026',
     title: 'Precio de una página web para clínica dental en España en 2026: guía real',
-    metaTitle: 'Precio página web clínica dental España 2026 | AgutiDesigns',
+    metaTitle: 'Precio página web clínica dental España 2026 | Agutidesigns',
     metaDescription: 'Cuánto cuesta una página web para una clínica dental en España en 2026: freelance, agencia, suscripción mensual. Rangos reales, qué incluye cada opción y cómo calcular el ROI.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -109,13 +109,13 @@ export const blogPosts = [
 </ul>
 <p>Cuándo tiene sentido: si tienes un presupuesto inicial sólido y un equipo interno que pueda gestionar el contenido y la estrategia digital después del lanzamiento.</p>
 
-<h2>Opción 3: Suscripción mensual especializada — desde 149 €/mes</h2>
+<h2>Opción 3: Suscripción mensual especializada — desde 190 €/mes</h2>
 <p>Este es el modelo que nosotros ofrecemos en AgutiDesigns y el que, en nuestra experiencia, mejor encaja con la realidad de la mayoría de clínicas dentales en España.</p>
 <p>En lugar de pagar un proyecto grande de una sola vez, pagas una cuota mensual que incluye todo: diseño, desarrollo, hosting, mantenimiento, actualizaciones de contenido, optimización SEO continuada y soporte directo.</p>
 <ul>
   <li><strong>Ventajas del modelo por suscripción:</strong>
     <ul>
-      <li>Sin gran inversión inicial: la web está operativa desde el primer mes.</li>
+      <li>Inversión inicial contenida (una puesta en marcha única desde 990 €) y después una cuota mensual.</li>
       <li>El servicio evoluciona con tu clínica: si abres un nuevo tratamiento, actualizamos la web.</li>
       <li>SEO y rendimiento monitorizados de forma continuada, no como un proyecto puntual.</li>
       <li>Soporte real cuando algo falla, sin tener que buscar al freelance que te hizo la web hace dos años.</li>
@@ -156,7 +156,7 @@ export const blogPosts = [
   {
     slug: 'marketing-digital-para-dentistas',
     title: 'Marketing digital para dentistas: la guía completa para 2026',
-    metaTitle: 'Marketing digital para dentistas 2026: guía completa | AgutiDesigns',
+    metaTitle: 'Marketing digital para dentistas 2026: guía completa | Agutidesigns',
     metaDescription: 'SEO local, Google Ads, Meta Ads, gestión de reseñas y chatbot IA: todo lo que un dentista necesita saber sobre marketing digital en España para conseguir más pacientes.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -250,7 +250,7 @@ export const blogPosts = [
   {
     slug: 'como-aparecer-google-maps-clinica-dental',
     title: 'Cómo aparecer en Google Maps con tu clínica dental: guía paso a paso',
-    metaTitle: 'Cómo aparecer en Google Maps clínica dental | AgutiDesigns',
+    metaTitle: 'Cómo aparecer en Google Maps clínica dental | Agutidesigns',
     metaDescription: 'Guía completa para posicionar tu clínica dental en Google Maps: Google Business Profile, categorías, reseñas, NAP, SEO local y directorios como Doctoralia y Top Doctors.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',

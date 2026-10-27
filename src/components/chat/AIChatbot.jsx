@@ -17,6 +17,7 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
   const [isLoading, setIsLoading] = useState(false);
   const [leadData, setLeadData] = useState(null);
   const messagesEndRef = useRef(null);
+  const savedLeadRef = useRef(false);
   const inputRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -39,7 +40,24 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
     if (userMessages.length > 0 && userMessages.length % 3 === 0) {
       qualifyLead(messages).then(data => {
         setLeadData(data);
-        console.log('[Lead Qualification]', data);
+        // Si el visitante ha dejado email o teléfono en el chat → lead al panel
+        const ci = data?.contact_info || {};
+        const phone = (ci.phone || ci.telefono || '').toString();
+        if (!savedLeadRef.current && (/\S+@\S+\.\S+/.test(ci.email || '') || phone.replace(/\D/g, '').length >= 9)) {
+          savedLeadRef.current = true;
+          fetch('/api/web-lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nombre: ci.name || '',
+              negocio: ci.business || '',
+              email: ci.email || '',
+              telefono: phone,
+              situacion: [`Chat IA · score ${data.score}/10 · ${data.intent}`, ...(data.key_needs || [])].join(' · '),
+              fuente: `chat-web:${window.location.pathname}`,
+            }),
+          }).then((r) => { if (!r.ok) savedLeadRef.current = false; }).catch(() => { savedLeadRef.current = false; });
+        }
       });
     }
   }, [messages]);

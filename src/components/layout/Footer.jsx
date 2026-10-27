@@ -1,99 +1,45 @@
-import { ArrowUpRight, Mail, Instagram, Linkedin, Heart } from 'lucide-react';
+import { Mail, Instagram, Linkedin, MessageCircle } from 'lucide-react';
+import { CONTACT } from '../../data/site';
 import './Footer.css';
 
+const COLS = [
+  { t: 'Servicios', links: [['Diseño web a medida', '/#servicios'], ['Diseño web para clínicas dentales', '/clinicas-dentales'], ['Webs por sector y ciudad', '/diseno-web'], ['Precios', '/#precios'], ['Calculadora de precio', '/calculadora']] },
+  { t: 'Agutidesigns', links: [['Casos de éxito', '/casos'], ['Blog', '/blog'], ['Consulta gratuita', '/clinicas-dentales/consulta'], ['Sobre Guti', '/#sobre-mi']] },
+];
+
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
-    <footer className="footer">
-      <div className="container">
-        {/* Top CTA */}
-        <div className="footer__cta">
-          <h2 className="footer__cta-title">
-            ¿Listo para llevar tu negocio al <span className="text-primary">siguiente nivel</span>?
-          </h2>
-          <p className="footer__cta-text">
-            Diseñemos juntos tu web con IA. El primer paso es hablar.
-          </p>
-          <a href="#presupuesto" className="footer__cta-button">
-            Empezar ahora <ArrowUpRight size={20} />
-          </a>
-        </div>
-
-        <div className="footer__divider" />
-
-        {/* Main Footer */}
-        <div className="footer__grid">
-          <div className="footer__brand">
-            <div className="footer__logo">
-              <img src="/images/logoazul.png" alt="Agutidesigns" className="footer__logo-img" />
-            </div>
-            <p className="footer__brand-desc">
-              Diseño web profesional potenciado con Inteligencia Artificial. Creamos experiencias digitales que convierten.
-            </p>
-            <div className="footer__socials">
-              <a href="https://instagram.com/agutidesigns" target="_blank" rel="noopener noreferrer" className="footer__social" aria-label="Instagram">
-                <Instagram size={18} />
-              </a>
-              <a href="https://linkedin.com/in/agutidesigns" target="_blank" rel="noopener noreferrer" className="footer__social" aria-label="LinkedIn">
-                <Linkedin size={18} />
-              </a>
-              <a href="mailto:info@agutidesigns.io" className="footer__social" aria-label="Email">
-                <Mail size={18} />
-              </a>
-            </div>
-          </div>
-
-          <div className="footer__col">
-            <h4 className="footer__col-title">Servicios</h4>
-            <ul className="footer__col-list">
-              <li><a href="#servicios">Web + IA</a></li>
-              <li><a href="#packs">Packs</a></li>
-              <li><a href="#presupuesto">Presupuesto</a></li>
-              <li><a href="#proceso">Proceso</a></li>
-            </ul>
-          </div>
-
-          <div className="footer__col">
-            <h4 className="footer__col-title">Empresa</h4>
-            <ul className="footer__col-list">
-              <li><a href="#sobre-mi">Sobre Guti</a></li>
-              <li><a href="#faq">FAQ</a></li>
-              <li><a href="mailto:info@agutidesigns.io">Contacto</a></li>
-            </ul>
-          </div>
-
-          <div className="footer__col">
-            <h4 className="footer__col-title">Contacto</h4>
-            <ul className="footer__col-list">
-              <li>
-                <a href="mailto:info@agutidesigns.io">
-                  info@agutidesigns.io
-                </a>
-              </li>
-              <li className="footer__availability">
-                <span className="footer__status-dot" />
-                Disponible para proyectos
-              </li>
-            </ul>
+    <footer className="foot">
+      <div className="foot__inner">
+        <div className="foot__brand">
+          <img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" />
+          <p>Diseño web, posicionamiento en Google y asistentes IA para clínicas y negocios locales. Desde Barcelona para toda España.</p>
+          <div className="foot__social">
+            <a href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><MessageCircle size={18} /></a>
+            <a href={`mailto:${CONTACT.email}`} aria-label="Email"><Mail size={18} /></a>
+            <a href={CONTACT.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Instagram size={18} /></a>
+            <a href={CONTACT.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><Linkedin size={18} /></a>
           </div>
         </div>
-
-        <div className="footer__divider" />
-
-        {/* Bottom */}
-        <div className="footer__bottom">
-          <p className="footer__copyright">
-            © {currentYear} Agutidesigns. Hecho con <Heart size={14} className="footer__heart" /> y mucha IA.
-          </p>
-          <button className="footer__back-top" onClick={scrollToTop}>
-            Volver arriba ↑
-          </button>
+        {COLS.map((c) => (
+          <nav key={c.t} className="foot__col" aria-label={c.t}>
+            <h2>{c.t}</h2>
+            <ul>{c.links.map(([l, h]) => <li key={h}><a href={h}>{l}</a></li>)}</ul>
+          </nav>
+        ))}
+        <div className="foot__col">
+          <h2>Contacto</h2>
+          <ul>
+            <li><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>
+            <li><a href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer">{CONTACT.phone}</a></li>
+            <li><a href={CONTACT.calendly} target="_blank" rel="noopener noreferrer">Reservar una llamada</a></li>
+            <li className="foot__muted">Barcelona, España</li>
+          </ul>
         </div>
+      </div>
+      <div className="foot__bottom">
+        <span>© {new Date().getFullYear()} Agutidesigns</span>
+        <span>Diseño web en Barcelona</span>
       </div>
     </footer>
   );

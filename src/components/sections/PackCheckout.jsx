@@ -8,7 +8,7 @@ import { sendAutomatedEmail } from '../../services/aiService';
 import Button from '../ui/Button';
 import './PackCheckout.css';
 
-const WHATSAPP_NUMBER = '34600000000'; // Cambiar por tu número real
+const WHATSAPP_NUMBER = '34625204337'; 
 
 export default function PackCheckout({ selectedPack, onChangePack, whatsappPlan = null }) {
   const sectionRef = useRef(null);
