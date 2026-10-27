@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import useSeo from '../hooks/useSeo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   IconArrowRight, IconArrowLeft, IconUpload, IconPlus, IconTrash,
@@ -331,6 +332,7 @@ function readFile(file) {
 
 /* ═════════════════════════════════════════════════════════ */
 export default function Onboarding() {
+  useSeo({ title: 'Crea tu web: elige diseño y personalízalo | Agutidesigns', description: 'Elige una plantilla para tu negocio, personaliza textos, colores y fotos y ve tu nueva web en tiempo real.', path: '/empezar' });
   const [step, setStep]         = useState(1);
   const [dir,  setDir]          = useState(1);
   const [data, setData]         = useState(INITIAL_DATA);

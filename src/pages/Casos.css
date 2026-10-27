@@ -1,9 +1,0 @@
-.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
-.cs-item { background: #fff; border: 1px solid var(--color-gray-200); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; transition: transform .25s, box-shadow .25s; }
-.cs-item:hover { transform: translateY(-4px); box-shadow: 0 30px 50px -30px rgba(0,0,0,.3); }
-.cs-item__img { aspect-ratio: 16/10; overflow: hidden; background: var(--color-gray-100); }
-.cs-item__img img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform .6s; }
-.cs-item:hover .cs-item__img img { transform: scale(1.04); }
-.cs-item__meta { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; }
-.cs-item__meta b { display: block; font-size: 1rem; }
-.cs-item__meta span { font-family: var(--font-mono); font-size: .72rem; color: var(--color-primary); }

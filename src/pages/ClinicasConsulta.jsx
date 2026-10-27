@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useSeo from '../hooks/useSeo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,7 +7,6 @@ import {
   BarChart2, Megaphone, Sparkles, Check, CheckCircle,
   Loader2, Mail, Lock, MessageCircle, Calendar,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import './CalculadoraLanding.css';
 import './ClinicasConsulta.css';
 
@@ -25,6 +25,7 @@ const TOTAL_STEPS = 3;
 const STEP_LABELS = ['Servicios', 'Tu clínica', 'Tus datos'];
 
 export default function ClinicasConsulta() {
+  useSeo({ title: 'Consulta gratuita de marketing dental para tu clínica | Agutidesigns', description: 'Pide una consulta gratuita: analizamos la web y la posición en Google de tu clínica dental y te enseñamos cómo conseguir más pacientes. Respuesta en 24 h.', path: '/clinicas-dentales/consulta', image: '/img/og-clinicas.jpg' });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -75,14 +76,16 @@ export default function ClinicasConsulta() {
     setSubmitting(true);
     setError('');
 
-    // Guardar en Supabase (silencioso si falla)
+    // Lead → base de datos + aviso por email a Aguti (/api/web-lead)
     try {
-      await supabase.from('clinicas_leads').insert({
-        nombre, clinica, ciudad, email, telefono,
-        web_actual: webActual,
-        pacientes_objetivo: null,
-        situacion: servicios,
-        fuente: 'landing-clinicas',
+      await fetch('/api/web-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre, negocio: clinica, ciudad, email, telefono, web: webActual,
+          situacion: servicios.map(id => SERVICIOS.find(s => s.id === id)?.label || id).join(', '),
+          fuente: 'consulta-clinicas',
+        }),
       });
     } catch (_) {}
 

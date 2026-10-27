@@ -1,96 +1,66 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { allPosts as blogPosts } from '../data/content';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import PostCover from '../components/site/PostCover';
+import { LeadSection } from '../components/site/Sections';
+import { allPosts } from '../data/posts';
+import useSeo from '../hooks/useSeo';
+import { formatDate } from '../utils/format';
 import './Blog.css';
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('es-ES', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
-}
+const BLOG_SEO = {
+  title: 'Blog de marketing digital para clínicas | Agutidesigns',
+  description: 'Guías prácticas de diseño web, SEO local, Google Maps y marketing dental para conseguir más pacientes y clientes. Escritas por Agutidesigns desde Barcelona.',
+};
+
 
 export default function Blog() {
-  useEffect(() => {
-    document.title = 'Blog de Marketing Dental | AgutiDesigns';
-
-    const setMeta = (sel, attr, val) => {
-      let el = document.querySelector(sel);
-      if (!el) { el = document.createElement(sel.split('[')[0]); document.head.appendChild(el); }
-      el.setAttribute(attr, val);
-    };
-
-    setMeta('meta[name="description"]', 'content',
-      'Artículos y guías de marketing digital para clínicas dentales en España: SEO local, Google Maps, Google Ads y estrategias para conseguir más pacientes.');
-    setMeta('link[rel="canonical"]', 'href', 'https://agutidesigns.io/blog');
-
-    const schema = {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      name: 'Blog de Marketing Dental | AgutiDesigns',
-      description: 'Artículos sobre marketing digital para clínicas dentales en España.',
-      url: 'https://agutidesigns.io/blog',
-      publisher: { '@type': 'Organization', name: 'AgutiDesigns', url: 'https://agutidesigns.io' },
-      hasPart: blogPosts.map((p) => ({
-        '@type': 'BlogPosting',
-        headline: p.title,
-        description: p.metaDescription,
-        url: `https://agutidesigns.io/blog/${p.slug}`,
-        datePublished: p.publishDate,
-        author: { '@type': 'Person', name: p.author },
-      })),
-    };
-
-    let s = document.querySelector('#blog-schema');
-    if (!s) { s = document.createElement('script'); s.id = 'blog-schema'; s.type = 'application/ld+json'; document.head.appendChild(s); }
-    s.textContent = JSON.stringify(schema);
-
-    return () => { document.querySelector('#blog-schema')?.remove(); };
-  }, []);
-
+  useSeo({
+    ...BLOG_SEO,
+    path: '/blog', image: '/img/og-blog.jpg',
+    jsonLd: {
+      '@context': 'https://schema.org', '@type': 'Blog', name: 'Blog de Agutidesigns', url: 'https://agutidesigns.io/blog',
+      blogPost: allPosts.map((p) => ({ '@type': 'BlogPosting', headline: p.title, url: `https://agutidesigns.io/blog/${p.slug}`, datePublished: p.publishDate, author: { '@type': 'Person', name: p.author } })),
+    },
+  });
+  const [first, ...rest] = allPosts;
   return (
-    <div className="blog-page">
-      <Navbar dark cta={{ label: 'Servicios para clínicas', href: '/clinicas-dentales' }} />
-
-      <header className="blog-hero">
-        <div className="container">
-          <span className="blog-hero__badge">Blog</span>
-          <h1 className="blog-hero__title">
-            Marketing Digital para<br />
-            <span>Clínicas Dentales</span>
-          </h1>
-          <p className="blog-hero__subtitle">
-            Guías prácticas y estrategias reales para conseguir más pacientes y hacer crecer tu clínica dental en España.
-          </p>
-        </div>
-      </header>
-
-      <main className="blog-grid-section">
-        <div className="container">
-          <div className="blog-grid">
-            {blogPosts.map((post) => (
-              <article key={post.slug} className="blog-card">
-                <div className="blog-card__body">
-                  <div className="blog-card__meta">
-                    <span className="blog-card__category">{post.category}</span>
-                    <span className="blog-card__readtime">{post.readTime} de lectura</span>
-                  </div>
-                  <h2 className="blog-card__title">{post.title}</h2>
-                  <p className="blog-card__excerpt">{post.excerpt}</p>
-                  <div className="blog-card__footer">
-                    <span className="blog-card__date">{formatDate(post.publishDate)}</span>
-                    <Link to={`/blog/${post.slug}`} className="blog-card__link">
-                      Leer artículo →
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
+    <div className="ag">
+      <Navbar />
+      <main>
+        <header className="ag-hero ag-hero--short">
+          <div className="ag-wrap blog-head">
+            <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Blog</span></nav>
+            <h1 className="ag-h1">Blog de marketing digital para clínicas y negocios locales</h1>
+            <p className="ag-lead">Guías prácticas sobre diseño web, Google Maps, SEO local e IA para conseguir más pacientes y clientes. Sin humo.</p>
           </div>
-        </div>
+        </header>
+        <section className="ag-section ag-section--white" style={{ paddingTop: 'clamp(40px,6vw,72px)' }}>
+          <div className="ag-wrap">
+            {first && (
+              <a className="blog-feat" href={`/blog/${first.slug}`}>
+                <PostCover post={first} big />
+                <div className="blog-feat__copy">
+                  <p className="blog-meta">{formatDate(first.publishDate)} · {first.readTime} de lectura</p>
+                  <h2 className="ag-h2">{first.title}</h2>
+                  <p className="ag-lead">{first.excerpt}</p>
+                  <span className="ag-link">Leer el artículo</span>
+                </div>
+              </a>
+            )}
+            <div className="blog-grid">
+              {rest.map((p) => (
+                <a key={p.slug} className="blog-card" href={`/blog/${p.slug}`}>
+                  <PostCover post={p} />
+                  <p className="blog-meta">{formatDate(p.publishDate)} · {p.readTime}</p>
+                  <h2 className="ag-h3">{p.title}</h2>
+                  <p className="blog-card__ex">{p.excerpt}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+        <LeadSection fuente="web:blog" title="¿Prefieres que lo hagamos por ti?" />
       </main>
-
       <Footer />
     </div>
   );

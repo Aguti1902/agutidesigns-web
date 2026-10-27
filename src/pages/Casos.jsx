@@ -1,51 +1,34 @@
-import { ArrowUpRight } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import AIChatbot from '../components/chat/AIChatbot';
-import WebLeadForm from '../components/forms/WebLeadForm';
-import CaseVela from '../components/sections/CaseVela';
-import { PORTFOLIO } from '../data/portfolio';
+import AIChatbot from '../components/chat/LazyChatbot';
+import { CaseVela, Portfolio, Reviews, LeadSection } from '../components/site/Sections';
+import { REVIEWS_GENERAL } from '../data/site';
 import useSeo from '../hooks/useSeo';
-import './NichoLanding.css';
-import './Casos.css';
+import './DisenoWebIndex.css';
+
+const CASOS_SEO = {
+  title: 'Casos de éxito en diseño web: +20.000 € en 3 meses | Agutidesigns',
+  description: 'Clínica Dental Vela-Segalà facturó más de 20.000 € en 3 meses (+80 %) con su nueva web, Google y asistente IA. Mira el antes y después y las webs que hemos diseñado.',
+};
 
 export default function Casos() {
-  useSeo({
-    title: 'Casos de éxito y webs reales | Agutidesigns',
-    description: 'Clínica Dental Vela-Segalà: más de 20.000 € facturados en 3 meses (+80 %). Mira el antes y después y las webs que hemos diseñado.',
-    path: '/casos',
-  });
+  useSeo({ ...CASOS_SEO, path: '/casos', image: '/img/og-casos.jpg' });
   return (
-    <div className="nl">
+    <div className="ag">
       <Navbar />
-      <header className="nl-hero">
-        <div className="container">
-          <span className="nl-pill">Resultados reales</span>
-          <h1 className="nl-hero__title">Casos y webs reales</h1>
-          <p className="nl-hero__intro">Nada de plantillas ni promesas: negocios reales, con webs que puedes visitar ahora mismo.</p>
-        </div>
-      </header>
-
-      <div className="container"><CaseVela /></div>
-
-      <section className="container nl-sec">
-        <h2 className="nl-h2">Webs que hemos diseñado</h2>
-        <div className="cs-grid">
-          {PORTFOLIO.map((p) => (
-            <a key={p.id} className="cs-item" href={p.href} target="_blank" rel="noopener noreferrer">
-              <div className="cs-item__img"><img src={p.img} alt={`Web de ${p.label}`} loading="lazy" /></div>
-              <div className="cs-item__meta">
-                <div><b>{p.label}</b><span>{p.type}</span></div>
-                <ArrowUpRight size={18} />
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="container nl-sec" style={{ maxWidth: 760, paddingTop: 0 }}>
-        <WebLeadForm fuente="web:casos" title="¿Quieres resultados como estos?" />
-      </section>
+      <main>
+        <header className="ag-hero ag-hero--short">
+          <div className="ag-wrap">
+            <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Casos</span></nav>
+            <h1 className="ag-h1 dwi__title">Casos de éxito y webs reales</h1>
+            <p className="ag-lead">Resultados de negocios reales, con webs que puedes visitar ahora mismo.</p>
+          </div>
+        </header>
+        <CaseVela full />
+        <Portfolio title="Todas las webs que hemos diseñado" lead="Desde clínicas y despachos hasta alquiler vacacional y startups. Toca cualquiera para visitarla." />
+        <Reviews items={REVIEWS_GENERAL} white />
+        <LeadSection fuente="web:casos" title="¿Quieres resultados como estos?" />
+      </main>
       <Footer />
       <AIChatbot />
     </div>

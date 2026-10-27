@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useSeo from '../hooks/useSeo';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, ArrowLeft, Globe, Smartphone, ShoppingCart, FileText,
@@ -146,6 +147,7 @@ function LoadingScreen({ onDone }) {
 
 /* ── Main ── */
 export default function CalculadoraLanding() {
+  useSeo({ title: 'Calculadora de precio de página web | Agutidesigns', description: 'Calcula cuánto cuesta tu página web: landing, web corporativa o tienda online. Presupuesto orientativo al momento, sin compromiso. Diseño web en Barcelona.', path: '/calculadora' });
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     webType: '',
@@ -266,6 +268,17 @@ export default function CalculadoraLanding() {
     setIsLoading(false);
     saveQuoteToSupabase(quoteData);
     sendLeadToN8N(quoteData);
+    // Aviso a Aguti y al panel (agente Nora)
+    fetch('/api/web-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: formData.name,
+        email: formData.email,
+        situacion: `Calculadora: ${formData.webType}, ${formData.pages} páginas, plazo ${formData.timeline}. Presupuesto ${quoteData.total} €${quoteData.monthly ? ` + ${quoteData.monthly} €/mes` : ''}`,
+        fuente: 'calculadora',
+      }),
+    }).catch(() => {});
     sendAutomatedEmail('quote', {
       name:            formData.name,
       email:           formData.email,

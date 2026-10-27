@@ -17,3 +17,8 @@ excerpt, keywords[], content (HTML: <h2>, <p>, <ul>, <a href="/diseno-web/...">)
 - Contenido único por página: no copiar párrafos entre landings.
 - Enlazar internamente: blog → landings relevantes y /casos.
 - `npm run build` debe pasar; el sitemap y el HTML estático se generan solos.
+
+## Diseño
+- Las páginas usan el sistema visual común (`src/styles/site.css` y `src/components/site/`). No hace falta tocar CSS para añadir contenido.
+- Si creas una landing de un nicho nuevo (p. ej. `psicologia`), añade su entrada en `src/data/sectors.js` (color, servicios y conversación de ejemplo) para que la cabecera muestre una demo de ese sector. Si no, se usa la demo genérica.
+- Precios, reseñas y preguntas frecuentes generales viven en `src/data/site.js`.

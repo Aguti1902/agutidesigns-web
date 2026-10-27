@@ -1640,3 +1640,7 @@
   .calc-reviews__grid { grid-template-columns: 1fr; }
   .calc-benefits__stat { font-size: var(--text-2xl); min-width: 60px; }
 }
+
+/* ── Integración con el sistema visual de la web ── */
+.calc-landing { background: #f5f5f7 !important; color: #1d1d1f; }
+.calc-landing [class*='badge'], .calc-landing [class*='label'], .calc-landing [class*='tag'] { text-transform: none !important; letter-spacing: -0.01em !important; }

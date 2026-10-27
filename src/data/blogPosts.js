@@ -2,7 +2,7 @@ export const blogPosts = [
   {
     slug: 'como-conseguir-mas-pacientes-clinica-dental',
     title: 'Cómo conseguir más pacientes en una clínica dental: 6 estrategias que funcionan',
-    metaTitle: 'Cómo conseguir más pacientes clínica dental | AgutiDesigns',
+    metaTitle: 'Cómo conseguir más pacientes clínica dental | Agutidesigns',
     metaDescription: 'Descubre las estrategias más efectivas para conseguir más pacientes en tu clínica dental: SEO local, Google Maps, web que convierte y redes sociales para dentistas.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -78,7 +78,7 @@ export const blogPosts = [
   {
     slug: 'precio-pagina-web-clinica-dental-espana-2026',
     title: 'Precio de una página web para clínica dental en España en 2026: guía real',
-    metaTitle: 'Precio página web clínica dental España 2026 | AgutiDesigns',
+    metaTitle: 'Precio página web clínica dental España 2026 | Agutidesigns',
     metaDescription: 'Cuánto cuesta una página web para una clínica dental en España en 2026: freelance, agencia, suscripción mensual. Rangos reales, qué incluye cada opción y cómo calcular el ROI.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -156,7 +156,7 @@ export const blogPosts = [
   {
     slug: 'marketing-digital-para-dentistas',
     title: 'Marketing digital para dentistas: la guía completa para 2026',
-    metaTitle: 'Marketing digital para dentistas 2026: guía completa | AgutiDesigns',
+    metaTitle: 'Marketing digital para dentistas 2026: guía completa | Agutidesigns',
     metaDescription: 'SEO local, Google Ads, Meta Ads, gestión de reseñas y chatbot IA: todo lo que un dentista necesita saber sobre marketing digital en España para conseguir más pacientes.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',
@@ -250,7 +250,7 @@ export const blogPosts = [
   {
     slug: 'como-aparecer-google-maps-clinica-dental',
     title: 'Cómo aparecer en Google Maps con tu clínica dental: guía paso a paso',
-    metaTitle: 'Cómo aparecer en Google Maps clínica dental | AgutiDesigns',
+    metaTitle: 'Cómo aparecer en Google Maps clínica dental | Agutidesigns',
     metaDescription: 'Guía completa para posicionar tu clínica dental en Google Maps: Google Business Profile, categorías, reseñas, NAP, SEO local y directorios como Doctoralia y Top Doctors.',
     publishDate: '2026-05-15',
     author: 'Alejandro Gutiérrez',

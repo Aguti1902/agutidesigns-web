@@ -12,7 +12,7 @@ const setMeta = (sel, attr, val) => {
 };
 
 /** Título, descripción, canonical, OG y JSON-LD para páginas SPA. */
-export default function useSeo({ title, description, path, jsonLd }) {
+export default function useSeo({ title, description, path, jsonLd, noindex = false, image = '/img/og-home.jpg' }) {
   useEffect(() => {
     if (!title) return;
     const url = `https://agutidesigns.io${path}`;
@@ -22,6 +22,12 @@ export default function useSeo({ title, description, path, jsonLd }) {
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:url"]', 'content', url);
+    const img = image.startsWith('http') ? image : `https://agutidesigns.io${image}`;
+    setMeta('meta[property="og:image"]', 'content', img);
+    setMeta('meta[name="twitter:title"]', 'content', title);
+    setMeta('meta[name="twitter:description"]', 'content', description);
+    setMeta('meta[name="twitter:image"]', 'content', img);
+    setMeta('meta[name="robots"]', 'content', noindex ? 'noindex, follow' : 'index, follow');
     let s;
     if (jsonLd) {
       document.head.querySelectorAll('script[data-seo-jsonld]').forEach((n) => n.remove());
@@ -32,5 +38,5 @@ export default function useSeo({ title, description, path, jsonLd }) {
       document.head.appendChild(s);
     }
     return () => s && s.remove();
-  }, [title, description, path]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [title, description, path, image]); // eslint-disable-line react-hooks/exhaustive-deps
 }

@@ -1,40 +1,27 @@
 import { useParams, Navigate } from 'react-router-dom';
-import { ArrowRight, AlertCircle, Check, MapPin, ChevronDown } from 'lucide-react';
+import { Check, LayoutTemplate, Bot, MapPin, CalendarClock, LineChart } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import AIChatbot from '../components/chat/AIChatbot';
-import WebLeadForm from '../components/forms/WebLeadForm';
-import CaseVela from '../components/sections/CaseVela';
+import AIChatbot from '../components/chat/LazyChatbot';
+import { SectorMock } from '../components/site/Visuals';
+import { Problems, Pillars, CaseVela, Plans, Faq, LeadSection } from '../components/site/Sections';
 import { getLanding, landings } from '../data/content';
+import { sectorOf } from '../data/sectors';
 import useSeo from '../hooks/useSeo';
-import './NichoLanding.css';
 
-export function landingJsonLd(l) {
+const ICONS = [LayoutTemplate, Bot, MapPin, CalendarClock, LineChart];
+
+function landingJsonLd(l) {
   const url = `https://agutidesigns.io/diseno-web/${l.slug}`;
   return {
     '@context': 'https://schema.org',
     '@graph': [
-      {
-        '@type': 'Service',
-        name: l.h1,
-        serviceType: 'Diseño web y marketing digital',
-        areaServed: { '@type': 'City', name: l.ciudad },
-        provider: { '@type': 'Organization', name: 'Agutidesigns', url: 'https://agutidesigns.io' },
-        url,
-        description: l.metaDescription,
-      },
-      {
-        '@type': 'FAQPage',
-        mainEntity: l.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://agutidesigns.io/' },
-          { '@type': 'ListItem', position: 2, name: 'Diseño web', item: 'https://agutidesigns.io/diseno-web' },
-          { '@type': 'ListItem', position: 3, name: l.h1, item: url },
-        ],
-      },
+      { '@type': 'Service', name: l.h1, serviceType: 'Diseño web y marketing digital', areaServed: { '@type': 'City', name: l.ciudad }, provider: { '@type': 'Organization', name: 'Agutidesigns', url: 'https://agutidesigns.io' }, url, description: l.metaDescription },
+      { '@type': 'FAQPage', mainEntity: l.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://agutidesigns.io/' },
+        { '@type': 'ListItem', position: 2, name: 'Diseño web por sector', item: 'https://agutidesigns.io/diseno-web' },
+        { '@type': 'ListItem', position: 3, name: l.h1, item: url }] },
     ],
   };
 }
@@ -42,85 +29,56 @@ export function landingJsonLd(l) {
 export default function NichoLanding() {
   const { slug } = useParams();
   const l = getLanding(slug);
-  useSeo(l ? { title: l.metaTitle, description: l.metaDescription, path: `/diseno-web/${l.slug}`, jsonLd: landingJsonLd(l) } : {});
+  useSeo(l ? { title: l.metaTitle, description: l.metaDescription, path: `/diseno-web/${l.slug}`, image: '/img/og-sectores.jpg', jsonLd: landingJsonLd(l) } : {});
   if (!l) return <Navigate to="/diseno-web" replace />;
 
-  const sameNiche = landings.filter((x) => x.nicho === l.nicho && x.slug !== l.slug);
-  const sameCity = landings.filter((x) => x.ciudad === l.ciudad && x.nicho !== l.nicho);
-  const related = [...sameNiche, ...sameCity].slice(0, 6);
-  const toForm = (e) => { e.preventDefault(); document.getElementById('propuesta')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  const related = [
+    ...landings.filter((x) => x.nicho === l.nicho && x.slug !== l.slug),
+    ...landings.filter((x) => x.ciudad === l.ciudad && x.nicho !== l.nicho),
+  ].slice(0, 8);
+  const pillars = l.solucion.map((s, i) => ({ Icon: ICONS[i % ICONS.length], t: s.t, d: s.d }));
+  const who = l.h1.replace(/^Diseño web para /, '').replace(` en ${l.ciudad}`, '');
 
   return (
-    <div className="nl">
+    <div className="ag">
       <Navbar />
-      <header className="nl-hero">
-        <div className="container nl-hero__grid">
-          <div>
-            <nav className="nl-crumbs" aria-label="Migas de pan">
-              <a href="/">Inicio</a> / <a href="/diseno-web">Diseño web</a> / <span>{l.ciudad}</span>
-            </nav>
-            <span className="nl-pill"><MapPin size={14} /> {l.ciudad}</span>
-            <h1 className="nl-hero__title">{l.h1}</h1>
-            <p className="nl-hero__intro">{l.intro}</p>
-            <div className="nl-hero__ctas">
-              <a href="#propuesta" onClick={toForm} className="nl-btn">Quiero mi propuesta <ArrowRight size={16} /></a>
-              <a href="/casos" className="nl-btn nl-btn--ghost">Ver casos reales</a>
+      <main>
+        <header className="ag-hero">
+          <div className="ag-wrap ag-hero__grid">
+            <div className="ag-hero__copy">
+              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><a href="/diseno-web">Sectores</a><span aria-hidden="true">/</span><span>{l.ciudad}</span></nav>
+              <h1 className="ag-h1">{l.h1}</h1>
+              <p className="ag-lead">{l.intro}</p>
+              <div className="ag-actions">
+                <a href="#propuesta" className="ag-btn ag-btn--primary">Pide tu propuesta gratis</a>
+                <a href="#caso" className="ag-btn ag-btn--ghost">Ver un caso real</a>
+              </div>
+              <ul className="ag-hero__trust">
+                <li><Check size={16} /> Demo de tu web antes de decidir</li>
+                <li><Check size={16} /> Lista en 2–3 semanas</li>
+              </ul>
             </div>
+            <SectorMock nicho={l.nicho} ciudad={l.ciudad} />
           </div>
-          <WebLeadForm fuente={`web:${l.slug}`} ciudad={l.ciudad} sector={l.nicho} />
-        </div>
-      </header>
+        </header>
 
-      <section className="container nl-sec">
-        <h2 className="nl-h2">Lo que está frenando a tu negocio</h2>
-        <div className="nl-cards">
-          {l.problemas.map((p) => (
-            <article key={p.t} className="nl-card">
-              <AlertCircle size={22} strokeWidth={1.7} className="nl-card__ic nl-card__ic--warn" />
-              <h3>{p.t}</h3>
-              <p>{p.d}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="nl-solution">
-        <div className="container">
-          <h2 className="nl-h2">Lo que montamos para ti</h2>
-          <p className="nl-lead">{l.nota}</p>
-          <ol className="nl-steps">
-            {l.solucion.map((s, i) => (
-              <li key={s.t}>
-                <span className="nl-steps__n">{String(i + 1).padStart(2, '0')}</span>
-                <div><h3>{s.t}</h3><p>{s.d}</p></div>
-                <Check size={20} className="nl-steps__ok" />
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <div className="container nl-sec"><CaseVela compact /></div>
-
-      <section className="container nl-sec nl-faq">
-        <h2 className="nl-h2">Preguntas frecuentes</h2>
-        {l.faqs.map((f) => (
-          <details key={f.q}>
-            <summary>{f.q}<ChevronDown size={18} /></summary>
-            <p>{f.a}</p>
-          </details>
-        ))}
-      </section>
-
-      {related.length > 0 && (
-        <section className="container nl-sec">
-          <h2 className="nl-h3">También trabajamos con</h2>
-          <div className="nl-related">
-            {related.map((r) => <a key={r.slug} href={`/diseno-web/${r.slug}`}>{r.h1.replace('Diseño web para ', '')} <ArrowRight size={14} /></a>)}
-          </div>
-        </section>
-      )}
-
+        <Problems title={`Lo que frena hoy a tu ${sectorOf(l.nicho).label.toLowerCase()} en ${l.ciudad}`} items={l.problemas} />
+        <Pillars title="Lo que montamos para ti" lead={l.nota} items={pillars} />
+        <CaseVela />
+        <Plans audience="tu negocio" />
+        <Faq items={l.faqs} title={`Preguntas sobre diseño web para ${who}`} white />
+        {related.length > 0 && (
+          <section className="ag-section ag-section--tight">
+            <div className="ag-wrap">
+              <h2 className="ag-h3">También trabajamos en</h2>
+              <div className="sx-chips" style={{ marginTop: 16 }}>
+                {related.map((r) => <a key={r.slug} href={`/diseno-web/${r.slug}`}>{r.h1.replace('Diseño web para ', '').replace(/^./, (c) => c.toUpperCase())}</a>)}
+              </div>
+            </div>
+          </section>
+        )}
+        <LeadSection fuente={`web:${l.slug}`} ciudad={l.ciudad} sector={l.nicho} />
+      </main>
       <Footer />
       <AIChatbot />
     </div>

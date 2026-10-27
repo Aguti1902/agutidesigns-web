@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, CheckCircle2, Calendar, MessageCircle } from 'lucide-react';
+import { CheckCircle2, Calendar, MessageCircle } from 'lucide-react';
 import './WebLeadForm.css';
 
 const CALENDLY_URL = 'https://calendly.com/agutidesigns/reunion';
@@ -48,7 +48,7 @@ export default function WebLeadForm({ fuente, ciudad = '', sector = '', title = 
   if (done) {
     const cal = `${CALENDLY_URL}?name=${encodeURIComponent(f.nombre)}&email=${encodeURIComponent(f.email)}`;
     return (
-      <div className="wlf wlf--done" id="propuesta">
+      <div className="wlf wlf--done">
         <CheckCircle2 size={40} strokeWidth={1.6} />
         <h3>¡Recibido, {f.nombre.split(' ')[0]}!</h3>
         <p>Preparamos una propuesta para {f.negocio} con una demo de cómo quedaría tu web. Te escribimos en menos de 24 h laborables.</p>
@@ -61,11 +61,11 @@ export default function WebLeadForm({ fuente, ciudad = '', sector = '', title = 
   }
 
   return (
-    <form className="wlf" id="propuesta" onSubmit={submit} noValidate>
+    <form className="wlf" onSubmit={submit} noValidate>
       <h3 className="wlf__title">{title}</h3>
-      <p className="wlf__sub">Gratis y sin compromiso. Te enseñamos una demo de tu nueva web antes de decidir nada.</p>
+      <p className="wlf__sub">Te respondemos en menos de 24 h laborables.</p>
       <div className="wlf__grid">
-        <label>Tu nombre<input value={f.nombre} onChange={set('nombre')} autoComplete="name" required /></label>
+        <label>Nombre<input value={f.nombre} onChange={set('nombre')} autoComplete="name" required /></label>
         <label>Negocio<input value={f.negocio} onChange={set('negocio')} autoComplete="organization" required /></label>
         <label>Email<input type="email" value={f.email} onChange={set('email')} autoComplete="email" /></label>
         <label>Teléfono<input type="tel" value={f.telefono} onChange={set('telefono')} autoComplete="tel" /></label>
@@ -76,9 +76,9 @@ export default function WebLeadForm({ fuente, ciudad = '', sector = '', title = 
       </div>
       {error && <p className="wlf__error" role="alert">{error}</p>}
       <button className="wlf__btn" type="submit" disabled={sending}>
-        {sending ? 'Enviando…' : <>Quiero mi propuesta <ArrowRight size={16} /></>}
+        {sending ? 'Enviando…' : <>Enviar y recibir mi propuesta</>}
       </button>
-      <p className="wlf__legal">Usaremos tus datos solo para contestarte. Nada de spam.</p>
+      <p className="wlf__legal">Solo usamos tus datos para responderte.</p>
     </form>
   );
 }

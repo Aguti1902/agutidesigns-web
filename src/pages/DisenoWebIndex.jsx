@@ -1,45 +1,53 @@
-import { ArrowRight } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import WebLeadForm from '../components/forms/WebLeadForm';
+import { LeadSection } from '../components/site/Sections';
 import { landings } from '../data/content';
+import { sectorOf } from '../data/sectors';
 import useSeo from '../hooks/useSeo';
-import './NichoLanding.css';
+import './DisenoWebIndex.css';
+
+const INDEX_SEO = {
+  title: 'Diseño web por sector y ciudad | Agutidesigns',
+  description: 'Diseño web para clínicas dentales, podólogos, fisioterapeutas, clínicas estéticas y nutricionistas en Barcelona y alrededores. Web, Google y asistente IA.',
+};
 
 export default function DisenoWebIndex() {
-  useSeo({
-    title: 'Diseño web por sector y ciudad | Agutidesigns',
-    description: 'Webs con asistente IA, Google Maps y citas online para clínicas y negocios locales. Elige tu sector y tu ciudad.',
-    path: '/diseno-web',
-  });
-  const cities = [...new Set(landings.map((l) => l.ciudad))];
+  useSeo({ ...INDEX_SEO, path: '/diseno-web', image: '/img/og-sectores.jpg' });
+  const groups = Object.entries(landings.reduce((acc, l) => { (acc[l.nicho] ||= []).push(l); return acc; }, {}));
   return (
-    <div className="nl">
+    <div className="ag">
       <Navbar />
-      <header className="nl-hero">
-        <div className="container">
-          <span className="nl-pill">Sectores y ciudades</span>
-          <h1 className="nl-hero__title">Diseño web para negocios que viven de sus clientes locales</h1>
-          <p className="nl-hero__intro">Web, asistente IA 24/7, posicionamiento en Google y recordatorios automáticos. Elige tu sector y tu ciudad.</p>
-        </div>
-      </header>
-      {cities.map((c) => (
-        <section key={c} className="container nl-sec" style={{ paddingTop: 0 }}>
-          <h2 className="nl-h3">{c}</h2>
-          <div className="nl-index">
-            {landings.filter((l) => l.ciudad === c).map((l) => (
-              <a key={l.slug} href={`/diseno-web/${l.slug}`}>
-                <span>{l.ciudad}</span>
-                <b>{l.h1}</b>
-                <ArrowRight size={16} />
-              </a>
-            ))}
+      <main>
+        <header className="ag-hero ag-hero--short">
+          <div className="ag-wrap">
+            <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Sectores</span></nav>
+            <h1 className="ag-h1 dwi__title">Diseño web por sector y ciudad</h1>
+            <p className="ag-lead">Cada sector tiene sus búsquedas, sus dudas y su forma de pedir cita. Elige el tuyo y mira cómo lo trabajamos en tu ciudad.</p>
+          </div>
+        </header>
+        <section className="ag-section ag-section--white">
+          <div className="ag-wrap dwi">
+            {groups.map(([nicho, items]) => {
+              const s = sectorOf(nicho);
+              return (
+                <div key={nicho} className="dwi__group" style={{ '--hue': s.hue }}>
+                  <h2 className="ag-h3">{s.label}</h2>
+                  <ul>
+                    {items.map((l) => (
+                      <li key={l.slug}><a href={`/diseno-web/${l.slug}`}><span>{l.ciudad}</span><small>{l.h1}</small></a></li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+            <div className="dwi__group" style={{ '--hue': '#0047ff' }}>
+              <h2 className="ag-h3">Clínicas dentales (página principal)</h2>
+              <ul><li><a href="/clinicas-dentales"><span>España</span><small>Diseño web y marketing para clínicas dentales</small></a></li></ul>
+            </div>
           </div>
         </section>
-      ))}
-      <section className="container nl-sec" style={{ maxWidth: 760 }}>
-        <WebLeadForm fuente="web:diseno-web" title="¿No ves tu sector? Cuéntanos" />
-      </section>
+        <LeadSection fuente="web:diseno-web" title="¿No ves tu sector o tu ciudad?" lead="Trabajamos con negocios locales de toda España. Cuéntanos el tuyo y te enseñamos cómo quedaría tu web." />
+      </main>
       <Footer />
     </div>
   );

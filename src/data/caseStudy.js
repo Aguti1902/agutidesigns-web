@@ -4,7 +4,7 @@ export const VELA = {
   city: 'Viladecans',
   url: 'https://www.velasegalaviladecans.com/',
   img: '/velasegala-screenshot.png',
-  headline: 'Más de 20.000 € facturados en solo 3 meses',
+  headline: 'Más de 20.000\u00a0€ facturados en solo 3\u00a0meses',
   stats: [
     { v: '+20.000 €', l: 'facturados en 3 meses' },
     { v: '+80 %', l: 'de facturación' },
