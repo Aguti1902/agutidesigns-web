@@ -4,6 +4,7 @@ import WebLeadForm from '../forms/WebLeadForm';
 import { PLANS, PARTNER, PROCESS, CONTACT } from '../../data/site';
 import { PORTFOLIO } from '../../data/portfolio';
 import { VELA } from '../../data/caseStudy';
+import { SECTOR_GROUPS } from '../../data/sectorGroups';
 import { Laptop } from './Visuals';
 import Photo from './Photo';
 import './Sections.css';
@@ -259,6 +260,29 @@ export function Problems({ title, lead, items, photo, photoAlt = '' }) {
             <li key={p.t}><h3 className="ag-h3">{p.t}</h3><p>{p.d}</p></li>
           ))}
         </ol>
+      </div>
+    </section>
+  );
+}
+
+/* ── Sectores (franja con fotos) ── */
+export function SectorStrip({ title = 'Webs para negocios de todos los sectores', lead = 'Clínicas, despachos, spas, alojamientos, bodegas y startups: cada uno vende distinto y su web también.' }) {
+  return (
+    <section className="ag-section" id="sectores">
+      <div className="ag-wrap">
+        <div className="ag-head ag-head--split">
+          <h2 className="ag-h2">{title}</h2>
+          <p className="ag-lead">{lead}</p>
+        </div>
+        <div className="sx-sectors">
+          {SECTOR_GROUPS.map((g) => (
+            <a key={g.id} href={`/diseno-web#${g.id}`} className="sx-sector">
+              <Photo name={g.photo} alt="" sizes="(max-width: 640px) 92vw, 380px" />
+              <span className="sx-sector__label">{g.title}</span>
+            </a>
+          ))}
+        </div>
+        <p className="sx-center"><a className="ag-link" href="/diseno-web">Ver cómo trabajamos cada sector</a></p>
       </div>
     </section>
   );

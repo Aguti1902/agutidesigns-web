@@ -4,7 +4,6 @@ import './Navbar.css';
 
 const LINKS = [
   { label: 'Servicios', href: '/#servicios' },
-  { label: 'Clínicas dentales', href: '/clinicas-dentales' },
   { label: 'Sectores', href: '/diseno-web' },
   { label: 'Casos', href: '/casos' },
   { label: 'Precios', href: '/#precios' },
