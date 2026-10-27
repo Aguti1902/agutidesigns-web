@@ -3,8 +3,9 @@ import { CONTACT } from '../../data/site';
 import './Footer.css';
 
 const COLS = [
-  { t: 'Servicios', links: [['Diseño web a medida', '/#servicios'], ['Diseño web para clínicas dentales', '/clinicas-dentales'], ['Webs por sector y ciudad', '/diseno-web'], ['Precios', '/#precios'], ['Calculadora de precio', '/calculadora']] },
-  { t: 'Agutidesigns', links: [['Casos de éxito', '/casos'], ['Blog', '/blog'], ['Consulta gratuita', '/clinicas-dentales/consulta'], ['Sobre Guti', '/#sobre-mi']] },
+  { t: 'Servicios', links: [['Diseño web a medida', '/#servicios'], ['Precios', '/#precios'], ['Calculadora de precio', '/calculadora'], ['Casos de éxito', '/casos']] },
+  { t: 'Sectores', links: [['Clínicas y salud', '/diseno-web#salud'], ['Belleza y bienestar', '/diseno-web#belleza'], ['Despachos y asesorías', '/diseno-web#despachos'], ['Alojamiento y turismo', '/diseno-web#turismo'], ['Clínicas dentales', '/clinicas-dentales']] },
+  { t: 'Agutidesigns', links: [['Sobre Guti', '/#sobre-mi'], ['Blog', '/blog'], ['Pide tu propuesta', '/#propuesta']] },
 ];
 
 export default function Footer() {
@@ -13,7 +14,7 @@ export default function Footer() {
       <div className="foot__inner">
         <div className="foot__brand">
           <img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" />
-          <p>Diseño web, posicionamiento en Google y asistentes IA para clínicas y negocios locales. Desde Barcelona para toda España.</p>
+          <p>Diseño web, posicionamiento en Google y asistentes IA para negocios de todos los sectores. Desde Barcelona para toda España.</p>
           <div className="foot__social">
             <a href={CONTACT.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><MessageCircle size={18} /></a>
             <a href={`mailto:${CONTACT.email}`} aria-label="Email"><Mail size={18} /></a>

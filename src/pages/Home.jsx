@@ -4,14 +4,13 @@ import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
 import { HeroGuti } from '../components/site/Visuals';
-import { Pillars, CaseVela, Portfolio, Plans, Process, AboutGuti, Reviews, Faq, LeadSection } from '../components/site/Sections';
+import { SectorStrip, Pillars, CaseVela, Portfolio, Plans, Process, AboutGuti, Reviews, Faq, LeadSection } from '../components/site/Sections';
 import { REVIEWS_GENERAL, FAQ_GENERAL, PLANS } from '../data/site';
-import { landings } from '../data/content';
 import useSeo from '../hooks/useSeo';
 
 const HOME_SEO = {
-  title: 'Diseño web en Barcelona para clínicas y negocios | Agutidesigns',
-  description: 'Diseño web a medida en Barcelona: webs que consiguen clientes, posicionamiento en Google y asistente IA en WhatsApp. Caso real: +20.000 € en 3 meses. Pide tu propuesta.',
+  title: 'Diseño web en Barcelona que consigue clientes | Agutidesigns',
+  description: 'Diseño web a medida en Barcelona para negocios de todos los sectores: webs que venden, posicionamiento en Google y asistente IA en WhatsApp. Pide tu propuesta gratis.',
 };
 
 const PILLARS = [
@@ -43,7 +42,6 @@ const homeJsonLd = () => ({
 
 export default function Home() {
   useSeo({ ...HOME_SEO, path: '/', jsonLd: homeJsonLd() });
-  const sectorLinks = landings.filter((l) => l.ciudad === 'Barcelona');
 
   return (
     <div className="ag">
@@ -53,7 +51,7 @@ export default function Home() {
           <div className="ag-wrap ag-hero__grid">
             <div className="ag-hero__copy">
               <h1 className="ag-h1">Diseño web en Barcelona que te trae clientes, no solo visitas</h1>
-              <p className="ag-lead">Webs a medida, posicionamiento en Google y un asistente IA que responde y agenda por ti. Para clínicas y negocios locales que quieren llenar la agenda cada mes.</p>
+              <p className="ag-lead">Webs a medida, posicionamiento en Google y un asistente IA que responde y agenda por ti. Para clínicas, despachos, alojamientos, comercios y empresas que quieren más clientes cada mes.</p>
               <div className="ag-actions">
                 <a href="#propuesta" className="ag-btn ag-btn--primary">Pide tu propuesta gratis</a>
                 <a href="/casos" className="ag-btn ag-btn--ghost">Ver casos reales</a>
@@ -73,13 +71,9 @@ export default function Home() {
         </header>
 
         <Pillars title="Todo lo que necesita tu negocio para conseguir clientes por internet" lead="Una web bonita no basta. La conectamos con Google, WhatsApp y tu agenda para que cada visita tenga un camino claro hasta la cita o la compra." items={PILLARS}>
-          <div className="sx-chips">
-            <span>Especialistas en</span>
-            <a href="/clinicas-dentales">Clínicas dentales</a>
-            {sectorLinks.filter((l) => l.nicho !== 'dental').map((l) => <a key={l.slug} href={`/diseno-web/${l.slug}`}>{l.h1.replace('Diseño web para ', '').replace(' en Barcelona', '').replace(/^./, (c) => c.toUpperCase())}</a>)}
-            <a href="/diseno-web">Ver todos los sectores</a>
-          </div>
         </Pillars>
+
+        <SectorStrip />
 
         <CaseVela />
         <Portfolio limit={4} lead="Cada web es distinta porque cada negocio lo es. Estas están online y puedes visitarlas." />

@@ -59,7 +59,7 @@ export default function ClinicasDentales() {
         <header className="ag-hero">
           <div className="ag-wrap ag-hero__grid">
             <div className="ag-hero__copy">
-              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Clínicas dentales</span></nav>
+              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><a href="/diseno-web">Sectores</a><span aria-hidden="true">/</span><span>Clínicas dentales</span></nav>
               <h1 className="ag-h1">Diseño web para clínicas dentales que llena tu agenda</h1>
               <p className="ag-lead">Web, Google Maps y un asistente IA que responde y agenda citas por WhatsApp a cualquier hora. Marketing dental hecho para que tu clínica reciba pacientes nuevos cada semana.</p>
               <div className="ag-actions">

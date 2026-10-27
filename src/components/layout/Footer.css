@@ -1,5 +1,5 @@
 .foot { background: #fff; border-top: 1px solid rgba(0, 0, 0, 0.08); color: #1d1d1f; font-family: var(--font-body); font-size: 0.92rem; }
-.foot__inner { max-width: var(--ag-max, 1200px); margin: 0 auto; padding: 64px var(--ag-gutter, 24px) 40px; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; }
+.foot__inner { max-width: var(--ag-max, 1200px); margin: 0 auto; padding: 64px var(--ag-gutter, 24px) 40px; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap: 32px; }
 .foot__brand img { height: 30px; width: auto; display: block; }
 .foot__brand p { color: #6e6e73; line-height: 1.6; margin: 16px 0 20px; max-width: 34ch; }
 .foot__social { display: flex; gap: 8px; }

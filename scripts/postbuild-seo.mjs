@@ -26,6 +26,7 @@ const readJsonDir = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f
 
 const { PLANS, PARTNER, FAQ_GENERAL, FAQ_CLINICAS, REVIEWS_GENERAL, REVIEWS_CLINICAS, PROCESS } = await imp('site.js');
 const { VELA } = await imp('caseStudy.js');
+const { SECTOR_GROUPS } = await imp('sectorGroups.js');
 const { blogPosts: legacyPosts } = await imp('blogPosts.js');
 const landings = readJsonDir(path.join(dataDir, 'landings')).sort((a, b) => a.slug.localeCompare(b.slug));
 const posts = [...readJsonDir(path.join(dataDir, 'blog')), ...legacyPosts]
@@ -38,11 +39,11 @@ const faqLd = (items) => ({ '@type': 'FAQPage', mainEntity: items.map((f) => ({ 
 const plansHtml = () => `<h2>Precios</h2><ul>${PLANS.map((p) => `<li><strong>Plan ${p.name}: ${p.monthly} €/mes + ${p.setup} € de puesta en marcha.</strong> ${esc(p.pitch)}</li>`).join('')}<li><strong>Plan ${PARTNER.name}: ${PARTNER.monthly} €/mes + ${PARTNER.setup} € de alta.</strong> ${esc(PARTNER.pitch)}</li></ul>`;
 const caseHtml = () => `<h2>${esc(VELA.headline)}</h2><p>${esc(VELA.name)} (${esc(VELA.city)}): +80 % de facturación con web nueva, Google, asistente IA y recordatorios automáticos.</p><ul>${VELA.rows.map((r) => `<li>${esc(r.k)}: antes: ${esc(r.a)}. Después: ${esc(r.d)}.</li>`).join('')}</ul>`;
 const reviewsHtml = (items) => `<h2>Opiniones de clientes</h2>${items.map((r) => `<blockquote><p>${esc(r.text)}</p><cite>${esc(r.name)}, ${esc(r.role)}</cite></blockquote>`).join('')}`;
-const nav = `<nav><a href="/">Inicio</a> · <a href="/clinicas-dentales">Clínicas dentales</a> · <a href="/diseno-web">Sectores</a> · <a href="/casos">Casos</a> · <a href="/blog">Blog</a></nav>`;
+const nav = `<nav><a href="/">Inicio</a> · <a href="/diseno-web">Sectores</a> · <a href="/casos">Casos</a> · <a href="/blog">Blog</a></nav>`;
 const crumbs = (items) => ({ '@type': 'BreadcrumbList', itemListElement: items.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}${item}` })) });
 
 const homeBody = `${nav}<main><h1>Diseño web en Barcelona que te trae clientes, no solo visitas</h1>
-<p>Webs a medida, posicionamiento en Google y un asistente IA que responde y agenda por ti. Para clínicas y negocios locales que quieren llenar la agenda cada mes.</p>
+<p>Webs a medida, posicionamiento en Google y un asistente IA que responde y agenda por ti. Para clínicas, despachos, alojamientos, comercios y empresas que quieren más clientes cada mes.</p>
 <h2>Todo lo que necesita tu negocio para conseguir clientes por internet</h2>
 <ul><li>Diseño web a medida, rápido y pensado para el móvil</li><li>Posicionamiento en Google: SEO local y ficha de Google Business</li><li>Asistente IA en la web y en WhatsApp</li><li>Citas y recordatorios automáticos</li></ul>
 <p>Especialistas en <a href="/clinicas-dentales">diseño web para clínicas dentales</a>${landings.map((l) => `, <a href="/diseno-web/${l.slug}">${esc(l.h1.toLowerCase())}</a>`).join('')}.</p>
@@ -64,7 +65,7 @@ ${caseHtml()}${plansHtml()}${faqHtml(l.faqs)}</main>`;
 const OG = { home: '/img/og-home.jpg', clinicas: '/img/og-clinicas.jpg', casos: '/img/og-casos.jpg', sectores: '/img/og-sectores.jpg', blog: '/img/og-blog.jpg' };
 
 const ROUTES = [
-  { dir: '', title: 'Diseño web en Barcelona para clínicas y negocios | Agutidesigns', description: 'Diseño web a medida en Barcelona: webs que consiguen clientes, posicionamiento en Google y asistente IA en WhatsApp. Caso real: +20.000 € en 3 meses. Pide tu propuesta.', og: OG.home, body: homeBody, pr: '1.0',
+  { dir: '', title: 'Diseño web en Barcelona que consigue clientes | Agutidesigns', description: 'Diseño web a medida en Barcelona para negocios de todos los sectores: webs que venden, posicionamiento en Google y asistente IA en WhatsApp. Pide tu propuesta gratis.', og: OG.home, body: homeBody, pr: '1.0',
     jsonLd: { '@context': 'https://schema.org', '@graph': [{ '@type': 'ProfessionalService', name: 'Agutidesigns', url: `${SITE}/`, image: `${SITE}${OG.home}`, telephone: '+34625204337', email: 'info@agutidesigns.io', address: { '@type': 'PostalAddress', addressLocality: 'Barcelona', addressCountry: 'ES' }, areaServed: 'ES', priceRange: '190 €–2.900 €/mes', founder: { '@type': 'Person', name: 'Alejandro Gutiérrez' } }, faqLd(FAQ_GENERAL)] } },
   { dir: 'clinicas-dentales', title: 'Diseño web para clínicas dentales y marketing dental | Agutidesigns', description: 'Diseño web para clínicas dentales con SEO local, Google Maps y asistente IA que agenda citas 24/7. Caso real en Viladecans: +20.000 € en 3 meses. Desde 190 €/mes.', og: OG.clinicas, body: clinicasBody, pr: '0.9',
     jsonLd: { '@context': 'https://schema.org', '@graph': [{ '@type': 'Service', name: 'Diseño web y marketing para clínicas dentales', provider: { '@type': 'Organization', name: 'Agutidesigns', url: SITE }, areaServed: 'ES', url: `${SITE}/clinicas-dentales`, offers: PLANS.map((p) => ({ '@type': 'Offer', name: `Plan ${p.name}`, price: p.monthly.replace('.', ''), priceCurrency: 'EUR' })) }, faqLd(FAQ_CLINICAS), crumbs([['Inicio', '/'], ['Clínicas dentales', '/clinicas-dentales']])] } },
@@ -74,8 +75,8 @@ const ROUTES = [
     body: `${nav}<main><h1>¿Cuánto cuesta tu página web?</h1><p>Responde seis preguntas y descubre el precio orientativo de tu landing page, web corporativa o tienda online.</p></main>` },
   { dir: 'casos', title: 'Casos de éxito en diseño web: +20.000 € en 3 meses | Agutidesigns', description: 'Clínica Dental Vela-Segalà facturó más de 20.000 € en 3 meses (+80 %) con su nueva web, Google y asistente IA. Mira el antes y después y las webs que hemos diseñado.', og: OG.casos, pr: '0.8',
     body: `${nav}<main><h1>Casos de éxito y webs reales</h1>${caseHtml()}${reviewsHtml(REVIEWS_GENERAL)}</main>` },
-  { dir: 'diseno-web', title: 'Diseño web por sector y ciudad | Agutidesigns', description: 'Diseño web para clínicas dentales, podólogos, fisioterapeutas, clínicas estéticas y nutricionistas en Barcelona y alrededores. Web, Google y asistente IA.', og: OG.sectores, pr: '0.8',
-    body: `${nav}<main><h1>Diseño web por sector y ciudad</h1><ul>${landings.map((l) => `<li><a href="/diseno-web/${l.slug}">${esc(l.h1)}</a></li>`).join('')}</ul></main>` },
+  { dir: 'diseno-web', title: 'Diseño web por sectores: clínicas, despachos, turismo y más | Agutidesigns', description: 'Webs que venden para clínicas, spas, despachos, alojamientos turísticos, hostelería y startups. Mira cómo trabajamos cada sector y las webs reales que hemos diseñado.', og: OG.sectores, pr: '0.8',
+    body: `${nav}<main><h1>Diseño web para cada sector</h1><p>Clínicas, despachos, spas, alojamientos, bodegas y startups. Cada negocio vende de una forma distinta, y su web también debería hacerlo.</p>${SECTOR_GROUPS.map((g) => `<h2>${esc(g.title)}</h2><p>${esc(g.lead)}</p><ul>${g.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>${g.proof ? `<blockquote>${esc(g.proof.text)}</blockquote>` : ''}`).join('')}<h2>Diseño web por sector y ciudad</h2><ul>${landings.map((l) => `<li><a href="/diseno-web/${l.slug}">${esc(l.h1)}</a></li>`).join('')}</ul></main>` },
   ...landings.map((l) => ({ dir: `diseno-web/${l.slug}`, title: l.metaTitle, description: l.metaDescription, og: OG.sectores, body: landingBody(l), lastmod: l.updatedDate || l.publishDate, pr: '0.8',
     jsonLd: { '@context': 'https://schema.org', '@graph': [{ '@type': 'Service', name: l.h1, serviceType: 'Diseño web y marketing digital', areaServed: { '@type': 'City', name: l.ciudad }, provider: { '@type': 'Organization', name: 'Agutidesigns', url: SITE }, url: `${SITE}/diseno-web/${l.slug}` }, faqLd(l.faqs), crumbs([['Inicio', '/'], ['Diseño web por sector', '/diseno-web'], [l.h1, `/diseno-web/${l.slug}`]])] } })),
   { dir: 'blog', title: 'Blog de marketing digital para clínicas | Agutidesigns', description: 'Guías prácticas de diseño web, SEO local, Google Maps y marketing dental para conseguir más pacientes y clientes. Escritas por Agutidesigns desde Barcelona.', og: OG.blog, pr: '0.7',
