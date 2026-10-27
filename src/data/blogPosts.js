@@ -109,13 +109,13 @@ export const blogPosts = [
 </ul>
 <p>Cuándo tiene sentido: si tienes un presupuesto inicial sólido y un equipo interno que pueda gestionar el contenido y la estrategia digital después del lanzamiento.</p>
 
-<h2>Opción 3: Suscripción mensual especializada — desde 149 €/mes</h2>
+<h2>Opción 3: Suscripción mensual especializada — desde 190 €/mes</h2>
 <p>Este es el modelo que nosotros ofrecemos en AgutiDesigns y el que, en nuestra experiencia, mejor encaja con la realidad de la mayoría de clínicas dentales en España.</p>
 <p>En lugar de pagar un proyecto grande de una sola vez, pagas una cuota mensual que incluye todo: diseño, desarrollo, hosting, mantenimiento, actualizaciones de contenido, optimización SEO continuada y soporte directo.</p>
 <ul>
   <li><strong>Ventajas del modelo por suscripción:</strong>
     <ul>
-      <li>Sin gran inversión inicial: la web está operativa desde el primer mes.</li>
+      <li>Inversión inicial contenida (una puesta en marcha única desde 990 €) y después una cuota mensual.</li>
       <li>El servicio evoluciona con tu clínica: si abres un nuevo tratamiento, actualizamos la web.</li>
       <li>SEO y rendimiento monitorizados de forma continuada, no como un proyecto puntual.</li>
       <li>Soporte real cuando algo falla, sin tener que buscar al freelance que te hizo la web hace dos años.</li>

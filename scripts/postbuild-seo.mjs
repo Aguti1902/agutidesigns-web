@@ -30,7 +30,7 @@ const STATIC_ROUTES = [
   {
     dir: 'clinicas-dentales',
     title: 'Diseño Web para Clínicas Dentales | AgutiDesigns',
-    description: 'Agencia de marketing dental especializada en España. Web profesional, SEO local, chatbot IA y publicidad online para dentistas. Desde 149€/mes.',
+    description: 'Agencia de marketing dental especializada en España. Web profesional, SEO local, chatbot IA y publicidad online para dentistas. Desde 190€/mes.',
     canonical: 'https://agutidesigns.io/clinicas-dentales',
     ogImage: 'https://agutidesigns.io/images/og-clinicas-dentales.jpg',
   },
@@ -44,7 +44,7 @@ const STATIC_ROUTES = [
   {
     dir: 'calculadora',
     title: 'Calculadora de Precio Web | AgutiDesigns',
-    description: 'Calcula el precio de tu página web con AgutiDesigns. Diseño web profesional en Barcelona desde 149€/mes. Obtén tu presupuesto personalizado en menos de 2 minutos.',
+    description: 'Calcula el precio de tu página web con AgutiDesigns. Diseño web profesional en Barcelona a medida. Obtén tu presupuesto personalizado en menos de 2 minutos.',
     canonical: 'https://agutidesigns.io/calculadora',
     ogImage: 'https://agutidesigns.io/images/og-agutidesigns.jpg',
   },

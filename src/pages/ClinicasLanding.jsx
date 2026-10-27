@@ -123,23 +123,21 @@ const PROCESS = [
 
 const PRICING = [
   {
-    name: 'Web + Mantenimiento',
-    monthly: '199',
-    setup: '1.199',
-    desc: 'Desarrollo web profesional desde cero, diseñada para convertir visitas en pacientes. Activa y creciendo mes a mes.',
+    name: 'Base',
+    monthly: '190',
+    setup: '990',
+    desc: 'Tu web nueva, diseñada para convertir visitas en pacientes, siempre al día y sin preocupaciones técnicas.',
     monthlyIncludes: [
       'Hosting y dominio incluido',
       'Actualizaciones y seguridad',
       'Copias de seguridad diarias',
-      'Soporte técnico prioritario',
-      'Cambios de contenido ilimitados',
-      'Informe mensual de rendimiento',
+      'Soporte técnico',
+      'Cambios de contenido',
     ],
     setupIncludes: [
       'Web desarrollada desde 0 a medida',
-      'Diseño UI/UX orientado a conversión',
-      'Chatbot IA básico integrado',
-      'Formulario de cita inteligente',
+      'Diseño orientado a pedir cita',
+      'Formulario de cita en un clic',
       'SEO on-page completo',
       'Google Analytics + Search Console',
     ],
@@ -147,50 +145,46 @@ const PRICING = [
     color: '',
   },
   {
-    name: 'Web + SEO + SEM',
-    monthly: '449',
-    setup: '1.990',
-    desc: 'Desarrollo web completo + domina Google con SEO local activo y publicidad gestionada desde el día 1.',
+    name: 'Crecimiento',
+    monthly: '590',
+    setup: '1.490',
+    desc: 'Todo lo de Base y además trabajamos tu visibilidad en Google cada mes para que te encuentren los pacientes de tu zona.',
     monthlyIncludes: [
-      'Todo lo de Mantenimiento',
+      'Todo lo del plan Base',
       'SEO local mensual activo',
-      'Google My Business optimizado',
-      'Gestión Google Ads (SEM)',
+      'Ficha de Google optimizada',
+      'Gestión de reseñas',
       'Informe mensual de resultados',
-      'Estrategia de palabras clave',
     ],
     setupIncludes: [
-      'Web premium desarrollada desde 0',
-      'Arquitectura SEO técnica avanzada',
-      'Landing pages de tratamientos',
-      'Auditoría y estrategia SEO inicial',
-      'Configuración y estructura Google Ads',
-      'Integración Google Reviews + Schema',
+      'Todo lo del plan Base',
+      'Páginas por tratamiento',
+      'Auditoría y estrategia SEO local',
+      'Optimización inicial de la ficha de Google',
+      'Sistema para pedir reseñas',
     ],
-    cta: 'Quiero ser el #1',
+    cta: 'Quiero crecer en Google',
     color: 'popular',
-    badge: 'Más contratado',
+    badge: 'Recomendado',
   },
   {
-    name: 'IA 360° Total',
-    monthly: '699',
-    setup: '2.990',
-    desc: 'La clínica más avanzada de tu zona: desarrollo web IA-first, SEO, SEM y una IA que trabaja sola mientras tú duermes.',
+    name: 'IA',
+    monthly: '1.490',
+    setup: '2.490',
+    desc: 'Todo lo de Crecimiento y un asistente IA que atiende a tus pacientes en la web y en WhatsApp, 24/7.',
     monthlyIncludes: [
-      'Todo lo de SEO + SEM',
-      'IA activa 24/7 en tu web',
-      'Agendado automático de citas',
-      'IA multiidioma personalizada',
-      'Reportes IA + pacientes nuevos',
-      'Optimización y entrenamiento IA',
+      'Todo lo del plan Crecimiento',
+      'Asistente IA 24/7 en web y WhatsApp',
+      'Citas y recordatorios automáticos',
+      'Automatizaciones de seguimiento',
+      'Panel con tus números',
     ],
     setupIncludes: [
-      'Desarrollo web IA-first desde 0',
+      'Todo lo del plan Crecimiento',
       'Asistente IA entrenado con tu clínica',
-      'Integración total con tu agenda',
+      'Integración con tu agenda',
       'Flujos de captación automatizados',
-      'Panel de control IA personalizado',
-      'Formación del equipo incluida',
+      'Formación del equipo',
     ],
     cta: 'Activar mi IA',
     color: '',
@@ -500,21 +494,14 @@ SOBRE LO QUE OFRECEMOS A CLÍNICAS DENTALES:
 - Panel de control incluido: visitas en tiempo real, pacientes nuevos, posición en Google, clics, conversiones y rendimiento de la IA
 - Informes mensuales de resultados
 
-PLANES DISPONIBLES:
-1. Web + Mantenimiento: 199€/mes + 1.199€ setup
-   - Web desarrollada desde 0 a medida con diseño orientado a conversión
-   - Chatbot IA básico integrado, formulario de cita inteligente, SEO on-page completo
-   - Hosting, actualizaciones, seguridad, soporte, cambios de contenido ilimitados
-
-2. Web + SEO + SEM: 449€/mes + 1.990€ setup (el más contratado)
-   - Web premium desde 0 + arquitectura SEO técnica avanzada + landing pages por tratamiento
-   - Todo lo anterior + SEO local mensual activo + Google Ads gestionado
-   - Google My Business optimizado, informe mensual
-
-3. IA 360° Total: 699€/mes + 2.990€ setup
-   - Desarrollo web IA-first desde 0 + asistente IA entrenado con los datos de tu clínica
-   - Todo lo anterior + IA activa 24/7, agendado automático, panel de control IA, formación del equipo
-   - Flujos de captación automatizados, IA multiidioma, optimización continua
+PLANES DISPONIBLES (cuota mensual + puesta en marcha única):
+1. Base: 190€/mes + 990€ de alta
+   - Web nueva desde 0 a medida, hosting, mantenimiento y cambios
+2. Crecimiento: 590€/mes + 1.490€ de alta (el recomendado)
+   - Base + SEO local, ficha de Google y reseñas
+3. IA: 1.490€/mes + 2.490€ de alta
+   - Crecimiento + asistente IA en web y WhatsApp, citas y automatizaciones
+4. Partner: 2.900€/mes + 3.900€ de alta — se explica en una llamada
 
 PROCESO:
 1. Solicitar consulta gratuita — analizamos la clínica y la competencia local
@@ -533,7 +520,11 @@ TU OBJETIVO:
 1. Resolver dudas sobre cómo podemos ayudar a la clínica a captar más pacientes
 2. Explicar las ventajas del SEO local, la IA y el panel de control
 3. Dirigir siempre a contactar por WhatsApp para la consulta gratuita
-4. Si preguntan por el precio, explica los planes con claridad y ofrece hablar por WhatsApp
+4. Si preguntan por el precio, explica los planes con claridad y ofrece hablar por WhatsApp (+34 625 204 337)
+5. Si hay interés, pide de forma natural nombre, clínica y email o teléfono para que Alejandro prepare una propuesta personalizada con demo
+
+CASO REAL (único dato de resultados que puedes usar):
+Clínica Dental Vela-Segalà (Viladecans): más de 20.000 € facturados en 3 meses (+80 % de facturación) tras la web nueva, Google, asistente IA y recordatorios automáticos.
 
 CIERRE SIEMPRE CON:
 Recuerda invitar a rellenar el formulario de consulta gratuita en la web.`;
@@ -552,7 +543,7 @@ const PAGE_SCHEMA = {
       name: 'AgutiDesigns',
       description: 'Agencia de marketing digital especializada en clínicas dentales en España. Diseño web, SEO local, publicidad online e inteligencia artificial para dentistas.',
       url: 'https://agutidesigns.io',
-      telephone: '+34-XXX-XXX-XXX',
+      telephone: '+34-625-204-337',
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'Barcelona',
@@ -566,39 +557,39 @@ const PAGE_SCHEMA = {
         itemListElement: [
           {
             '@type': 'Offer',
-            name: 'Web + Mantenimiento',
-            description: 'Tu web profesional activa y mantenida mes a mes. Sin preocupaciones técnicas.',
-            price: '199',
+            name: 'Base',
+            description: 'Web nueva a medida, hosting, mantenimiento y cambios.',
+            price: '190',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '199',
+              price: '190',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
           },
           {
             '@type': 'Offer',
-            name: 'Web + SEO + SEM',
-            description: 'Desarrollo web completo + domina Google con SEO local activo y publicidad gestionada.',
-            price: '449',
+            name: 'Crecimiento',
+            description: 'Base + SEO local, ficha de Google y reseñas.',
+            price: '590',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '449',
+              price: '590',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
           },
           {
             '@type': 'Offer',
-            name: 'IA 360° Total',
-            description: 'Desarrollo web IA-first, SEO, SEM e IA que trabaja sola las 24h.',
-            price: '699',
+            name: 'IA',
+            description: 'Crecimiento + asistente IA en web y WhatsApp, citas y automatizaciones.',
+            price: '1490',
             priceCurrency: 'EUR',
             priceSpecification: {
               '@type': 'UnitPriceSpecification',
-              price: '699',
+              price: '1490',
               priceCurrency: 'EUR',
               unitText: 'mes',
             },
@@ -681,42 +672,43 @@ const PAGE_SCHEMA = {
 
 /* ── Caso de éxito ── */
 const CASO_STATS = [
-  { value: 40,  suffix: '%', label: 'Más facturación',      Icon: TrendingUp, desc: 'Incremento en ingresos en 6 meses' },
-  { value: 3,   suffix: '×', label: 'Más pacientes nuevos', Icon: Users,      desc: 'Captación orgánica desde Google' },
-  { value: 320, suffix: '%', label: 'Más visitas web',      Icon: BarChart2,  desc: 'Crecimiento de tráfico SEO' },
-  { value: 4.9, suffix: '',  label: 'Valoración en Google', Icon: Star,       desc: '150+ reseñas verificadas', isDecimal: true },
+  { value: 20,  suffix: '.000 €', label: 'Facturados',         Icon: TrendingUp, desc: 'En solo 3 meses' },
+  { value: 80,  suffix: '%',      label: 'Más facturación',    Icon: BarChart2,  desc: 'Comparado con antes del cambio' },
+  { value: 3,   suffix: ' meses', label: 'Para verlo en caja', Icon: Activity,   desc: 'Desde el lanzamiento' },
+  { value: 24,  suffix: '/7',     label: 'Citas online',       Icon: Users,      desc: 'Por la web y por WhatsApp' },
 ];
 
 const CASO_TIMELINE = [
-  { phase: 'Mes 1',   title: 'Web desde 0 + SEO',       desc: 'Diseñamos y lanzamos la web en 2 semanas. Optimización SEO local en Viladecans desde el día 1.' },
-  { phase: 'Mes 2–3', title: 'Chatbot IA + Reseñas',    desc: 'Instalamos el asistente IA que responde 24/7. Estrategia de captación de reseñas en Google.' },
-  { phase: 'Mes 4–6', title: 'Ads + Panel de métricas', desc: 'Campañas de Google Ads segmentadas. Dashboard en tiempo real para la clínica.' },
-  { phase: 'Hoy',     title: '+40% facturación',        desc: 'La clínica ha más que doblado la captación de nuevos pacientes respecto al año anterior.' },
+  { phase: 'Paso 1', title: 'Web nueva desde 0',            desc: 'Una web pensada para pedir cita en un clic, rápida en el móvil y optimizada para Viladecans.' },
+  { phase: 'Paso 2', title: 'Google y reseñas',             desc: 'Ficha de Google trabajada y SEO local para aparecer cuando buscan dentista en la zona.' },
+  { phase: 'Paso 3', title: 'Asistente IA y recordatorios', desc: 'El asistente responde al momento en web y WhatsApp, y los recordatorios automáticos reducen las ausencias.' },
+  { phase: 'Resultado', title: '+20.000 € en 3 meses',      desc: '+80 % de facturación gracias a toda la digitalización de la clínica.' },
+];
+
+const CASO_ROWS = [
+  { k: 'Citas',     a: 'Solo por teléfono y en horario', d: 'A cualquier hora, web y WhatsApp' },
+  { k: 'Google',    a: 'Poco visibles en Viladecans',    d: 'Posicionados en búsquedas locales' },
+  { k: 'Mensajes',  a: 'Sin respuesta fuera de horario', d: 'El asistente IA responde al momento' },
+  { k: 'Ausencias', a: 'Recordatorios a mano',           d: 'Recordatorios automáticos' },
 ];
 
 /* ── Mini panel de métricas ── */
 const CHART_BARS = [18, 25, 22, 35, 42, 38, 55, 62, 58, 74, 85, 100];
 const MONTHS     = ['E','F','M','A','M','J','J','A','S','O','N','D'];
 
-function MetricsPanel({ inView }) {
-  const [animated, setAnimated] = useState(false);
-  useEffect(() => { if (inView) { const t = setTimeout(() => setAnimated(true), 400); return () => clearTimeout(t); } }, [inView]);
-
+function MetricsPanel() {
   return (
     <div className="cl-caso__metrics">
-      {/* Header del panel */}
       <div className="cl-caso__metrics-header">
         <div className="cl-caso__metrics-dot" style={{ background: '#10B981' }} />
-        <span className="cl-caso__metrics-title">Panel de métricas — Vela-Segalà</span>
-        <span className="cl-caso__metrics-period">Últimos 12 meses</span>
+        <span className="cl-caso__metrics-title">Vela-Segalà — antes y después</span>
+        <span className="cl-caso__metrics-period">3 meses</span>
       </div>
-
-      {/* KPI row */}
       <div className="cl-caso__metrics-kpis">
         {[
-          { label: 'Visitas/mes',   value: '4.280',  delta: '+320%', color: '#10B981' },
-          { label: 'Nuevos pac.',   value: '68',      delta: '+3x',   color: '#0047FF' },
-          { label: 'Pos. Google',   value: '#1',      delta: '↑ 47',  color: '#8B5CF6' },
+          { label: 'Facturado', value: '+20.000 €', delta: 'en 3 meses', color: '#10B981' },
+          { label: 'Facturación', value: '+80 %', delta: 'vs. antes', color: '#0047FF' },
+          { label: 'Citas', value: '24/7', delta: 'web + WhatsApp', color: '#8B5CF6' },
         ].map((k, i) => (
           <div key={i} className="cl-caso__metrics-kpi">
             <div className="cl-caso__metrics-kpi-val">{k.value}</div>
@@ -725,34 +717,14 @@ function MetricsPanel({ inView }) {
           </div>
         ))}
       </div>
-
-      {/* Bar chart */}
-      <div className="cl-caso__chart">
-        {CHART_BARS.map((h, i) => (
-          <div key={i} className="cl-caso__chart-col">
-            <div
-              className="cl-caso__chart-bar"
-              style={{
-                height: animated ? `${h}%` : '4%',
-                background: i >= 9
-                  ? 'linear-gradient(180deg,#0047FF,#3b82f6)'
-                  : 'linear-gradient(180deg,#C7D7FF,#E8EFFE)',
-                transitionDelay: `${i * 60}ms`,
-              }}
-            />
-            <div className="cl-caso__chart-label">{MONTHS[i]}</div>
+      <div className="cl-caso__ba">
+        {CASO_ROWS.map((r) => (
+          <div key={r.k} className="cl-caso__ba-row">
+            <span className="cl-caso__ba-k">{r.k}</span>
+            <span className="cl-caso__ba-a">{r.a}</span>
+            <span className="cl-caso__ba-d"><Check size={12} /> {r.d}</span>
           </div>
         ))}
-      </div>
-
-      {/* Footer */}
-      <div className="cl-caso__metrics-footer">
-        <span className="cl-caso__metrics-src">
-          <BarChart2 size={11} /> Google Analytics · Search Console
-        </span>
-        <span className="cl-caso__metrics-tag">
-          <Activity size={10} /> En tiempo real
-        </span>
       </div>
     </div>
   );
@@ -772,10 +744,10 @@ function CasoExito({ openForm }) {
             <CheckCircle size={14} strokeWidth={2} /> Caso de éxito real
           </motion.span>
           <motion.h2 variants={fadeUp} className="cl-section-title">
-            De 0 a la clínica más visible<br />de Viladecans en 6 meses
+            Más de 20.000 € facturados<br />en solo 3 meses
           </motion.h2>
           <motion.p variants={fadeUp} className="cl-section-sub">
-            Cómo transformamos la presencia digital de <strong>Clínica Dental Vela-Segalà</strong> y disparamos su captación de pacientes.
+            Cómo transformamos la presencia digital de <strong>Clínica Dental Vela-Segalà</strong> y aumentamos su facturación un 80 %.
           </motion.p>
         </motion.div>
 
@@ -826,14 +798,12 @@ function CasoExito({ openForm }) {
             </div>
             {/* Floating badges */}
             <div className="cl-caso__badge cl-caso__badge--tl">
-              <TrendingUp size={14} /> SEO #1 Viladecans
+              <TrendingUp size={14} /> +80 % facturación
             </div>
-            <div className="cl-caso__badge cl-caso__badge--br">
-              <Star size={13} style={{ fill: '#F59E0B', color: '#F59E0B' }} /> 4.9 · 150+ reseñas
-            </div>
+            
 
             {/* Panel de métricas */}
-            <MetricsPanel inView={inView} />
+            <MetricsPanel />
           </motion.div>
 
           {/* Timeline */}
@@ -894,7 +864,7 @@ export default function ClinicasLanding() {
   /* ── SEO: dynamic meta tags for /clinicas-dentales ── */
   useEffect(() => {
     const TITLE = 'Diseño Web para Clínicas Dentales | AgutiDesigns';
-    const DESC = 'Agencia especializada en clínicas dentales en España. Desarrollo web desde 0, SEO local, IA 24/7 y publicidad online para dentistas. Setup desde 1.199€.';
+    const DESC = 'Agencia especializada en clínicas dentales en España. Desarrollo web desde 0, SEO local, IA 24/7 y publicidad online para dentistas. Desde 190€/mes.';
     const CANONICAL = 'https://agutidesigns.io/clinicas-dentales';
     const OG_IMAGE = 'https://agutidesigns.io/images/og-clinicas-dentales.jpg';
 
@@ -1129,7 +1099,7 @@ export default function ClinicasLanding() {
 
         {/* Mini stats strip */}
         <div className="cl-hero__mini-stats">
-          <div className="cl-mini-stat"><span className="cl-mini-stat__num">+40%</span><span>citas</span></div>
+          <div className="cl-mini-stat"><span className="cl-mini-stat__num">+80%</span><span>facturación</span></div>
           <div className="cl-mini-stat__divider" />
           <div className="cl-mini-stat"><span className="cl-mini-stat__num">#1</span><span>Google local</span></div>
           <div className="cl-mini-stat__divider" />
@@ -1221,8 +1191,8 @@ export default function ClinicasLanding() {
             <div className="cl-video__badge cl-video__badge--1">
               <TrendingUp size={16} />
               <div>
-                <strong>+40%</strong>
-                <span>nuevos pacientes</span>
+                <strong>+80%</strong>
+                <span>facturación</span>
               </div>
             </div>
             <div className="cl-video__badge cl-video__badge--2">
@@ -1469,7 +1439,7 @@ export default function ClinicasLanding() {
             <motion.div variants={fadeUp} className="cl-section-label">Planes y precios</motion.div>
             <motion.h2 variants={fadeUp} className="cl-section-title">
               Web + IA para clínicas dentales —<br />
-              <span className="text-primary">desde 1.199€, resultados garantizados</span>
+              <span className="text-primary">desde 190 €/mes</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="cl-pricing__sub">
               Setup único para lanzar tu proyecto + mensualidad que mantiene tu clínica creciendo cada mes.
@@ -1509,7 +1479,7 @@ export default function ClinicasLanding() {
 
                   {/* Setup — smaller */}
                   <div className="cl-price-card__setup">
-                    <span>+ Setup único</span>
+                    <span>+ Alta única</span>
                     <strong>€{plan.setup}</strong>
                   </div>
 
@@ -1517,7 +1487,7 @@ export default function ClinicasLanding() {
 
                   {/* Monthly includes */}
                   <div className="cl-price-card__section-label">
-                    <span className="cl-price-tag cl-price-tag--monthly">Mensualidad incluye</span>
+                    <span className="cl-price-tag cl-price-tag--monthly">Cada mes</span>
                   </div>
                   <ul className="cl-price-card__features">
                     {plan.monthlyIncludes.map((f, j) => (
@@ -1527,7 +1497,7 @@ export default function ClinicasLanding() {
 
                   {/* Setup includes */}
                   <div className="cl-price-card__section-label">
-                    <span className="cl-price-tag cl-price-tag--setup">Setup incluye</span>
+                    <span className="cl-price-tag cl-price-tag--setup">Puesta en marcha</span>
                   </div>
                   <ul className="cl-price-card__features cl-price-card__features--setup">
                     {plan.setupIncludes.map((f, j) => (
@@ -1545,7 +1515,8 @@ export default function ClinicasLanding() {
             </motion.div>
 
             <motion.p variants={fadeUp} className="cl-pricing__note">
-              ¿Tienes dudas sobre qué plan necesitas?{' '}
+              ¿Quieres que lo llevemos todo? Plan Partner: 2.900 €/mes + 3.900 € de alta.{' '}
+              <br />¿Dudas sobre qué plan necesitas?{' '}
               <a href="#" onClick={openForm}>
                 Reservar llamada gratuita →
               </a>
