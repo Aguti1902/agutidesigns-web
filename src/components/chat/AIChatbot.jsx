@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Bot, User, Sparkles, Minimize2 } from 'lucide-react';
 import { sendChatMessage, qualifyLead } from '../../services/aiService';
 import './AIChatbot.css';
+import { trackLeadConversion } from '../../utils/conversion';
 
 const DEFAULT_INITIAL_MESSAGE = {
   role: 'assistant',
@@ -56,7 +57,7 @@ export default function AIChatbot({ systemPrompt, initialMessage }) {
               situacion: [`Chat IA · score ${data.score}/10 · ${data.intent}`, ...(data.key_needs || [])].join(' · '),
               fuente: `chat-web:${window.location.pathname}`,
             }),
-          }).then((r) => { if (!r.ok) savedLeadRef.current = false; }).catch(() => { savedLeadRef.current = false; });
+          }).then((r) => { if (!r.ok) savedLeadRef.current = false; else trackLeadConversion('chat-web'); }).catch(() => { savedLeadRef.current = false; });
         }
       });
     }

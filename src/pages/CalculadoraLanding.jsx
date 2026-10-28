@@ -12,6 +12,7 @@ import { calculatePrice, formatPrice } from '../services/priceCalculator';
 import { sendAutomatedEmail } from '../services/aiService';
 import { supabase } from '../lib/supabase';
 import './CalculadoraLanding.css';
+import { trackLeadConversion } from '../utils/conversion';
 
 /* ── Step Data ── */
 const WEB_TYPES = [
@@ -278,7 +279,7 @@ export default function CalculadoraLanding() {
         situacion: `Calculadora: ${formData.webType}, ${formData.pages} páginas, plazo ${formData.timeline}. Presupuesto ${quoteData.total} €${quoteData.monthly ? ` + ${quoteData.monthly} €/mes` : ''}`,
         fuente: 'calculadora',
       }),
-    }).catch(() => {});
+    }).then((r) => { if (r.ok) trackLeadConversion('calculadora'); }).catch(() => {});
     sendAutomatedEmail('quote', {
       name:            formData.name,
       email:           formData.email,
