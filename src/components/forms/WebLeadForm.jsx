@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, Calendar, MessageCircle } from 'lucide-react';
+import { trackLeadConversion } from '../../utils/conversion';
 import './WebLeadForm.css';
 
 const CALENDLY_URL = 'https://calendly.com/agutidesigns/reunion';
@@ -42,6 +43,7 @@ export default function WebLeadForm({ fuente, ciudad = '', sector = '', title = 
     } catch { ok = false; }
     setSending(false);
     if (!ok) return setError('No se ha podido enviar. Escríbenos a info@agutidesigns.io o por WhatsApp.');
+    trackLeadConversion(fuente);
     setDone(true);
   };
 

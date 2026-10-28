@@ -6,6 +6,7 @@ import {
   Phone, Mail, CheckCircle, Loader2,
 } from 'lucide-react';
 import './ClinicasLeadForm.css';
+import { trackLeadConversion } from '../../utils/conversion';
 
 const CALENDLY_URL = 'https://calendly.com/agutidesigns/reunion';
 
@@ -74,6 +75,7 @@ export default function ClinicasLeadForm({ onClose }) {
     } catch { ok = false; }
     setSubmitting(false);
     if (!ok) { setError('Algo salió mal. Inténtalo de nuevo.'); return; }
+    trackLeadConversion('landing-clinicas');
     setDone(true);
     setStep(4);
   };
