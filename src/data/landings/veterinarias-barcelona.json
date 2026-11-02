@@ -1,0 +1,73 @@
+{
+  "slug": "veterinarias-barcelona",
+  "nicho": "veterinaria",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-11-02",
+  "metaTitle": "Diseño web para clínicas veterinarias en Barcelona | Agutidesigns",
+  "metaDescription": "Web para clínicas veterinarias en Barcelona: cita online, urgencias bien visibles, recordatorios de vacunas y SEO local para aparecer en tu barrio.",
+  "h1": "Diseño web para clínicas veterinarias en Barcelona",
+  "intro": "Cuando una mascota se encuentra mal, el dueño busca “veterinario cerca” y llama al primero que le inspira confianza y contesta. Diseñamos la web de tu clínica para que te encuentren en tu barrio, vean enseguida horario y urgencias, y puedan pedir cita sin esperar a que cojas el teléfono.",
+  "nota": "En veterinaria se decide por cercanía y rapidez: gana la clínica que se encuentra a la primera y se puede contactar al momento.",
+  "problemas": [
+    {
+      "t": "No apareces en “veterinario cerca de mí”",
+      "d": "La mayoría de búsquedas son de barrio. Si tu ficha de Google y tu web no están trabajadas, el dueño acaba en la clínica que sí sale."
+    },
+    {
+      "t": "Urgencias y horarios difíciles de encontrar",
+      "d": "Quien tiene una urgencia necesita saber en segundos si estás abierto y cómo llegar. Si hay que buscar el dato, llama a otra clínica."
+    },
+    {
+      "t": "Teléfono ocupado mientras atiendes",
+      "d": "Con el equipo en consulta o quirófano, muchas llamadas se pierden. Sin cita online ni respuesta automática, esos clientes no siempre vuelven a intentarlo."
+    },
+    {
+      "t": "Vacunas y revisiones que se olvidan",
+      "d": "Vacunas, desparasitaciones y revisiones anuales dependen de que el dueño se acuerde. Sin recordatorios, esas visitas se pierden."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Web clara para dueños con prisa",
+      "d": "Horario, teléfono, ubicación y aviso de urgencias a la vista desde la portada, y rápida en el móvil, que es desde donde se busca."
+    },
+    {
+      "t": "Una página por servicio y especie",
+      "d": "Consulta general, vacunación, cirugía, dermatología, exóticos… cada servicio con su página para que Google entienda qué atiendes."
+    },
+    {
+      "t": "Cita online",
+      "d": "El dueño elige servicio y hueco desde el móvil y la cita llega a tu agenda con su confirmación, también fuera de horario."
+    },
+    {
+      "t": "Asistente IA en web y WhatsApp",
+      "d": "Contesta dudas habituales (horario, primera visita, cómo pedir cita) y orienta a urgencias hacia el teléfono. No diagnostica: eso lo hace tu equipo."
+    },
+    {
+      "t": "Recordatorios y SEO local",
+      "d": "Avisos automáticos de vacunas y revisiones, y trabajo de ficha de Google y páginas de servicio para aparecer en tu barrio."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿Puedo destacar el servicio de urgencias?",
+      "a": "Sí. Se muestra en la portada con teléfono y horario, y puedes indicar qué cubres tú y a dónde derivar el resto."
+    },
+    {
+      "q": "¿Se pueden enviar recordatorios de vacunas?",
+      "a": "Sí, mediante mensajes automáticos según las fechas que registres. Tú eliges el texto y la antelación."
+    },
+    {
+      "q": "¿El asistente IA da consejos clínicos?",
+      "a": "No. Solo resuelve dudas prácticas y, si el caso parece urgente, indica que llamen a la clínica. El criterio veterinario es siempre de tu equipo."
+    },
+    {
+      "q": "¿Trabajáis solo en Barcelona?",
+      "a": "Trabajamos con negocios de toda España, en remoto. Si estás en Barcelona y el área metropolitana también podemos vernos en persona."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, preparamos una propuesta personalizada con una demo de cómo quedaría tu web y te la enseñamos en una llamada corta."
+    }
+  ]
+}

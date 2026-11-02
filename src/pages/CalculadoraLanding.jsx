@@ -148,7 +148,7 @@ function LoadingScreen({ onDone }) {
 
 /* ── Main ── */
 export default function CalculadoraLanding() {
-  useSeo({ title: 'Calculadora de precio de página web | Agutidesigns', description: 'Calcula cuánto cuesta tu página web: landing, web corporativa o tienda online. Presupuesto orientativo al momento, sin compromiso. Diseño web en Barcelona.', path: '/calculadora' });
+  useSeo({ title: 'Calcular precio web: cotizador de páginas web | Agutidesigns', description: 'Cotizador de páginas web: calcula el precio de tu web (landing, corporativa o tienda online) en 2 minutos y recibe un presupuesto orientativo sin compromiso.', path: '/calculadora' });
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     webType: '',
