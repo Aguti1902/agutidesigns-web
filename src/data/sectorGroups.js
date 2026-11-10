@@ -30,7 +30,7 @@ export const SECTOR_GROUPS = [
     points: ['Servicios explicados con claridad', 'Formularios de consulta que filtran casos', 'SEO local por especialidad'],
     proof: { label: 'Opinión real', text: '“Ahora recibimos consultas cada semana gracias al formulario y al posicionamiento en Google.” Ramón Rusiñol, Gestoría Rusiñol.' },
     clients: ['lgolegal', 'rusinol'],
-    nichos: ['abogados'],
+    nichos: ['abogados', 'gestorias'],
   },
   {
     id: 'turismo',
@@ -40,6 +40,7 @@ export const SECTOR_GROUPS = [
     points: ['Buscador de disponibilidad y reserva directa', 'Web en varios idiomas', 'Fotos a pantalla completa, rápida en el móvil'],
     proof: { label: 'Opinión real', text: '“La web es rápida, preciosa y en pocas semanas ya notamos más reservas.” María García, Stay4Days.' },
     clients: ['stay4days'],
+    nichos: ['hoteles'],
   },
   {
     id: 'comercio',

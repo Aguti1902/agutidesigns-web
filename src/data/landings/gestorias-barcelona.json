@@ -1,0 +1,73 @@
+{
+  "slug": "gestorias-barcelona",
+  "nicho": "gestorias",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-11-09",
+  "metaTitle": "Diseño web para gestorías en Barcelona | Agutidesigns",
+  "metaDescription": "Web para gestorías y asesorías en Barcelona: trámites explicados uno a uno, formulario de alta de cliente, SEO local y asistente IA fuera de horario.",
+  "h1": "Diseño web para gestorías en Barcelona",
+  "intro": "Hacemos la web de tu gestoría para que el autónomo, la pyme o el particular que busca “gestoría en Barcelona” o “alta de autónomo en Gràcia” encuentre el trámite que necesita, vea que lo resolvéis y os escriba con los datos justos para empezar.",
+  "nota": "A una gestoría se le pide tranquilidad: que alguien se ocupe del papeleo. Una web clara, con cada trámite explicado y una forma sencilla de empezar, transmite justo eso antes de la primera llamada.",
+  "problemas": [
+    {
+      "t": "Un listado de servicios que no responde a lo que la gente busca",
+      "d": "Nadie busca “servicios de gestoría”: buscan “cambio de titularidad de un vehículo”, “alta de autónomo” o “constituir una sociedad”. Si todo está en una sola página, Google no sabe para qué trámite mostrarte."
+    },
+    {
+      "t": "Consultas por teléfono y correo que se repiten cada día",
+      "d": "Qué documentación hay que traer, cuánto se tarda, si se puede hacer sin ir en persona. Son las mismas preguntas una y otra vez, y le quitan tiempo a quien debería estar tramitando."
+    },
+    {
+      "t": "Fichas de Google y webs que no coinciden",
+      "d": "Horarios distintos, direcciones antiguas o un aviso legal copiado de otra empresa generan desconfianza justo en un sector donde se entregan datos y documentos personales."
+    },
+    {
+      "t": "Cuesta explicar si trabajáis a distancia",
+      "d": "Muchos clientes preferirían enviar la documentación por internet, pero la web no deja claro cómo se hace, qué firma digital se necesita ni si hay que pasarse por la oficina."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Una página por trámite y por tipo de cliente",
+      "d": "Autónomos, sociedades, nóminas, tráfico, extranjería, herencias: cada línea con su propia página, qué documentación se necesita y cómo es el proceso paso a paso, en lenguaje claro."
+    },
+    {
+      "t": "Formulario de alta de cliente que ordena la información",
+      "d": "La persona elige el trámite, deja sus datos y adjunta lo básico. A vosotros os llega clasificado, sin tener que pedir tres veces lo mismo por correo."
+    },
+    {
+      "t": "SEO local en Barcelona y su área metropolitana",
+      "d": "Trabajamos la ficha de Google Business Profile, las páginas por trámite y las búsquedas con barrio o municipio para que aparezcáis cuando alguien busca gestoría cerca."
+    },
+    {
+      "t": "Asistente IA para las dudas de siempre",
+      "d": "Contesta, en castellano y catalán, a preguntas generales sobre horarios, documentación habitual y cómo empezar. No sustituye al gestor: recoge el caso y se lo pasa al equipo."
+    },
+    {
+      "t": "Aviso legal y protección de datos bien resueltos",
+      "d": "Textos legales propios, consentimiento claro en cada formulario y una política de privacidad que corresponde a vuestra empresa, no a otra."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿Podemos explicar los trámites sin que la web parezca un manual?",
+      "a": "Sí. Cada trámite se cuenta con un resumen corto arriba, los pasos y la documentación en una lista, y un botón para empezar. Quien tiene prisa encuentra lo esencial y quien quiere detalle lo tiene debajo."
+    },
+    {
+      "q": "¿El asistente IA puede dar asesoramiento fiscal o laboral?",
+      "a": "No, y está configurado para no hacerlo. Atiende dudas generales sobre cómo trabajáis y cómo empezar, recoge los datos del caso y lo traslada a vuestro equipo para que lo valore un profesional."
+    },
+    {
+      "q": "¿Se puede conectar el formulario con nuestro programa de gestión?",
+      "a": "Depende de la herramienta que uséis. Lo revisamos al principio y, si no hay conexión directa, hacemos que las solicitudes lleguen ordenadas a un correo o a una hoja compartida."
+    },
+    {
+      "q": "Ya tenemos web, pero está desactualizada. ¿Se puede rehacer?",
+      "a": "Sí. Partimos de vuestros textos y servicios actuales, corregimos lo que ya no sirve y os enseñamos una demo de cómo quedaría antes de que decidáis nada."
+    },
+    {
+      "q": "¿Trabajáis solo con gestorías de Barcelona?",
+      "a": "Trabajamos con negocios de toda España, en remoto. Si estáis en Barcelona o el área metropolitana, también podemos vernos en persona."
+    }
+  ]
+}
