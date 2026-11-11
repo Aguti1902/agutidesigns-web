@@ -1,0 +1,152 @@
+import { Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench } from 'lucide-react';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
+import AIChatbot from '../components/chat/LazyChatbot';
+import CookieBanner from '../components/ui/LazyCookieBanner';
+import { Problems, Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
+import useSeo from '../hooks/useSeo';
+import './OficinaIA.css';
+
+const SEO = {
+  title: 'Oficina de IA: agentes de IA para tu empresa | Agutidesigns',
+  description: 'Instalamos en tu empresa un equipo de agentes de IA que contestan a tus clientes, hacen tu contenido y vídeos, cuidan tu ficha de Google y te enseñan todo en un panel. Pide una demo.',
+};
+
+const AGENTES_PANEL = [
+  { Icon: Bot, t: 'Ventas', d: 'Ha contestado a un presupuesto nuevo de la web', st: 'Hecho' },
+  { Icon: Video, t: 'Vídeos', d: '3 vídeos programados para mañana', st: 'Hecho' },
+  { Icon: PenLine, t: 'Contenido', d: 'Escribiendo el artículo del blog de hoy', st: 'Trabajando', run: true },
+  { Icon: MapPin, t: 'Google Business', d: 'Publicación nueva en la ficha', st: 'Hecho' },
+  { Icon: Headphones, t: 'Clientes', d: 'Ha contestado a un cliente y anotado su cambio', st: 'Hecho' },
+];
+
+const PROBLEMS = [
+  { t: 'Clientes que escriben y nadie les contesta a tiempo', d: 'Piden presupuesto un sábado por la noche y el lunes ya han contratado a otro. Cada respuesta tardía es una venta perdida.' },
+  { t: 'Redes y blog que siempre se quedan para “cuando tenga tiempo”', d: 'Sabes que publicar te trae clientes, pero entre el trabajo del día a día nunca hay hueco para grabar, escribir y programar.' },
+  { t: 'Seguimientos que se olvidan', d: 'Presupuestos enviados sin un segundo correo, clientes que pidieron un cambio y nadie lo apuntó. No es falta de ganas: es falta de manos.' },
+  { t: 'Herramientas sueltas que no hablan entre sí', d: 'Un CRM por aquí, una agenda por allá, hojas de cálculo… y tú en medio, copiando y pegando.' },
+];
+
+const PILLARS = [
+  { Icon: Bot, t: 'Agente de ventas', d: 'Contesta a quien pide presupuesto o información, le hace seguimiento por correo y te avisa cuando alguien quiere una llamada.' },
+  { Icon: Video, t: 'Agente de vídeos y redes', d: 'Prepara guion, voz, animación, portada y descripciones, y programa los vídeos en Instagram, TikTok, YouTube y LinkedIn.' },
+  { Icon: PenLine, t: 'Agente de contenido', d: 'Escribe los artículos del blog y los posts de LinkedIn con tu tono, y los deja publicados o listos para revisar.' },
+  { Icon: MapPin, t: 'Agente de Google Business', d: 'Mantiene viva tu ficha de Google con publicaciones regulares y te prepara las respuestas a las reseñas.' },
+  { Icon: Headphones, t: 'Agente de atención a clientes', d: 'Responde las dudas de tus clientes por correo y anota lo que piden para que no se pierda nada.' },
+  { Icon: Megaphone, t: 'Agente de publicidad', d: 'Revisa tus campañas de Google Ads, quita lo que gasta sin traer clientes y nunca pasa del tope que tú le pongas.' },
+];
+
+const PLANES = [
+  { id: 'agente', name: 'Un agente', setup: '2.900', monthly: '290', pitch: 'Para empezar por lo que más te duele: un agente para un área concreta.',
+    includes: ['1 agente a medida (ventas, contenido, vídeos o clientes)', 'Conectado a tu correo, tu web o tus redes', 'Reglas claras de lo que puede y no puede hacer', 'Mantenimiento y ajustes cada mes'] },
+  { id: 'oficina', name: 'Oficina de IA', setup: '6.900', monthly: '590', recommended: true, pitch: 'Un equipo de agentes que trabaja coordinado y un panel donde lo ves todo.',
+    includes: ['Hasta 4 agentes coordinados entre sí', 'Panel propio con lo que hace cada agente', 'Aprobaciones: tú decides qué sale solo y qué revisas', 'Mantenimiento, mejoras y un agente nuevo al año'] },
+  { id: 'completa', name: 'Oficina completa', setup: 'Desde 12.000', monthly: '990', pitch: 'Para empresas con varias áreas, sedes o equipos que quieren automatizar a fondo.',
+    includes: ['Todos los agentes que necesites', 'Integraciones con tus herramientas (CRM, agenda, facturación)', 'Formación para tu equipo', 'Soporte prioritario'] },
+];
+
+const PROCESS = [
+  { t: 'Llamada de diagnóstico', d: 'Vemos qué tareas se repiten en tu empresa y cuáles puede llevar ya un agente. Gratis y sin compromiso.' },
+  { t: 'Diseño de tu oficina', d: 'Te proponemos qué agentes, qué hará cada uno, qué reglas seguirá y qué tendrás que aprobar tú.' },
+  { t: 'Instalación y pruebas', d: 'Conectamos los agentes a tus herramientas y los probamos con casos reales antes de dejarlos trabajar solos.' },
+  { t: 'Funcionando y mejorando', d: 'Los agentes trabajan cada día, tú lo ves en el panel y nosotros los ajustamos cada mes.' },
+];
+
+const FAQ = [
+  { q: '¿Necesito saber de inteligencia artificial?', a: 'No. Nosotros lo instalamos y lo mantenemos. Tú ves lo que hacen los agentes en el panel y apruebas lo que quieras revisar.' },
+  { q: '¿Qué pasa si un agente se equivoca?', a: 'Cada agente tiene reglas firmes (por ejemplo, no dar precios ni plazos que no hayas fijado tú, o no publicar sin tu permiso si así lo quieres). Lo delicado queda pendiente de tu aprobación y todo queda registrado en el panel.' },
+  { q: '¿Qué herramientas necesito?', a: 'Las que ya usas: tu correo, tu web, tus redes y tu ficha de Google. Las licencias de IA y de las herramientas que haga falta contratar van a nombre de tu empresa y aparte de la cuota.' },
+  { q: '¿Y mis datos?', a: 'Los agentes trabajan con tus propias cuentas y solo con los permisos que les des. Revisamos contigo la protección de datos de cada agente antes de ponerlo a trabajar.' },
+  { q: '¿Sustituye a mi equipo?', a: 'No. Le quita el trabajo repetitivo (contestar lo de siempre, publicar, hacer seguimientos) para que tu equipo se dedique a lo que de verdad vende.' },
+];
+
+const jsonLd = () => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Service', name: 'Oficina de IA: agentes de IA para empresas', serviceType: 'Implantación de agentes de inteligencia artificial', provider: { '@type': 'Organization', name: 'Agutidesigns', url: 'https://agutidesigns.io' }, areaServed: 'ES', url: 'https://agutidesigns.io/oficina-ia',
+      offers: PLANES.filter((p) => /^\d/.test(p.setup)).map((p) => ({ '@type': 'Offer', name: p.name, price: p.monthly, priceCurrency: 'EUR' })) },
+    { '@type': 'FAQPage', mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ],
+});
+
+export default function OficinaIA() {
+  useSeo({ ...SEO, path: '/oficina-ia', image: '/img/og-home.jpg', jsonLd: jsonLd() });
+  return (
+    <div className="ag">
+      <Navbar cta={{ label: 'Pide una demo', href: '#propuesta' }} />
+      <main>
+        <header className="ag-hero">
+          <div className="ag-wrap ag-hero__grid">
+            <div className="ag-hero__copy">
+              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Oficina de IA</span></nav>
+              <h1 className="ag-h1">Un equipo de agentes de IA trabajando para tu empresa</h1>
+              <p className="ag-lead">Contestan a tus clientes, hacen el seguimiento de cada presupuesto, preparan tus vídeos y tu contenido y cuidan tu ficha de Google. Tú lo ves todo en un panel y decides qué revisas.</p>
+              <div className="ag-actions">
+                <a href="#propuesta" className="ag-btn ag-btn--primary">Pide una demo</a>
+                <a href="#agentes" className="ag-btn ag-btn--ghost">Qué hace cada agente</a>
+              </div>
+              <ul className="ag-hero__trust">
+                <li><Check size={16} /> Lo usamos cada día en Agutidesigns</li>
+                <li><Check size={16} /> Instalado y mantenido por nosotros</li>
+                <li><Check size={16} /> Tú decides qué sale solo</li>
+              </ul>
+            </div>
+            <figure className="oi-panel" aria-label="Ejemplo ilustrativo del panel de agentes">
+              <div className="oi-panel__bar"><i /><i /><i /><b>Panel de agentes</b><span className="oi-panel__live">En marcha</span></div>
+              <ul className="oi-agents">
+                {AGENTES_PANEL.map(({ Icon, t, d, st, run }) => (
+                  <li key={t} className="oi-agent">
+                    <span className="oi-agent__ico"><Icon size={20} /></span>
+                    <span className="oi-agent__txt"><b>{t}</b><span>{d}</span></span>
+                    <span className={`oi-agent__st ${run ? 'oi-agent__st--run' : ''}`}>{st}</span>
+                  </li>
+                ))}
+              </ul>
+              <figcaption className="oi-note">Ejemplo ilustrativo de un día normal en el panel.</figcaption>
+            </figure>
+          </div>
+        </header>
+
+        <Problems title="Lo que se queda sin hacer en una empresa pequeña" lead="No es falta de ganas: son tareas repetitivas que se comen las horas que necesitas para vender y atender." items={PROBLEMS} photo="reunion" photoAlt="Equipo de una pequeña empresa revisando el trabajo del día" />
+
+        <Pillars id="agentes" title="Tu oficina de IA, agente a agente" lead="Elige los que necesitas. Cada uno tiene su tarea, sus reglas y su horario, y todos trabajan coordinados." items={PILLARS}>
+          <div className="oi-real">
+            <article><LayoutDashboard size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Un panel para verlo todo</h3><p>Qué ha hecho cada agente, qué está pendiente de tu aprobación y qué viene después.</p></article>
+            <article><Wrench size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Hecho a medida</h3><p>Lo adaptamos a tu sector, a tu forma de trabajar y a las herramientas que ya usas.</p></article>
+            <article><Check size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Probado en casa</h3><p>Es el mismo sistema con el que funciona Agutidesigns: lo usamos cada día antes de instalártelo a ti.</p></article>
+          </div>
+        </Pillars>
+
+        <section id="precios" className="ag-section">
+          <div className="ag-wrap">
+            <div className="ag-head ag-head--split">
+              <h2 className="ag-h2">Precios de la Oficina de IA</h2>
+              <p className="ag-lead">Una puesta en marcha para diseñar e instalar tus agentes y una cuota mensual para mantenerlos y mejorarlos.</p>
+            </div>
+            <div className="sx-plans">
+              {PLANES.map((p) => (
+                <article key={p.id} className={`sx-plan ${p.recommended ? 'sx-plan--rec' : ''}`} aria-label={`Plan ${p.name}`}>
+                  {p.recommended && <span className="sx-plan__badge">El más elegido</span>}
+                  <h3 className="sx-plan__name">{p.name}</h3>
+                  <p className="sx-plan__price"><b>{p.monthly} €</b><span>/mes</span></p>
+                  <p className="sx-plan__setup">+ {p.setup} € de puesta en marcha</p>
+                  <p className="sx-plan__pitch">{p.pitch}</p>
+                  <ul className="ag-checks">{p.includes.map((i) => <li key={i}><Check size={16} />{i}</li>)}</ul>
+                  <a href="#propuesta" className={`ag-btn ${p.recommended ? 'ag-btn--primary' : 'ag-btn--ghost'}`}>Quiero {p.name.toLowerCase()}</a>
+                </article>
+              ))}
+            </div>
+            <p className="oi-extra">Precios sin IVA. Las licencias de IA y de las herramientas necesarias van a nombre de tu empresa y se pagan aparte.</p>
+          </div>
+        </section>
+
+        <Process title="Cómo montamos tu oficina de IA" items={PROCESS} white />
+        <Faq items={FAQ} title="Preguntas sobre la Oficina de IA" />
+        <LeadSection fuente="landing-oficina-ia" title="Pide una demo de tu oficina de IA" lead="Te enseñamos el panel funcionando y vemos juntos qué agentes tendrían más sentido en tu empresa. 30 minutos, sin compromiso." />
+      </main>
+      <Footer />
+      <AIChatbot />
+      <CookieBanner />
+    </div>
+  );
+}

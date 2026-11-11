@@ -1,0 +1,24 @@
+/* Landing «Oficina de IA»: un panel de agentes dibujado en la cabecera y los planes propios. */
+.oi-panel { position: relative; background: #fff; border: 1px solid var(--ag-line); border-radius: var(--ag-r-xl); box-shadow: 0 30px 80px -30px rgba(7, 13, 36, 0.35); padding: 22px; max-width: 520px; width: 100%; margin-left: auto; }
+.oi-panel__bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 13px; color: var(--ag-muted); }
+.oi-panel__bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--ag-line-strong); display: inline-block; }
+.oi-panel__bar b { margin-left: 6px; color: var(--ag-ink); font-weight: 600; }
+.oi-panel__live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--ag-green); font-weight: 600; }
+.oi-panel__live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ag-green); animation: oi-pulse 1.8s infinite; }
+@keyframes oi-pulse { 0% { box-shadow: 0 0 0 0 rgba(10, 143, 90, 0.5); } 100% { box-shadow: 0 0 0 10px rgba(10, 143, 90, 0); } }
+.oi-agents { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.oi-agent { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--ag-r-md); background: var(--ag-paper); }
+.oi-agent__ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--ag-blue-soft); color: var(--ag-blue); }
+.oi-agent__txt { min-width: 0; }
+.oi-agent__txt b { display: block; font-size: 15px; }
+.oi-agent__txt span { display: block; font-size: 13px; color: var(--ag-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oi-agent__st { font-size: 12px; font-weight: 600; color: var(--ag-green); background: rgba(10, 143, 90, 0.1); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.oi-agent__st--run { color: var(--ag-blue); background: var(--ag-blue-soft); }
+.oi-note { margin-top: 12px; font-size: 12px; color: var(--ag-muted); text-align: center; }
+
+.oi-real { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; }
+.oi-real article { background: #fff; border: 1px solid var(--ag-line); border-radius: var(--ag-r-lg); padding: 22px; }
+.oi-real article p { margin: 8px 0 0; color: var(--ag-ink-2); font-size: 15px; }
+
+.oi-extra { margin-top: 18px; font-size: 14px; color: var(--ag-muted); max-width: 760px; }
+@media (max-width: 900px) { .oi-panel { margin: 32px auto 0; } }
