@@ -19,8 +19,8 @@ import './CasoIA.css';
 import './OficinaIA.css';
 
 const SEO = {
-  title: 'Oficina de IA: agentes de IA para tu empresa | Agutidesigns',
-  description: 'Instalamos en tu empresa un equipo de agentes de IA que contestan a tus clientes, hacen tu contenido y vídeos, cuidan tu ficha de Google y te enseñan todo en un panel. Pide una demo.',
+  title: 'Oficina de IA: una empresa de IA trabajando 24/7 para la tuya | Agutidesigns',
+  description: 'Instalamos en tu empresa un equipo de agentes de IA que traza tu estrategia digital y la ejecuta cada día, 24/7: redes sociales, SEO, Google Business, campañas y clientes. Todo en un panel. Pide una demo.',
 };
 
 const PILLARS = [
@@ -89,7 +89,7 @@ const jsonLd = () => ({
   ],
 });
 
-const ROTA = ['contestan a tus clientes', 'siguen cada presupuesto', 'hacen tus vídeos', 'escriben tu blog', 'cuidan tu ficha de Google'];
+const ROTA = ['trazan tu estrategia digital', 'la ejecutan cada día', 'llevan tus redes sociales', 'posicionan tu web en Google', 'cuidan tu ficha de Google', 'atienden a tus clientes'];
 
 function OficinaInteractiva() {
   const [sel, setSel] = useState(0);
@@ -140,9 +140,9 @@ function HeroOficina() {
       <div className="ag-wrap oh-wrap">
         <p className="oh-live"><i aria-hidden="true" /> Oficina de IA · en directo</p>
         <h1 className="oh-h1">
-          <span className="oh-l"><span>Tu empresa,</span></span>
-          <span className="oh-l"><span>con su propia</span></span>
-          <span className="oh-l"><span><em>oficina de IA</em></span></span>
+          <span className="oh-l"><span>Una empresa</span></span>
+          <span className="oh-l"><span>de IA para</span></span>
+          <span className="oh-l"><span><em>la tuya, 24/7</em></span></span>
         </h1>
         <p className="oh-rota" aria-live="off">
           <span className="oh-rota__fijo">Agentes que</span>{' '}
@@ -150,7 +150,7 @@ function HeroOficina() {
             {ROTA.map((t, n) => <span key={t} className={`oh-rota__w ${n === i ? 'is-on' : ''}`} aria-hidden={n !== i}>{t}</span>)}
           </span>
         </p>
-        <p className="oh-lead">Instalamos en tu empresa un equipo de agentes de IA que trabaja cada día. Tú lo ves todo en un panel y decides qué revisas.</p>
+        <p className="oh-lead">Instalamos en tu empresa un equipo de agentes de IA que traza tu estrategia digital y la sigue paso a paso cada día, sin horarios ni vacaciones: redes sociales, SEO, Google Business, campañas y clientes. Tú lo ves todo en un panel y decides.</p>
         <div className="ag-actions oh-actions">
           <a href="#propuesta" className="ag-btn ag-btn--primary">Pide una demo</a>
           <a href="#precios" className="ag-btn oh-btn-ghost">Ver precios</a>
@@ -202,7 +202,7 @@ export default function OficinaIA() {
       <main>
         <HeroOficina />
         <div id="agentes-intro" />
-        <FraseScroll texto="Cada día tu empresa pierde horas contestando lo mismo, persiguiendo presupuestos y publicando cuando hay tiempo. Una oficina de IA hace ese trabajo por ti. Tú solo decides." destacadas={['oficina', 'IA', 'decides']} />
+        <FraseScroll texto="Una estrategia digital solo funciona si alguien la ejecuta cada día. Una empresa de IA la traza, la sigue paso a paso las 24 horas y te enseña los resultados. Tú solo decides." destacadas={['empresa', 'IA', '24', 'decides']} />
 
         <VideoComercial />
         <Cinta filas={[['Contesta presupuestos', 'Hace seguimiento', 'Propone llamadas', 'Escribe el blog', 'Prepara posts de LinkedIn', 'Hace vídeos', 'Programa redes'], ['Publica en Google', 'Atiende a clientes', 'Anota cambios', 'Revisa anuncios', 'Respeta tu tope de gasto', 'Te pide aprobación', 'Lo deja todo en el panel']]} />

@@ -2,7 +2,7 @@
 // Todo lo que se dice de la clínica sale de su web (clinicalluchmajor.es, 12-nov-2026).
 // Las únicas cifras de resultados son las de Vela-Segalà (+20.000 € en 3 meses, +80 %).
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck, Megaphone, PenLine, Lock, Compass } from 'lucide-react';
+import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck, Megaphone, PenLine, Lock, Compass, Video, MapPin, Brain, Zap, BarChart3, Play, Pause } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { LeadSection } from '../../components/site/Sections';
@@ -31,16 +31,20 @@ const CASO_3D = {
   marca: {
     tema: 'clinica', acento: 0x009eba, acentoCss: '#009eba', inicial: 'L', pantallaA: '#062a31', pantallaB: '#009eba',
     placa: 'LLUCHMAJOR', ceo: 'Dirección', logo: C.logo, lema: 'ODONTOLOGÍA · PASSEIG DE VALLDAURA', pantalla: 'LLUCHMAJOR · EN DIRECTO',
-    pizarra: ['Hoy en la clínica', 'Ninguna cita sin respuesta'], nombres: NOMBRES,
-    deptos: { direccion: 'Dirección', ventas: 'Citas', marketing: 'Google', clientes: 'Pacientes', finanzas: 'Presupuestos' },
+    pizarra: ['Estrategia de noviembre', 'Implantes + Google + redes'], nombres: NOMBRES,
+    deptos: { direccion: 'Estrategia', ventas: 'Pacientes', marketing: 'Redes · SEO · Google', clientes: 'Atención', finanzas: 'Presupuestos' },
     charla: [
+      ['analista', 'todos', 'Plan de hoy: vídeo de implantes, artículo de cigomáticos y 2 posts en Google.'],
+      ['produccion', 'publicador', 'El vídeo «¿Duele un implante?» está montado.'],
+      ['publicador', 'todos', 'Publicado en Instagram, TikTok y YouTube.'],
       ['webleads', 'pipeline', 'Petición de primera visita gratuita desde la web: implantes.'],
       ['pipeline', 'ceo', 'Contestada por WhatsApp con dos huecos de agenda.'],
       ['seguimiento', 'redactor', 'Presupuesto de implante sin respuesta: toca seguimiento.'],
       ['cs', 'produccion', 'Paciente de ortodoncia pregunta por su próxima revisión.'],
       ['seo', 'contenido', 'Nueva reseña de 5 estrellas: respuesta lista para aprobar.'],
       ['recontacto', 'ceo', '12 pacientes llevan más de 6 meses sin higiene.'],
-      ['ceo', 'todos', 'Foco de hoy: ninguna petición de cita sin respuesta.'],
+      ['ads', 'ceo', 'Campaña de implantes ajustada, dentro del tope.'],
+      ['ceo', 'todos', 'Aprobada la estrategia de la semana.'],
     ],
   },
 };
@@ -50,7 +54,7 @@ const VISTO = [
   { Icon: Moon, t: 'Muchas peticiones llegan con la clínica cerrada', d: 'Abrís de lunes a jueves hasta las 19:00 y el viernes hasta las 14:00. Lo que llega el viernes por la tarde o el fin de semana espera al lunes.' },
   { Icon: FileText, t: 'Implantes, cigomáticos y estética: presupuestos altos', d: 'Son decisiones que el paciente piensa. Un buen seguimiento del presupuesto es donde más facturación se recupera.' },
   { Icon: Star, t: 'Vuestras reseñas de Google ya venden', d: 'Las mostráis en la web. Un agente puede pedir la reseña después de cada visita y preparar la respuesta a cada una.' },
-  { Icon: Users, t: 'Diez personas y una sola recepción', d: 'Llamadas, WhatsApp, formulario y correo pasan por las mismas manos. La oficina se queda con lo repetitivo y vuestro equipo con los pacientes.' },
+  { Icon: Users, t: 'Diez personas y una sola recepción', d: 'Llamadas, WhatsApp, formulario y correo pasan por las mismas manos. La empresa de IA se queda con lo repetitivo y vuestro equipo con los pacientes.' },
 ];
 
 const MOTIVOS = [
@@ -89,8 +93,8 @@ function Simulador() {
     <section className="ag-section ag-section--white pz-sim" id="pruebalo">
       <div className="ag-wrap">
         <div className="ag-head ag-head--split">
-          <h2 className="ag-h2">Pruébalo: es viernes, 21:40</h2>
-          <p className="ag-lead">La clínica está cerrada y entra un mensaje por WhatsApp. Elige qué pide el paciente, con las mismas opciones de vuestro formulario, y mira qué haría vuestra oficina de IA.</p>
+          <h2 className="ag-h2">Un ejemplo, en directo: viernes, 21:40</h2>
+          <p className="ag-lead">Una de las cosas que ejecuta vuestra empresa de IA. La clínica está cerrada y entra un WhatsApp: elige qué pide el paciente, con las mismas opciones de vuestro formulario, y mira qué pasa.</p>
         </div>
         <div className="pz-sim__grid">
           <div className="pz-sim__ops" role="group" aria-label="¿Qué necesita el paciente?">
@@ -142,21 +146,97 @@ function Simulador() {
 }
 
 const AREAS = [
-  { k: 'Pacientes', l: 'Que ninguna petición ni ningún presupuesto se pierda', items: [
+  { k: 'Piensa', l: 'Traza la estrategia digital de la clínica', items: [
+    { Icon: Compass, t: 'Estrategia digital', d: 'Con los datos de la clínica traza el plan de cada mes: qué tratamientos empujar, dónde invertir, qué publicar y en qué canal. Y lo reparte entre los agentes, día a día.' },
+  ] },
+  { k: 'Ejecuta, 24/7', l: 'Sigue el plan paso a paso, cada día, sin vacaciones', items: [
+    { Icon: Video, t: 'Redes sociales y vídeos', d: 'Prepara guion, voz, animación y portada, y programa los vídeos y posts en Instagram, TikTok, YouTube y Facebook.' },
+    { Icon: PenLine, t: 'SEO y blog', d: 'Escribe artículos sobre implantes, cigomáticos, ortodoncia invisible o estética dental que responden a lo que la gente busca en Google en Barcelona.' },
+    { Icon: MapPin, t: 'Google Business y reseñas', d: 'Publica en vuestra ficha de Google cada semana, pide la reseña después de cada visita y prepara la respuesta a cada una.' },
+    { Icon: Megaphone, t: 'Campañas de publicidad', d: 'Lleva vuestras campañas de Google y Meta: quita lo que gasta sin traer pacientes, refuerza lo que funciona y nunca pasa del tope que le pongáis.' },
     { Icon: MessageCircle, t: 'Recepción 24 h', d: 'Contesta al momento cada petición que llega por la web y por WhatsApp, explica la primera visita gratuita y propone hueco de vuestra agenda.' },
     { Icon: FileText, t: 'Seguimiento de presupuestos', d: 'Cuando un paciente se lleva un presupuesto de implantes, ortodoncia o estética, le escribe en los días que decidáis, resuelve dudas y propone volver a hablar.' },
     { Icon: Bell, t: 'Recordatorios y revisiones', d: 'Recuerda cada cita el día antes y avisa a quien le toca higiene, revisión o mantenimiento periodontal.' },
-  ] },
-  { k: 'Captación', l: 'Que os encuentren más pacientes nuevos', items: [
-    { Icon: Megaphone, t: 'Campañas de publicidad', d: 'Lleva vuestras campañas de Google y Meta: quita lo que gasta sin traer pacientes, refuerza lo que funciona y nunca pasa del tope que le pongáis.' },
-    { Icon: PenLine, t: 'SEO y blog', d: 'Escribe artículos sobre implantes, cigomáticos, ortodoncia invisible o estética dental que responden a lo que la gente busca en Google en Barcelona.' },
-    { Icon: Star, t: 'Google y reseñas', d: 'Pide la reseña después de cada visita, prepara la respuesta a cada una para que la aprobéis y mantiene viva vuestra ficha de Google.' },
-  ] },
-  { k: 'Control', l: 'Que la dirección lo tenga todo bajo control', items: [
     { Icon: Lock, t: 'Seguridad de la web', d: 'Vigila cada día que la web esté en marcha, actualizada y protegida, y avisa antes de que un problema os cueste pacientes.' },
-    { Icon: Compass, t: 'Estrategia digital', d: 'Cruza lo que hacen todos los agentes y os propone cada mes qué tratamientos empujar, dónde invertir y qué mejorar.' },
+  ] },
+  { k: 'Rinde cuentas', l: 'Todo a la vista de la dirección', items: [
+    { Icon: LayoutDashboard, t: 'Panel en directo', d: 'Qué ha hecho cada agente, qué se ha publicado, qué pacientes han entrado, cómo van las campañas y lo que espera vuestra aprobación.' },
+    { Icon: BarChart3, t: 'Informe y ajuste cada mes', d: 'Cada mes, qué ha funcionado y qué no. La estrategia se ajusta con lo aprendido y vuelta a empezar.' },
   ] },
 ];
+
+const DIA = [
+  { h: 0, a: 'Seguridad web', Icon: Lock, t: 'Revisa que la web siga en marcha, actualizada y protegida.' },
+  { h: 3, a: 'SEO y blog', Icon: PenLine, t: 'Analiza qué buscan hoy en Barcelona sobre implantes y estética dental.' },
+  { h: 7, a: 'Estrategia', Icon: Compass, t: 'Reparte el plan del día entre los agentes y lo deja en el panel.' },
+  { h: 9, a: 'Campañas', Icon: Megaphone, t: 'Revisa las campañas de ayer, quita lo que no trae pacientes y respeta el tope.' },
+  { h: 10, a: 'Google Business', Icon: MapPin, t: 'Publica en la ficha de Google y prepara la respuesta a las reseñas nuevas.' },
+  { h: 12, a: 'Presupuestos', Icon: FileText, t: 'Escribe a los pacientes con un presupuesto abierto, en los días que habéis decidido.' },
+  { h: 13, a: 'Redes y vídeos', Icon: Video, t: 'Publica el vídeo del día en Instagram, TikTok y YouTube.' },
+  { h: 16, a: 'SEO y blog', Icon: PenLine, t: 'Publica el artículo de la semana sobre cigomáticos.' },
+  { h: 18, a: 'Recordatorios', Icon: Bell, t: 'Envía los recordatorios de las citas de mañana y avisa a quien le toca higiene.' },
+  { h: 20, a: 'Redes y vídeos', Icon: Video, t: 'Prepara los vídeos de mañana: guion, voz y portada.' },
+  { h: 21, a: 'Recepción 24 h', Icon: MessageCircle, t: 'Contesta un WhatsApp con la clínica cerrada y reserva la primera visita.' },
+  { h: 23, a: 'Estrategia', Icon: BarChart3, t: 'Resume el día en el panel: lo hecho, los resultados y lo que espera vuestra aprobación.' },
+];
+
+function DiaEmpresa() {
+  const [i, setI] = useState(0);
+  const [auto, setAuto] = useState(true);
+  const raiz = useRef(null);
+  useEffect(() => {
+    if (!auto || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    let visible = false;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.3 });
+    if (raiz.current) io.observe(raiz.current);
+    const id = setInterval(() => { if (visible) setI((n) => (n + 1) % DIA.length); }, 2200);
+    return () => { clearInterval(id); io.disconnect(); };
+  }, [auto]);
+  const ev = DIA[i];
+  const ang = (ev.h / 24) * 360;
+  const elegir = (n) => { setAuto(false); setI(n); };
+  return (
+    <section className="ag-section ag-section--white pz-dia" id="dia" ref={raiz}>
+      <div className="ag-wrap">
+        <div className="ag-head ag-head--split">
+          <h2 className="ag-h2">Un día en vuestra empresa de IA</h2>
+          <p className="ag-lead">Mientras la clínica abre, atiende y cierra, los agentes siguen el plan. Son 24 horas, todos los días del año. Toca cualquier hora del reloj.</p>
+        </div>
+        <div className="pz-dia__grid">
+          <div className="pz-reloj">
+            <svg viewBox="-170 -170 340 340" role="group" aria-label="Reloj de 24 horas">
+              <circle r="150" className="pz-reloj__aro" />
+              <path d={`M 0 -150 A 150 150 0 0 1 ${150 * Math.cos(((9 / 24) * 360 - 90) * Math.PI / 180)} ${150 * Math.sin(((9 / 24) * 360 - 90) * Math.PI / 180)}`} className="pz-reloj__noche" />
+              <path d={`M ${150 * Math.cos(((19 / 24) * 360 - 90) * Math.PI / 180)} ${150 * Math.sin(((19 / 24) * 360 - 90) * Math.PI / 180)} A 150 150 0 0 1 0 -150`} className="pz-reloj__noche" />
+              {Array.from({ length: 24 }, (_, h) => { const a = ((h / 24) * 360 - 90) * Math.PI / 180; return <text key={h} x={Math.cos(a) * 112} y={Math.sin(a) * 112 + 4} className={`pz-reloj__h ${h % 6 === 0 ? 'is-b' : ''}`}>{h}</text>; })}
+              <circle r="150" className="pz-reloj__prog" pathLength="360" strokeDasharray={`${Math.max(ang, 0.5)} 360`} transform="rotate(-90)" />
+              {DIA.map((d, n) => { const a = ((d.h / 24) * 360 - 90) * Math.PI / 180; return (
+                <g key={d.h + d.a} className={`pz-reloj__ev ${n === i ? 'is-on' : ''}`} transform={`translate(${Math.cos(a) * 150} ${Math.sin(a) * 150})`} onClick={() => elegir(n)} role="button" tabIndex={0} aria-label={`${d.h}:00 ${d.a}`} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && elegir(n)}>
+                  <circle r={n === i ? 13 : 9} />
+                </g>
+              ); })}
+            </svg>
+            <div className="pz-reloj__txt"><b>{String(ev.h).padStart(2, '0')}:00</b><span>{ev.h >= 19 || ev.h < 9 ? 'Clínica cerrada' : 'Clínica abierta'}</span></div>
+          </div>
+          <div className="pz-dia__lista">
+            <div className="pz-dia__now" key={i}>
+              <span className="pz-ag__ico"><ev.Icon size={22} /></span>
+              <div><p className="pz-ag__tag">{String(ev.h).padStart(2, '0')}:00 · {ev.a}</p><p className="pz-dia__t">{ev.t}</p></div>
+            </div>
+            <ol>
+              {DIA.map((d, n) => (
+                <li key={d.h + d.a}><button type="button" aria-pressed={n === i} onClick={() => elegir(n)}><span>{String(d.h).padStart(2, '0')}:00</span>{d.a}</button></li>
+              ))}
+            </ol>
+            <button type="button" className="pz-dia__auto" onClick={() => setAuto((x) => !x)}>{auto ? <><Pause size={15} /> Pausar el día</> : <><Play size={15} /> Ver el día solo</>}</button>
+          </div>
+        </div>
+        <p className="oi-extra">Jornada de ejemplo: los horarios y las tareas los fijamos con vosotros en la estrategia.</p>
+      </div>
+    </section>
+  );
+}
+
 
 
 function Calculadora() {
@@ -183,7 +263,7 @@ function Calculadora() {
           <div className="pz-calc__res">
             <span>Facturación recuperada al mes</span>
             <strong>{fmt(res)} €</strong>
-            <small>Solo con los presupuestos recuperados, la cuota de la Oficina completa (990 €/mes){res >= 990 ? ` se cubriría ${res >= 1980 ? `${Math.floor(res / 990)} veces` : 'de sobra'}.` : ' no se cubriría todavía: aquí no cuentan los pacientes nuevos de campañas, SEO y Google.'}</small>
+            <small>Solo con los presupuestos recuperados, la cuota de la empresa de IA completa (990 €/mes){res >= 990 ? ` se cubriría ${res >= 1980 ? `${Math.floor(res / 990)} veces` : 'de sobra'}.` : ' no se cubriría todavía: aquí no cuentan los pacientes nuevos que traen redes, SEO, Google y campañas.'}</small>
           </div>
         </div>
       </div>
@@ -192,7 +272,7 @@ function Calculadora() {
 }
 
 export default function PropuestaLluchmajor() {
-  useSeo({ title: `Propuesta: oficina de IA para ${C.nombre} | Agutidesigns`, description: `Propuesta personalizada de oficina de IA para ${C.nombre}.`, path: '/propuesta/clinica-lluchmajor', noindex: true });
+  useSeo({ title: `Propuesta: empresa de IA para ${C.nombre} | Agutidesigns`, description: `Propuesta personalizada de empresa de IA para ${C.nombre}.`, path: '/propuesta/clinica-lluchmajor', noindex: true });
   const raiz = useRef(null);
   useAparecer(raiz);
   return (
@@ -205,15 +285,15 @@ export default function PropuestaLluchmajor() {
               <img src={C.logo} alt={C.nombre} width="1000" height="214" />
             </div>
             <p className="pz-k">Propuesta para {C.nombre} · {C.fecha}</p>
-            <h1 className="pz-h1">{C.contacto}, esta sería la <em>oficina de IA</em> de vuestra clínica.</h1>
-            <p className="pz-lead">Un equipo de agentes que atiende a cada paciente al momento, también con la clínica cerrada, sigue cada presupuesto, os trae pacientes nuevos con campañas, SEO y Google, y vigila vuestra web. Vosotros lo veis todo en un panel y decidís qué revisáis.</p>
+            <h1 className="pz-h1">{C.contacto}, vuestra clínica con su propia <em>empresa de IA</em>, 24/7.</h1>
+            <p className="pz-lead">Un equipo de agentes que traza la estrategia digital de Lluchmajor y la sigue paso a paso cada día: redes sociales, SEO, Google Business, campañas, atención a pacientes y presupuestos. Sin horarios ni vacaciones. Vosotros lo veis todo en un panel y decidís.</p>
             <ul className="pz-notis" aria-hidden="true">
-              <li><span>Viernes 21:40</span><b>Nueva petición por WhatsApp</b>Primera visita · implantes</li>
-              <li><span>21:40</span><b>Contestada al momento</b>Con la primera visita gratuita</li>
-              <li><span>21:41</span><b>Cita reservada · lunes 9:30</b>Recordatorio programado</li>
+              <li><span>07:00 · Estrategia</span><b>Plan del día repartido</b>Vídeo, artículo y 2 posts en Google</li>
+              <li><span>13:00 · Redes</span><b>Vídeo publicado</b>Instagram, TikTok y YouTube</li>
+              <li><span>21:40 · Recepción</span><b>Cita reservada · lunes 9:30</b>WhatsApp con la clínica cerrada</li>
             </ul>
             <div className="ag-actions">
-              <a href="#pruebalo" className="ag-btn ag-btn--primary">Pruébalo en 1 minuto <ArrowRight size={18} /></a>
+              <a href="#dia" className="ag-btn ag-btn--primary">Ver un día de trabajo <ArrowRight size={18} /></a>
               <a href="#inversion" className="ag-btn ag-btn--ghost">Ver la inversión</a>
             </div>
           </div>
@@ -223,7 +303,7 @@ export default function PropuestaLluchmajor() {
           <div className="ag-wrap">
             <div className="ag-head ag-head--split">
               <h2 className="ag-h2">Lo que hemos visto en vuestra clínica</h2>
-              <p className="ag-lead">Hemos estudiado clinicalluchmajor.es: vuestros tratamientos, cómo se pide cita y cómo trabajáis. Esto es lo que una oficina de IA puede mejorar.</p>
+              <p className="ag-lead">Hemos estudiado clinicalluchmajor.es: vuestros tratamientos, cómo se pide cita y cómo trabajáis. Esto es lo que una empresa de IA puede mejorar.</p>
             </div>
             <div className="pz-visto">
               {VISTO.map(({ Icon, t, d }, i) => (
@@ -233,13 +313,11 @@ export default function PropuestaLluchmajor() {
           </div>
         </section>
 
-        <Simulador />
-
         <section className="ag-section pz-ags">
           <div className="ag-wrap">
             <div className="ag-head ag-head--split">
-              <h2 className="ag-h2">Todo lo que podría tener vuestra clínica</h2>
-              <p className="ag-lead">Ocho agentes en tres áreas: cuidar a cada paciente, atraer pacientes nuevos y que la dirección lo controle todo desde un solo panel.</p>
+              <h2 className="ag-h2">Piensa, ejecuta y rinde cuentas</h2>
+              <p className="ag-lead">Una empresa de IA no es un chatbot: es un equipo que traza la estrategia digital de la clínica, la ejecuta cada día y os enseña los resultados. Esto es todo lo que podría tener Lluchmajor.</p>
             </div>
             <div className="pz-areas">
               {AREAS.map((ar, n) => (
@@ -253,16 +331,20 @@ export default function PropuestaLluchmajor() {
                 </div>
               ))}
             </div>
-            <div className="pz-dir"><LayoutDashboard size={22} /><p><b>Y un panel único para la dirección.</b> Qué ha entrado, qué se ha contestado, qué presupuestos siguen abiertos, cómo van las campañas, el estado de la web y lo que espera vuestra aprobación. Todo en una pantalla.</p></div>
+            <div className="pz-dir"><Zap size={22} /><p><b>Vosotros decidís.</b> Lo delicado espera vuestra aprobación en el panel: ningún agente da precios, diagnósticos ni descuentos que no hayáis fijado.</p></div>
           </div>
         </section>
+
+        <DiaEmpresa />
+
+        <Simulador />
 
         <section className="cs-ofi pz-ofi">
           <div className="ag-wrap">
             <div className="cs-ofi__head">
-              <p className="cs-k">Vuestra oficina por dentro</p>
+              <p className="cs-k">Vuestra empresa de IA por dentro</p>
               <h2 className="cs-h2">Así trabajaría el equipo digital de Lluchmajor.</h2>
-              <p>Con vuestro logo y vuestros colores. Gírala y mira a cada agente en su mesa: atienden pacientes, siguen presupuestos y se pasan el trabajo entre ellos.</p>
+              <p>Con vuestro logo y vuestros colores. Gírala y mira a cada agente en su mesa: la estrategia reparte el trabajo, y redes, SEO, Google, campañas y pacientes lo ejecutan y se lo pasan entre ellos.</p>
             </div>
             <Suspense fallback={<div className="oc-lienzo" />}><OficinasCaso caso={CASO_3D} /></Suspense>
             <p className="cs-nota">Representación ilustrativa. Los nombres de los agentes y sus mensajes son de ejemplo.</p>
@@ -298,11 +380,12 @@ export default function PropuestaLluchmajor() {
                 <h3 className="sx-plan__name">Oficina completa</h3>
                 <p className="sx-plan__price"><b>990 €</b><span>/mes</span></p>
                 <p className="sx-plan__setup">+ desde 12.000 € de puesta en marcha</p>
-                <p className="sx-plan__pitch">Los 8 agentes de esta propuesta en las tres áreas, con su panel único.</p>
+                <p className="sx-plan__pitch">Vuestra empresa de IA completa: estrategia, los 8 agentes que la ejecutan 24/7 y el panel.</p>
                 <ul className="ag-checks">
-                  <li><Check size={16} />Pacientes: recepción 24 h, presupuestos y recordatorios</li>
-                  <li><Check size={16} />Captación: campañas, SEO y blog, Google y reseñas</li>
-                  <li><Check size={16} />Control: seguridad de la web y estrategia digital</li>
+                  <li><Check size={16} />Estrategia digital mensual y plan diario</li>
+                  <li><Check size={16} />Redes y vídeos, SEO y blog, Google Business y campañas</li>
+                  <li><Check size={16} />Recepción 24 h, presupuestos y recordatorios</li>
+                  <li><Check size={16} />Seguridad de la web, panel e informe mensual</li>
                   <li><Check size={16} />Integraciones con vuestras herramientas (agenda, CRM, facturación)</li>
                   <li><Check size={16} />Formación para vuestro equipo</li>
                   <li><Check size={16} />Soporte prioritario</li>
@@ -313,7 +396,7 @@ export default function PropuestaLluchmajor() {
                 <h3 className="sx-plan__name">Oficina de IA</h3>
                 <p className="sx-plan__price"><b>590 €</b><span>/mes</span></p>
                 <p className="sx-plan__setup">+ 6.900 € de puesta en marcha</p>
-                <p className="sx-plan__pitch">Si preferís empezar por un área: hasta 4 agentes coordinados, y ampliar cuando os compense.</p>
+                <p className="sx-plan__pitch">Si preferís empezar por una parte: hasta 4 agentes coordinados, y ampliar cuando os compense.</p>
                 <ul className="ag-checks">
                   <li><Check size={16} />Hasta 4 agentes a elegir de esta propuesta</li>
                   <li><Check size={16} />Panel propio con lo que hace cada agente</li>
@@ -333,9 +416,9 @@ export default function PropuestaLluchmajor() {
             <ol className="pz-pasos">
               {[
                 ['Llamada de diagnóstico', 'Vemos vuestra agenda, cómo entran hoy las peticiones y qué presupuestos se quedan por el camino.'],
-                ['Diseño de vuestra oficina', 'Os proponemos qué dirá cada agente, sus reglas y lo que tendréis que aprobar vosotros.'],
-                ['Instalación y pruebas', 'Lo conectamos a vuestra web, WhatsApp, Google y campañas, y lo probamos con casos reales antes de dejarlo solo.'],
-                ['Funcionando y mejorando', 'Los agentes trabajan cada día, lo veis en el panel y lo ajustamos cada mes.'],
+                ['Diseño de vuestra empresa de IA', 'Os proponemos qué hará cada agente, sus reglas y lo que tendréis que aprobar vosotros.'],
+                ['Estrategia e instalación', 'Trazamos con vosotros la primera estrategia, conectamos los agentes a vuestra web, WhatsApp, redes, Google y campañas, y los probamos con casos reales.'],
+                ['Funcionando 24/7', 'Los agentes ejecutan el plan cada día, lo veis en el panel y cada mes ajustamos la estrategia.'],
               ].map(([t, d], i) => <li key={t}><span>{i + 1}</span><h3>{t}</h3><p>{d}</p></li>)}
             </ol>
             <div className="pz-honesto">
@@ -350,7 +433,7 @@ export default function PropuestaLluchmajor() {
           </div>
         </section>
 
-        <LeadSection fuente="propuesta-clinica-lluchmajor" title={`${C.contacto}, ¿lo vemos en 30 minutos?`} lead={`Te enseño el panel funcionando y vemos juntos cómo quedaría en ${C.nombre}. Si en vuestra clínica no tiene sentido, te lo diré. También puedes escribirme a ${CONTACT.email}.`} />
+        <LeadSection fuente="propuesta-clinica-lluchmajor" title={`${C.contacto}, ¿lo vemos en 30 minutos?`} lead={`Te enseño una empresa de IA funcionando y vemos juntos cómo quedaría en ${C.nombre}. Si en vuestra clínica no tiene sentido, te lo diré. También puedes escribirme a ${CONTACT.email}.`} />
       </main>
       <Footer />
     </div>

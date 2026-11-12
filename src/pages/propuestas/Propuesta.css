@@ -153,3 +153,43 @@
 .pz-area:nth-child(2) .pz-area__head > span { background: var(--pz); }
 .pz-area:nth-child(3) .pz-area__head > span { background: var(--pz-green); }
 .pz-area .pz-ags__grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* Un día en vuestra empresa de IA: reloj de 24 h */
+.pz-area:nth-child(1) .pz-ags__grid { grid-template-columns: 1fr; }
+.pz-area:nth-child(1) .pz-ag { background: linear-gradient(120deg, #06232a, #0b4d59); color: #fff; border-color: transparent; }
+.pz-area:nth-child(1) .pz-ag p:last-child { color: #c9e9ef; max-width: 70ch; }
+.pz-area:nth-child(1) .pz-ag__ico { background: rgba(255,255,255,.1); color: #8fd8e6; }
+.pz-area:nth-child(1) .pz-area__head > span { background: #06232a; }
+.pz-area:nth-child(2) .pz-area__head > span { background: var(--pz); }
+.pz-area:nth-child(3) .pz-area__head > span { background: var(--pz-green); }
+.pz-dia__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+.pz-reloj { position: relative; max-width: 460px; width: 100%; justify-self: center; aspect-ratio: 1; }
+.pz-reloj svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.pz-reloj__aro { fill: var(--pz-soft); stroke: rgba(0,105,122,.18); stroke-width: 2; }
+.pz-reloj__noche { fill: none; stroke: #06232a; stroke-width: 10; stroke-linecap: round; opacity: .85; }
+.pz-reloj__h { font-size: 11px; fill: var(--ag-muted); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.pz-reloj__h.is-b { fill: var(--ag-ink); font-weight: 700; font-size: 13px; }
+.pz-reloj__aguja { stroke: var(--pz-deep); stroke-width: 4; stroke-linecap: round; transform-origin: 0 0; transition: transform .9s var(--ag-ease); }
+.pz-reloj__centro { fill: var(--pz-deep); }
+.pz-reloj__ev { cursor: pointer; }
+.pz-reloj__ev circle { fill: #fff; stroke: var(--pz); stroke-width: 3; transition: r .3s var(--ag-ease), fill .3s; }
+.pz-reloj__ev.is-on circle { fill: var(--pz); stroke: #fff; filter: drop-shadow(0 4px 10px rgba(0,158,186,.6)); }
+.pz-reloj__ev:focus-visible circle { stroke: var(--ag-ink); }
+.pz-reloj__txt { position: absolute; left: 50%; top: 62%; translate: -50% 0; display: grid; justify-items: center; gap: 2px; pointer-events: none; }
+.pz-reloj__txt b { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -.03em; color: var(--pz-deep); font-variant-numeric: tabular-nums; }
+.pz-reloj__txt span { font-size: .78rem; color: var(--ag-muted); font-weight: 600; }
+.pz-dia__lista { display: grid; gap: 16px; }
+.pz-dia__now { display: flex; gap: 14px; align-items: flex-start; padding: 22px; border-radius: var(--ag-r-lg); background: #06232a; color: #fff; animation: pz-pop .45s var(--ag-ease) both; min-height: 112px; }
+.pz-dia__now .pz-ag__ico { background: rgba(255,255,255,.1); color: #8fd8e6; margin: 0; flex: none; }
+.pz-dia__now .pz-ag__tag { color: #8fd8e6; }
+.pz-dia__t { margin: 4px 0 0; font-size: 1.12rem; line-height: 1.4; }
+.pz-dia__lista ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.pz-dia__lista ol button { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--ag-line); background: #fff; font: inherit; font-size: .88rem; color: var(--ag-ink-2); cursor: pointer; }
+.pz-dia__lista ol button span { color: var(--pz-deep); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pz-dia__lista ol button[aria-pressed="true"] { border-color: var(--pz); background: var(--pz-soft); color: var(--ag-ink); }
+.pz-dia__auto { justify-self: start; display: inline-flex; gap: 6px; align-items: center; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--ag-line-strong); background: #fff; font: inherit; font-size: .85rem; cursor: pointer; }
+@media (max-width: 980px) { .pz-dia__grid { grid-template-columns: 1fr; } .pz-reloj { max-width: 360px; } }
+.pz-reloj__prog { fill: none; stroke: var(--pz); stroke-width: 6; stroke-linecap: round; transition: stroke-dasharray .9s var(--ag-ease); }
+.pz-reloj__txt { top: 50%; translate: -50% -50%; }
+.pz-reloj__txt b { font-size: clamp(2rem, 4vw, 2.8rem); }
+@media (max-width: 640px) { .pz-dia__lista ol { grid-template-columns: 1fr 1fr; } .pz-dia__lista ol button { font-size: .82rem; padding: 8px 10px; } }
