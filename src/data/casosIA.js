@@ -1,6 +1,6 @@
 // Casos de éxito de la «Oficina de IA».
 // Spa Organic: historia y cifra facilitadas por Agutidesigns (+120 % de facturación en 3 meses).
-// Vela-Segalà: cifras facilitadas por la clínica (+20.000 € en 3 meses, +80 % de facturación) y unificación de sus 4 webs.
+// Vela-Segalà: cifras facilitadas por la clínica (+20.000 € en 3 meses, +80 % de facturación). Lo montado (según Guti, 12-nov): webs unificadas en un panel + agentes de campañas, SEO y blog, seguridad web y estrategia digital. NO WhatsApp ni llamadas.
 
 const NOMBRES_SPA = { ceo: 'Dirección', prospector: 'Nuria', demos: 'Ona', redactor: 'Pau', seguimiento: 'Laia', recontacto: 'Jan', finanzas: 'Marc', cartera: 'Aina', semanal: 'Júlia', resumen: 'Carla', webleads: 'Emma', pipeline: 'Berta', contenido: 'Irene', publicador: 'Pol', analista: 'Arnau', ads: 'Biel', cs: 'Mireia', produccion: 'Gerard', seo: 'Queralt' };
 
@@ -70,21 +70,18 @@ const NOMBRES = [
   { ceo: 'Dirección', prospector: 'Elena', demos: 'Lola', redactor: 'Sofía', seguimiento: 'Aitana', recontacto: 'Pablo', finanzas: 'Julia', cartera: 'Nico', semanal: 'Carmen', resumen: 'Lara', webleads: 'Emma', pipeline: 'Vera', contenido: 'Aina', publicador: 'Iker', analista: 'Gael', ads: 'Mía', cs: 'Abril', produccion: 'Unai', seo: 'Candela' },
 ];
 const CHARLA_DENTAL = [
-  ['webleads', 'pipeline', 'Petición de primera visita desde la web.'],
-  ['pipeline', 'ceo', 'Contestada con propuesta de cita en agenda.'],
-  ['seguimiento', 'redactor', 'Paciente sin confirmar: toca recordatorio.'],
+  ['seo', 'contenido', 'Tema nuevo para el blog: implantes en un día.'],
+  ['analista', 'ceo', 'La web está al día y protegida.'],
   ['contenido', 'publicador', 'Artículo sobre implantes listo para publicar.'],
-  ['cs', 'produccion', 'Un paciente pregunta por su próxima revisión.'],
   ['ads', 'ceo', 'Campaña de la clínica revisada, dentro del tope.'],
-  ['ceo', 'todos', 'Foco de hoy: ninguna petición de cita sin respuesta.'],
+  ['ceo', 'todos', 'Foco de hoy: más visibilidad en Google.'],
 ];
 const CHARLA_ESTETICA = [
-  ['webleads', 'pipeline', 'Consulta nueva: quiere información de un tratamiento facial.'],
-  ['pipeline', 'ceo', 'Contestada con huecos libres para la cita.'],
-  ['seguimiento', 'cs', 'Clienta habitual: toca recordarle su próxima sesión.'],
+  ['ads', 'ceo', 'Campaña de tratamientos faciales ajustada, dentro del tope.'],
+  ['seo', 'contenido', 'Tema nuevo para el blog: láser e IPL en invierno.'],
   ['contenido', 'publicador', 'Post sobre láser e IPL listo.'],
   ['publicador', 'todos', 'Publicado en redes y en la web.'],
-  ['ceo', 'todos', 'Foco de hoy: que vuelvan las clientas de siempre.'],
+  ['ceo', 'todos', 'Foco de hoy: estrategia del mes lista para revisar.'],
 ];
 const neg = (i, nombre, corto, tipo, color, lema, charla) => ({
   nombre, corto, tipo, color,
@@ -105,35 +102,34 @@ export const VELA_IA = {
   titular: 'Cuatro negocios, cuatro webs. Ahora, una sola oficina.',
   cifra: { v: 20000, pre: '+', suf: ' €', l: 'facturados en 3 meses' },
   cifra2: { v: 80, pre: '+', suf: ' %', l: 'de facturación' },
-  resumen: 'Vela-Segalà tenía cuatro negocios con cuatro webs distintas: dos clínicas dentales y dos centros de estética. Las unificamos y le pusimos a cada negocio su propia oficina de IA, todas conectadas a un mismo panel.',
+  resumen: 'Vela-Segalà tenía cuatro negocios con cuatro webs distintas: dos clínicas dentales y dos centros de estética. Unificamos todas sus webs en un mismo panel y les pusimos agentes de IA para las campañas, el SEO y el blog, la seguridad web y la estrategia digital.',
   reto: [
     'Clínicas Vela-Segalà son dos clínicas dentales, en Viladecans y Sant Celoni, y dos centros de estética. Un equipo de referencia en implantología y estética dental, con cuatro negocios que funcionaban cada uno por su lado.',
-    'Cada negocio tenía su propia web: cuatro sitios distintos que mantener, cuatro formas diferentes de pedir cita y cuatro bandejas de entrada. Las citas solo se pedían por teléfono y en horario de clínica, y las consultas que llegaban fuera de horario se quedaban sin contestar.',
+    'Cada negocio tenía su propia web: cuatro sitios distintos que mantener, sin una visión de conjunto. Las campañas, el posicionamiento en Google, el blog y la seguridad de las webs se llevaban por separado, cuando había tiempo.',
   ],
   agentes: [
-    { t: 'Una sola web', d: 'Unificamos las cuatro webs en velasegala.com: una marca, cuatro negocios y una forma clara de pedir cita en cada uno.' },
-    { t: 'Una oficina por negocio', d: 'Cada clínica y cada centro de estética tiene su propia oficina de IA, con agentes que conocen sus tratamientos y su agenda.' },
-    { t: 'Citas a cualquier hora', d: 'Los pacientes piden cita por la web y por WhatsApp, también fuera del horario de la clínica.' },
-    { t: 'Asistente IA', d: 'Responde al momento las consultas sobre tratamientos y deja cada petición en el negocio que le toca.' },
-    { t: 'Recordatorios automáticos', d: 'Antes de cada cita, el paciente recibe su recordatorio sin que nadie tenga que hacerlo a mano.' },
-    { t: 'Un panel único', d: 'La dirección ve en un solo panel lo que pasa en los cuatro negocios.' },
+    { t: 'Todo en un mismo panel', d: 'Unificamos todas sus webs en un mismo panel: la dirección tiene el control total de los cuatro negocios desde un solo sitio.' },
+    { t: 'Agente de campañas', d: 'Automatiza las campañas de publicidad: revisa cada día qué funciona, ajusta y nunca pasa del tope fijado.' },
+    { t: 'Agente de SEO y blog', d: 'Escribe los artículos del blog y trabaja el posicionamiento para que cada clínica aparezca cuando la buscan en Google.' },
+    { t: 'Agente de seguridad web', d: 'Vigila que todas las webs estén en marcha, actualizadas y protegidas, y avisa antes de que un problema afecte al negocio.' },
+    { t: 'Agente de estrategia digital', d: 'Cruza lo que pasa en los cuatro negocios y propone dónde invertir y qué mejorar cada mes.' },
   ],
   cambios: [
-    'Con todo unificado, Vela-Segalà dejó de gestionar cuatro webs por separado y pasó a ver sus cuatro negocios en un mismo sitio.',
-    'Las citas ya no dependen del teléfono ni del horario: se piden a cualquier hora, el asistente responde al momento y los recordatorios salen solos. Además, la clínica aparece en las búsquedas locales de Google.',
+    'Con todas las webs unificadas en un mismo panel, Vela-Segalà dejó de gestionar cuatro negocios por separado y pasó a tener el control total desde un solo sitio.',
+    'Los agentes de IA llevan cada día las campañas, el SEO y el blog, la seguridad de las webs y la estrategia digital, sin depender de que alguien encuentre un hueco.',
     'En tres meses, más de 20.000 € facturados y un 80 % más de facturación.',
   ],
   historia: [
-    { k: 'Antes', t: 'Cuatro webs que no hablaban entre sí', d: 'Dos webs para sus clínicas dentales y dos para sus centros de estética: cuatro sitios que mantener, cuatro formas de pedir cita y ninguna visión de conjunto.' },
-    { k: 'Lo que montamos', t: 'Una web, cuatro oficinas, un panel', d: 'Unificamos las cuatro webs en una sola y cada negocio tiene su oficina de IA: atienden las peticiones de cita, envían recordatorios y responden al momento. Todo se ve desde un panel único.' },
-    { k: 'Después', t: '+20.000 € en 3 meses', d: 'Con todo unificado y las citas abiertas a cualquier hora por la web y WhatsApp, la facturación creció un 80 %.' },
+    { k: 'Antes', t: 'Cuatro webs que no hablaban entre sí', d: 'Dos webs para sus clínicas dentales y dos para sus centros de estética: cuatro sitios que mantener por separado y ninguna visión de conjunto.' },
+    { k: 'Lo que montamos', t: 'Un panel y un equipo de agentes', d: 'Unificamos todas las webs en un mismo panel y pusimos agentes de IA para las campañas, el SEO y el blog, la seguridad de las webs y la estrategia digital.' },
+    { k: 'Después', t: '+20.000 € en 3 meses', d: 'Con todo unificado y los agentes trabajando cada día, la facturación creció un 80 %.' },
   ],
   filas: [
-    { k: 'Webs', a: 'Cuatro webs distintas, una por negocio', d: 'Una sola web con los cuatro negocios' },
-    { k: 'Citas', a: 'Solo por teléfono y en horario de clínica', d: 'A cualquier hora, por la web y por WhatsApp' },
-    { k: 'Google', a: 'Poco visibles en las búsquedas locales', d: 'Posicionados en las búsquedas locales' },
-    { k: 'Mensajes', a: 'Consultas sin contestar fuera de horario', d: 'El asistente IA responde al momento' },
-    { k: 'Ausencias', a: 'Recordatorios a mano, cuando había tiempo', d: 'Recordatorios automáticos antes de cada cita' },
+    { k: 'Webs', a: 'Cuatro webs, cada una por su lado', d: 'Todas en un mismo panel, con control total' },
+    { k: 'Campañas', a: 'Se revisaban cuando había tiempo', d: 'Un agente las automatiza cada día, dentro del tope' },
+    { k: 'SEO y blog', a: 'Sin publicar con regularidad', d: 'Artículos y posicionamiento cada semana' },
+    { k: 'Seguridad', a: 'Revisión a mano, de vez en cuando', d: 'Vigilancia diaria de todas las webs' },
+    { k: 'Estrategia', a: 'Decisiones por intuición', d: 'Propuestas cada mes con los datos de los cuatro negocios' },
   ],
   centro: { titulo: 'PANEL ÚNICO · VELA-SEGALÀ', dominio: 'velasegala.com' },
   oficinas: [

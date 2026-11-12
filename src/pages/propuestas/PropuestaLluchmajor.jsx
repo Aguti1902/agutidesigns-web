@@ -2,7 +2,7 @@
 // Todo lo que se dice de la clínica sale de su web (clinicalluchmajor.es, 12-nov-2026).
 // Las únicas cifras de resultados son las de Vela-Segalà (+20.000 € en 3 meses, +80 %).
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck, Megaphone, PenLine, Lock, Compass } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { LeadSection } from '../../components/site/Sections';
@@ -141,12 +141,23 @@ function Simulador() {
   );
 }
 
-const AGENTES = [
-  { Icon: MessageCircle, t: 'Recepción 24 h', d: 'Contesta al momento cada petición que llega por la web y por WhatsApp, explica la primera visita gratuita y propone hueco de vuestra agenda.', tag: 'Web · WhatsApp' },
-  { Icon: FileText, t: 'Seguimiento de presupuestos', d: 'Cuando un paciente se lleva un presupuesto de implantes, ortodoncia o estética, le escribe en los días que vosotros decidáis, resuelve dudas y propone volver a hablar.', tag: 'Implantes · Ortodoncia · Estética' },
-  { Icon: Bell, t: 'Recordatorios y revisiones', d: 'Recuerda cada cita el día antes y avisa a quien le toca higiene, revisión o mantenimiento periodontal. Menos huecos vacíos en la agenda.', tag: 'Citas · Higiene · Revisiones' },
-  { Icon: Star, t: 'Google y reseñas', d: 'Pide la reseña después de la visita, prepara la respuesta a cada una para que la aprobéis y mantiene viva vuestra ficha de Google.', tag: 'Ficha de Google' },
+const AREAS = [
+  { k: 'Pacientes', l: 'Que ninguna petición ni ningún presupuesto se pierda', items: [
+    { Icon: MessageCircle, t: 'Recepción 24 h', d: 'Contesta al momento cada petición que llega por la web y por WhatsApp, explica la primera visita gratuita y propone hueco de vuestra agenda.' },
+    { Icon: FileText, t: 'Seguimiento de presupuestos', d: 'Cuando un paciente se lleva un presupuesto de implantes, ortodoncia o estética, le escribe en los días que decidáis, resuelve dudas y propone volver a hablar.' },
+    { Icon: Bell, t: 'Recordatorios y revisiones', d: 'Recuerda cada cita el día antes y avisa a quien le toca higiene, revisión o mantenimiento periodontal.' },
+  ] },
+  { k: 'Captación', l: 'Que os encuentren más pacientes nuevos', items: [
+    { Icon: Megaphone, t: 'Campañas de publicidad', d: 'Lleva vuestras campañas de Google y Meta: quita lo que gasta sin traer pacientes, refuerza lo que funciona y nunca pasa del tope que le pongáis.' },
+    { Icon: PenLine, t: 'SEO y blog', d: 'Escribe artículos sobre implantes, cigomáticos, ortodoncia invisible o estética dental que responden a lo que la gente busca en Google en Barcelona.' },
+    { Icon: Star, t: 'Google y reseñas', d: 'Pide la reseña después de cada visita, prepara la respuesta a cada una para que la aprobéis y mantiene viva vuestra ficha de Google.' },
+  ] },
+  { k: 'Control', l: 'Que la dirección lo tenga todo bajo control', items: [
+    { Icon: Lock, t: 'Seguridad de la web', d: 'Vigila cada día que la web esté en marcha, actualizada y protegida, y avisa antes de que un problema os cueste pacientes.' },
+    { Icon: Compass, t: 'Estrategia digital', d: 'Cruza lo que hacen todos los agentes y os propone cada mes qué tratamientos empujar, dónde invertir y qué mejorar.' },
+  ] },
 ];
+
 
 function Calculadora() {
   const [n, setN] = useState(8);
@@ -172,7 +183,7 @@ function Calculadora() {
           <div className="pz-calc__res">
             <span>Facturación recuperada al mes</span>
             <strong>{fmt(res)} €</strong>
-            <small>La cuota de la Oficina de IA es de 590 €/mes{res > 590 ? `: con estos números, la cubriría ${res >= 1180 ? `${Math.floor(res / 590)} veces` : 'de sobra'}.` : '.'}</small>
+            <small>Solo con los presupuestos recuperados, la cuota de la Oficina completa (990 €/mes){res >= 990 ? ` se cubriría ${res >= 1980 ? `${Math.floor(res / 990)} veces` : 'de sobra'}.` : ' no se cubriría todavía: aquí no cuentan los pacientes nuevos de campañas, SEO y Google.'}</small>
           </div>
         </div>
       </div>
@@ -195,7 +206,7 @@ export default function PropuestaLluchmajor() {
             </div>
             <p className="pz-k">Propuesta para {C.nombre} · {C.fecha}</p>
             <h1 className="pz-h1">{C.contacto}, esta sería la <em>oficina de IA</em> de vuestra clínica.</h1>
-            <p className="pz-lead">Un equipo de agentes que contesta cada petición de cita al momento, también con la clínica cerrada, hace el seguimiento de cada presupuesto y cuida vuestras reseñas. Vosotros lo veis todo en un panel y decidís qué revisáis.</p>
+            <p className="pz-lead">Un equipo de agentes que atiende a cada paciente al momento, también con la clínica cerrada, sigue cada presupuesto, os trae pacientes nuevos con campañas, SEO y Google, y vigila vuestra web. Vosotros lo veis todo en un panel y decidís qué revisáis.</p>
             <ul className="pz-notis" aria-hidden="true">
               <li><span>Viernes 21:40</span><b>Nueva petición por WhatsApp</b>Primera visita · implantes</li>
               <li><span>21:40</span><b>Contestada al momento</b>Con la primera visita gratuita</li>
@@ -227,15 +238,22 @@ export default function PropuestaLluchmajor() {
         <section className="ag-section pz-ags">
           <div className="ag-wrap">
             <div className="ag-head ag-head--split">
-              <h2 className="ag-h2">Los 4 agentes que os proponemos</h2>
-              <p className="ag-lead">Cada uno con su tarea y sus reglas. Trabajan coordinados y todo lo que hacen llega al mismo panel.</p>
+              <h2 className="ag-h2">Todo lo que podría tener vuestra clínica</h2>
+              <p className="ag-lead">Ocho agentes en tres áreas: cuidar a cada paciente, atraer pacientes nuevos y que la dirección lo controle todo desde un solo panel.</p>
             </div>
-            <div className="pz-ags__grid">
-              {AGENTES.map(({ Icon, t, d, tag }) => (
-                <article key={t} className="pz-ag"><span className="pz-ag__ico"><Icon size={22} /></span><p className="pz-ag__tag">{tag}</p><h3>{t}</h3><p>{d}</p></article>
+            <div className="pz-areas">
+              {AREAS.map((ar, n) => (
+                <div key={ar.k} className="pz-area">
+                  <div className="pz-area__head"><span>{String(n + 1).padStart(2, '0')}</span><div><p className="pz-ag__tag">{ar.k}</p><h3>{ar.l}</h3></div></div>
+                  <div className="pz-ags__grid">
+                    {ar.items.map(({ Icon, t, d }) => (
+                      <article key={t} className="pz-ag"><span className="pz-ag__ico"><Icon size={22} /></span><h3>{t}</h3><p>{d}</p></article>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-            <div className="pz-dir"><LayoutDashboard size={22} /><p><b>Y un panel para la dirección.</b> Qué ha entrado, qué se ha contestado, qué presupuestos siguen abiertos y qué espera vuestra aprobación. Todo en una pantalla.</p></div>
+            <div className="pz-dir"><LayoutDashboard size={22} /><p><b>Y un panel único para la dirección.</b> Qué ha entrado, qué se ha contestado, qué presupuestos siguen abiertos, cómo van las campañas, el estado de la web y lo que espera vuestra aprobación. Todo en una pantalla.</p></div>
           </div>
         </section>
 
@@ -258,7 +276,7 @@ export default function PropuestaLluchmajor() {
             <div>
               <p className="pz-k">Ya funciona en clínicas dentales</p>
               <h2 className="ag-h2">Clínicas Vela-Segalà</h2>
-              <p className="ag-lead">Dos clínicas dentales y dos centros de estética. Antes, las citas solo se pedían por teléfono y en horario de clínica. Con su oficina de IA se piden a cualquier hora por la web y por WhatsApp, el asistente responde al momento y los recordatorios salen solos.</p>
+              <p className="ag-lead">Dos clínicas dentales y dos centros de estética, cada uno con su propia web. Unificamos todas sus webs en un mismo panel para tener el control total, y les pusimos agentes de IA que llevan sus campañas de publicidad, el SEO y el blog, la seguridad de las webs y la estrategia digital.</p>
               <a href="/casos/vela-segala" className="ag-btn ag-btn--ghost">Ver el caso completo <ArrowRight size={18} /></a>
             </div>
             <div className="pz-caso__cifras">
@@ -277,32 +295,32 @@ export default function PropuestaLluchmajor() {
             <div className="sx-plans pz-planes">
               <article className="sx-plan sx-plan--rec">
                 <span className="sx-plan__badge">Lo que os recomendamos</span>
+                <h3 className="sx-plan__name">Oficina completa</h3>
+                <p className="sx-plan__price"><b>990 €</b><span>/mes</span></p>
+                <p className="sx-plan__setup">+ desde 12.000 € de puesta en marcha</p>
+                <p className="sx-plan__pitch">Los 8 agentes de esta propuesta en las tres áreas, con su panel único.</p>
+                <ul className="ag-checks">
+                  <li><Check size={16} />Pacientes: recepción 24 h, presupuestos y recordatorios</li>
+                  <li><Check size={16} />Captación: campañas, SEO y blog, Google y reseñas</li>
+                  <li><Check size={16} />Control: seguridad de la web y estrategia digital</li>
+                  <li><Check size={16} />Integraciones con vuestras herramientas (agenda, CRM, facturación)</li>
+                  <li><Check size={16} />Formación para vuestro equipo</li>
+                  <li><Check size={16} />Soporte prioritario</li>
+                </ul>
+                <a href="#propuesta" className="ag-btn ag-btn--primary">Quiero la oficina completa</a>
+              </article>
+              <article className="sx-plan">
                 <h3 className="sx-plan__name">Oficina de IA</h3>
                 <p className="sx-plan__price"><b>590 €</b><span>/mes</span></p>
                 <p className="sx-plan__setup">+ 6.900 € de puesta en marcha</p>
-                <p className="sx-plan__pitch">Los 4 agentes de esta propuesta, coordinados y con su panel.</p>
+                <p className="sx-plan__pitch">Si preferís empezar por un área: hasta 4 agentes coordinados, y ampliar cuando os compense.</p>
                 <ul className="ag-checks">
-                  <li><Check size={16} />Recepción 24 h por web y WhatsApp</li>
-                  <li><Check size={16} />Seguimiento de presupuestos</li>
-                  <li><Check size={16} />Recordatorios de citas y revisiones</li>
-                  <li><Check size={16} />Google y reseñas</li>
-                  <li><Check size={16} />Panel propio y aprobaciones</li>
+                  <li><Check size={16} />Hasta 4 agentes a elegir de esta propuesta</li>
+                  <li><Check size={16} />Panel propio con lo que hace cada agente</li>
+                  <li><Check size={16} />Aprobaciones: decidís qué sale solo y qué revisáis</li>
                   <li><Check size={16} />Mantenimiento, mejoras y un agente nuevo al año</li>
                 </ul>
-                <a href="#propuesta" className="ag-btn ag-btn--primary">Quiero la oficina</a>
-              </article>
-              <article className="sx-plan">
-                <h3 className="sx-plan__name">Empezar con un agente</h3>
-                <p className="sx-plan__price"><b>290 €</b><span>/mes</span></p>
-                <p className="sx-plan__setup">+ 2.900 € de puesta en marcha</p>
-                <p className="sx-plan__pitch">Si preferís empezar por lo que más duele: la recepción 24 h, y ampliar cuando os compense.</p>
-                <ul className="ag-checks">
-                  <li><Check size={16} />1 agente a medida: recepción 24 h</li>
-                  <li><Check size={16} />Conectado a vuestra web y WhatsApp</li>
-                  <li><Check size={16} />Reglas claras de lo que puede y no puede decir</li>
-                  <li><Check size={16} />Mantenimiento y ajustes cada mes</li>
-                </ul>
-                <a href="#propuesta" className="ag-btn ag-btn--ghost">Empezar con uno</a>
+                <a href="#propuesta" className="ag-btn ag-btn--ghost">Empezar con 4 agentes</a>
               </article>
             </div>
             <p className="oi-extra">Precios sin IVA. Las licencias de IA y de las herramientas necesarias van a nombre de la clínica y se pagan aparte.</p>
@@ -316,7 +334,7 @@ export default function PropuestaLluchmajor() {
               {[
                 ['Llamada de diagnóstico', 'Vemos vuestra agenda, cómo entran hoy las peticiones y qué presupuestos se quedan por el camino.'],
                 ['Diseño de vuestra oficina', 'Os proponemos qué dirá cada agente, sus reglas y lo que tendréis que aprobar vosotros.'],
-                ['Instalación y pruebas', 'Lo conectamos a vuestra web, WhatsApp y Google, y lo probamos con casos reales antes de dejarlo solo.'],
+                ['Instalación y pruebas', 'Lo conectamos a vuestra web, WhatsApp, Google y campañas, y lo probamos con casos reales antes de dejarlo solo.'],
                 ['Funcionando y mejorando', 'Los agentes trabajan cada día, lo veis en el panel y lo ajustamos cada mes.'],
               ].map(([t, d], i) => <li key={t}><span>{i + 1}</span><h3>{t}</h3><p>{d}</p></li>)}
             </ol>
