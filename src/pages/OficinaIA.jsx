@@ -1,28 +1,18 @@
-import { Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench } from 'lucide-react';
+import { Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench, ChevronDown } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
 import { Problems, Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
-import { lazy, Suspense, useState, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import useSeo from '../hooks/useSeo';
-import { AGENTES } from '../components/oficina/agentes';
-import '../components/oficina/Oficina3D.css';
-const Oficina3D = lazy(() => import('../components/oficina/Oficina3D'));
+const OficinaHero3D = lazy(() => import('../components/oficina/OficinaHero3D'));
 import './OficinaIA.css';
 
 const SEO = {
   title: 'Oficina de IA: agentes de IA para tu empresa | Agutidesigns',
   description: 'Instalamos en tu empresa un equipo de agentes de IA que contestan a tus clientes, hacen tu contenido y vídeos, cuidan tu ficha de Google y te enseñan todo en un panel. Pide una demo.',
 };
-
-const AGENTES_PANEL = [
-  { Icon: Bot, t: 'Ventas', d: 'Ha contestado a un presupuesto nuevo de la web', st: 'Hecho' },
-  { Icon: Video, t: 'Vídeos', d: '3 vídeos programados para mañana', st: 'Hecho' },
-  { Icon: PenLine, t: 'Contenido', d: 'Escribiendo el artículo del blog de hoy', st: 'Trabajando', run: true },
-  { Icon: MapPin, t: 'Google Business', d: 'Publicación nueva en la ficha', st: 'Hecho' },
-  { Icon: Headphones, t: 'Clientes', d: 'Ha contestado a un cliente y anotado su cambio', st: 'Hecho' },
-];
 
 const PROBLEMS = [
   { t: 'Clientes que escriben y nadie les contesta a tiempo', d: 'Piden presupuesto un sábado por la noche y el lunes ya han contratado a otro. Cada respuesta tardía es una venta perdida.' },
@@ -73,76 +63,59 @@ const jsonLd = () => ({
   ],
 });
 
-function OficinaInteractiva() {
-  const [sel, setSel] = useState(0);
-  const elegir = useCallback((i) => setSel(i), []);
-  const a = AGENTES[sel];
+const ROTA = ['contestan a tus clientes', 'siguen cada presupuesto', 'hacen tus vídeos', 'escriben tu blog', 'cuidan tu ficha de Google'];
+
+function HeroOficina() {
+  const [listo, setListo] = useState(false);
+  const [i, setI] = useState(0);
+  const marcarListo = useCallback(() => setListo(true), []);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const id = setInterval(() => setI((n) => (n + 1) % ROTA.length), 2600);
+    return () => clearInterval(id);
+  }, []);
   return (
-    <section className="ag-section ag-section--white" id="oficina-3d">
-      <div className="ag-wrap">
-        <div className="ag-head ag-head--split">
-          <h2 className="ag-h2">Entra en la oficina</h2>
-          <p className="ag-lead">Así trabaja un equipo de agentes de IA: cada uno en su mesa, con su tarea, y todo lo que hacen llega al panel. Gírala y toca a cualquier agente.</p>
+    <header className={`oh ${listo ? 'oh--listo' : ''}`}>
+      <Suspense fallback={null}><OficinaHero3D onListo={marcarListo} /></Suspense>
+      <div className="oh-velo" aria-hidden="true" />
+      <div className="ag-wrap oh-wrap">
+        <p className="oh-live"><i aria-hidden="true" /> Oficina de IA · en directo</p>
+        <h1 className="oh-h1">
+          <span className="oh-l"><span>Tu empresa,</span></span>
+          <span className="oh-l"><span>con su propia</span></span>
+          <span className="oh-l"><span><em>oficina de IA</em></span></span>
+        </h1>
+        <p className="oh-rota" aria-live="off">
+          <span className="oh-rota__fijo">Agentes que</span>{' '}
+          <span className="oh-rota__caja">
+            {ROTA.map((t, n) => <span key={t} className={`oh-rota__w ${n === i ? 'is-on' : ''}`} aria-hidden={n !== i}>{t}</span>)}
+          </span>
+        </p>
+        <p className="oh-lead">Instalamos en tu empresa un equipo de agentes de IA que trabaja cada día. Tú lo ves todo en un panel y decides qué revisas.</p>
+        <div className="ag-actions oh-actions">
+          <a href="#propuesta" className="ag-btn ag-btn--primary">Pide una demo</a>
+          <a href="#precios" className="ag-btn oh-btn-ghost">Ver precios</a>
         </div>
-        <div className="o3-grid">
-          <Suspense fallback={<div className="o3-lienzo" />}>
-            <Oficina3D onSelect={elegir} seleccionado={sel} />
-          </Suspense>
-          <aside className="o3-ficha" aria-live="polite">
-            <span className="o3-ficha__tag"><i style={{ background: a.color }} /> Agente de {a.nombre.toLowerCase()}</span>
-            <h3 className="ag-h3">{a.nombre}</h3>
-            <p>{a.que}</p>
-            <ul>{a.tareas.map((t) => <li key={t}>{t}</li>)}</ul>
-            <div className="o3-chips" role="group" aria-label="Elige un agente">
-              {AGENTES.map((x, i) => <button key={x.id} type="button" aria-pressed={i === sel} onClick={() => setSel(i)}><i style={{ background: x.color }} />{x.nombre}</button>)}
-            </div>
-          </aside>
-        </div>
-        <p className="oi-extra">Escena ilustrativa: en tu empresa elegimos juntos qué agentes tiene la oficina.</p>
+        <ul className="oh-trust">
+          <li><Check size={16} /> Lo usamos cada día en Agutidesigns</li>
+          <li><Check size={16} /> Instalado y mantenido por nosotros</li>
+        </ul>
       </div>
-    </section>
+      <p className="oh-pie">Esta es la oficina real de Agutidesigns · actividad ilustrativa</p>
+      <a href="#agentes-intro" className="oh-baja" aria-label="Seguir bajando"><ChevronDown size={22} /></a>
+    </header>
   );
 }
 
 export default function OficinaIA() {
   useSeo({ ...SEO, path: '/oficina-ia', image: '/img/og-home.jpg', jsonLd: jsonLd() });
   return (
-    <div className="ag">
+    <div className="ag oi-page">
       <Navbar cta={{ label: 'Pide una demo', href: '#propuesta' }} />
       <main>
-        <header className="ag-hero">
-          <div className="ag-wrap ag-hero__grid">
-            <div className="ag-hero__copy">
-              <nav className="ag-crumbs" aria-label="Migas de pan"><a href="/">Inicio</a><span aria-hidden="true">/</span><span>Oficina de IA</span></nav>
-              <h1 className="ag-h1">Un equipo de agentes de IA trabajando para tu empresa</h1>
-              <p className="ag-lead">Contestan a tus clientes, hacen el seguimiento de cada presupuesto, preparan tus vídeos y tu contenido y cuidan tu ficha de Google. Tú lo ves todo en un panel y decides qué revisas.</p>
-              <div className="ag-actions">
-                <a href="#propuesta" className="ag-btn ag-btn--primary">Pide una demo</a>
-                <a href="#oficina-3d" className="ag-btn ag-btn--ghost">Entra en la oficina 3D</a>
-              </div>
-              <ul className="ag-hero__trust">
-                <li><Check size={16} /> Lo usamos cada día en Agutidesigns</li>
-                <li><Check size={16} /> Instalado y mantenido por nosotros</li>
-                <li><Check size={16} /> Tú decides qué sale solo</li>
-              </ul>
-            </div>
-            <figure className="oi-panel" aria-label="Ejemplo ilustrativo del panel de agentes">
-              <div className="oi-panel__bar"><i /><i /><i /><b>Panel de agentes</b><span className="oi-panel__live">En marcha</span></div>
-              <ul className="oi-agents">
-                {AGENTES_PANEL.map(({ Icon, t, d, st, run }) => (
-                  <li key={t} className="oi-agent">
-                    <span className="oi-agent__ico"><Icon size={20} /></span>
-                    <span className="oi-agent__txt"><b>{t}</b><span>{d}</span></span>
-                    <span className={`oi-agent__st ${run ? 'oi-agent__st--run' : ''}`}>{st}</span>
-                  </li>
-                ))}
-              </ul>
-              <figcaption className="oi-note">Ejemplo ilustrativo de un día normal en el panel.</figcaption>
-            </figure>
-          </div>
-        </header>
+        <HeroOficina />
+        <div id="agentes-intro" />
 
-        <OficinaInteractiva />
 
         <Problems title="Lo que se queda sin hacer en una empresa pequeña" lead="No es falta de ganas: son tareas repetitivas que se comen las horas que necesitas para vender y atender." items={PROBLEMS} photo="reunion" photoAlt="Equipo de una pequeña empresa revisando el trabajo del día" />
 
