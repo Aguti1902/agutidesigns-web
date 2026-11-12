@@ -205,3 +205,30 @@ export function DiaEnLaOficina() {
     </section>
   );
 }
+
+/* ---------- Vídeo comercial: crece al hacer scroll y se reproduce al verse ---------- */
+export function VideoComercial() {
+  const ref = useRef(null), vid = useRef(null);
+  const p = useProgreso(ref);
+  useEffect(() => {
+    const v = vid.current; if (!v) return undefined;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play?.().catch(() => {}); else v.pause?.(); }, { threshold: 0.35 });
+    io.observe(v); return () => io.disconnect();
+  }, []);
+  const e = Math.min(1, p * 1.8);
+  return (
+    <section ref={ref} className="vc" id="video">
+      <div className="vc-pega">
+        <div className="ag-wrap vc-in">
+          <div className="vc-head">
+            <p className="pv-k">En 40 segundos</p>
+            <h2 className="pv-h">Mira tu oficina de IA<br /><span>funcionando.</span></h2>
+          </div>
+          <div className="vc-marco" style={{ transform: `scale(${0.78 + e * 0.22})`, borderRadius: `${36 - e * 12}px` }}>
+            <video ref={vid} src="/video/oficina-ia.mp4" poster="/video/oficina-ia-poster.jpg" muted loop playsInline controls preload="metadata" aria-label="Vídeo: qué es una oficina de IA y casos de éxito" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

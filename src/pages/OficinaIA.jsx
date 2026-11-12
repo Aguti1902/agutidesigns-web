@@ -12,7 +12,7 @@ import { AGENTES } from '../components/oficina/agentes';
 import '../components/oficina/Oficina3D.css';
 import { useAparecer, useSalidaHero, FraseScroll, RompeElNo, Balanza, Cierre, BotonFlotante } from '../components/oficina/Animado';
 import '../components/oficina/Animado.css';
-import { AgentesIlustrados, Cinta, PanelEnVivo, DiaEnLaOficina } from '../components/oficina/Ilustraciones';
+import { AgentesIlustrados, Cinta, PanelEnVivo, DiaEnLaOficina, VideoComercial } from '../components/oficina/Ilustraciones';
 import '../components/oficina/Ilustraciones.css';
 import { CASOS_IA } from '../data/casosIA';
 import { Cuenta } from './CasoIA';
@@ -220,6 +220,7 @@ export default function OficinaIA() {
         <Logos />
         <FraseScroll texto="Cada día tu empresa pierde horas contestando lo mismo, persiguiendo presupuestos y publicando cuando hay tiempo. Una oficina de IA hace ese trabajo por ti. Tú solo decides." destacadas={['oficina', 'IA', 'decides']} />
 
+        <VideoComercial />
         <Cinta filas={[['Contesta presupuestos', 'Hace seguimiento', 'Propone llamadas', 'Escribe el blog', 'Prepara posts de LinkedIn', 'Hace vídeos', 'Programa redes'], ['Publica en Google', 'Atiende a clientes', 'Anota cambios', 'Revisa anuncios', 'Respeta tu tope de gasto', 'Te pide aprobación', 'Lo deja todo en el panel']]} />
         <OficinaInteractiva />
         <PanelEnVivo />
