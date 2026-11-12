@@ -91,3 +91,15 @@
   .fs { height: auto; } .fs-pega { position: static; height: auto; padding-block: 100px; }
   .no-card { position: static; transform: none; filter: none; }
 }
+@media (max-width: 760px) {
+  .fs { height: 200vh; }
+  .fs-txt { font-size: clamp(2.6rem, 11.5vw, 3.6rem); line-height: 1.04; max-width: none; letter-spacing: -.045em; }
+}
+@media (max-width: 760px) {
+  .no-stack { gap: 16px; }
+  .no-card { position: relative !important; top: auto !important; transform: none !important; filter: none !important; }
+  .no-card__in { min-height: 0; padding: 26px 22px; }
+  .no-h2 { font-size: clamp(3.4rem, 17vw, 5rem); }
+  .flota { right: max(16px, env(safe-area-inset-right, 0px)); }
+  .cierre__h { font-size: clamp(3.4rem, 15vw, 5rem); }
+}

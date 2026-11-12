@@ -1,7 +1,6 @@
 import { ArrowRight, Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench, ChevronDown } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
 import { Process, Faq, LeadSection } from '../components/site/Sections';
 import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
@@ -253,7 +252,6 @@ export default function OficinaIA() {
       </main>
       <BotonFlotante />
       <Footer />
-      <AIChatbot />
       <CookieBanner />
     </div>
   );
