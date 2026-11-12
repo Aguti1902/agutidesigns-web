@@ -3,23 +3,21 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
-import { Problems, Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
-import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
+import { Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import useSeo from '../hooks/useSeo';
 const OficinaHero3D = lazy(() => import('../components/oficina/OficinaHero3D'));
+const Oficina3D = lazy(() => import('../components/oficina/Oficina3D'));
+import { AGENTES } from '../components/oficina/agentes';
+import '../components/oficina/Oficina3D.css';
+import { useAparecer, useSalidaHero, FraseScroll, RompeElNo, Balanza, Cierre, BotonFlotante } from '../components/oficina/Animado';
+import '../components/oficina/Animado.css';
 import './OficinaIA.css';
 
 const SEO = {
   title: 'Oficina de IA: agentes de IA para tu empresa | Agutidesigns',
   description: 'Instalamos en tu empresa un equipo de agentes de IA que contestan a tus clientes, hacen tu contenido y vídeos, cuidan tu ficha de Google y te enseñan todo en un panel. Pide una demo.',
 };
-
-const PROBLEMS = [
-  { t: 'Clientes que escriben y nadie les contesta a tiempo', d: 'Piden presupuesto un sábado por la noche y el lunes ya han contratado a otro. Cada respuesta tardía es una venta perdida.' },
-  { t: 'Redes y blog que siempre se quedan para “cuando tenga tiempo”', d: 'Sabes que publicar te trae clientes, pero entre el trabajo del día a día nunca hay hueco para grabar, escribir y programar.' },
-  { t: 'Seguimientos que se olvidan', d: 'Presupuestos enviados sin un segundo correo, clientes que pidieron un cambio y nadie lo apuntó. No es falta de ganas: es falta de manos.' },
-  { t: 'Herramientas sueltas que no hablan entre sí', d: 'Un CRM por aquí, una agenda por allá, hojas de cálculo… y tú en medio, copiando y pegando.' },
-];
 
 const PILLARS = [
   { Icon: Bot, t: 'Agente de ventas', d: 'Contesta a quien pide presupuesto o información, le hace seguimiento por correo y te avisa cuando alguien quiere una llamada.' },
@@ -38,6 +36,30 @@ const PLANES = [
   { id: 'completa', name: 'Oficina completa', setup: 'Desde 12.000', monthly: '990', pitch: 'Para empresas con varias áreas, sedes o equipos que quieren automatizar a fondo.',
     includes: ['Todos los agentes que necesites', 'Integraciones con tus herramientas (CRM, agenda, facturación)', 'Formación para tu equipo', 'Soporte prioritario'] },
 ];
+
+const OBJECIONES = [
+  { pero: 'Es caro', resp: 'Compáralo con las horas que hoy se van en contestar lo mismo, perseguir presupuestos y publicar. Puedes empezar con un solo agente y ampliar solo si te compensa.', si: 'Empiezas por el área que más te duele, sin montar toda la oficina de golpe.', ojo: 'Hay una puesta en marcha y las licencias de IA se pagan aparte, a nombre de tu empresa.' },
+  { pero: 'No me fío de que una IA hable con mis clientes', resp: 'Cada agente trabaja con reglas firmes y tú decides qué sale solo y qué pasa antes por ti. Lo delicado se queda pendiente de tu aprobación.', si: 'Todo queda registrado en el panel: ves qué ha dicho cada agente y a quién.', ojo: 'Al principio conviene revisar más, hasta que veas cómo responde con tus clientes.' },
+  { pero: 'Mi negocio es distinto', resp: 'Por eso no hay plantillas: diseñamos la oficina con tu sector, tu tono y las herramientas que ya usas.', si: 'Los agentes aprenden tu forma de hablar y tus reglas, no las de otro.', ojo: 'No todo se puede automatizar. En la llamada te decimos con claridad qué no tiene sentido en tu caso.' },
+  { pero: 'No tengo tiempo para montarlo', resp: 'Lo instalamos y lo mantenemos nosotros. Tu parte es una llamada de diagnóstico y aprobar qué hará cada agente.', si: 'No tienes que aprender nada técnico: solo mirar el panel.', ojo: 'Necesitamos acceso a tus cuentas (correo, web, redes) con los permisos que tú decidas.' },
+  { pero: '¿Y si se equivoca?', resp: 'Los agentes no dan precios, plazos ni descuentos que no hayas fijado tú, y lo importante pasa por tu aprobación.', si: 'Si algo no te gusta, ajustamos sus reglas y no se repite.', ojo: 'La IA puede equivocarse, como una persona. Por eso lo delicado siempre lo decides tú.' },
+  { pero: 'Mis clientes notarán que es una máquina', resp: 'Los agentes escriben con tu tono y se encargan de lo repetitivo. Lo personal sigue siendo tuyo.', si: 'Tus clientes reciben respuesta antes, también cuando tú no estás.', ojo: 'No sustituye el trato humano en las conversaciones delicadas, y no debería.' },
+  { pero: 'Ya tengo mis herramientas', resp: 'Mejor: los agentes se conectan a lo que ya usas en lugar de obligarte a cambiar.', si: 'No migras nada ni cambias tu forma de trabajar.', ojo: 'Si alguna herramienta no permite conectarse, te lo decimos antes de empezar.' },
+];
+
+const VENTAJAS = ['Trabaja cada día, sin vacaciones ni bajas', 'No se olvida de ningún seguimiento', 'Lo ves todo en un panel, en tiempo real', 'Tú decides qué sale solo y qué revisas', 'Crece contigo: añades agentes cuando quieras', 'Lo usamos cada día en Agutidesigns'];
+const DESVENTAJAS = ['Necesita una puesta en marcha: no es instantáneo', 'Las licencias de IA se pagan aparte', 'Al principio conviene revisar lo que hace', 'No sustituye a las personas en lo delicado', 'Depende de que tus herramientas se puedan conectar'];
+const TABLA = {
+  cols: ['Oficina de IA', 'Contratar a alguien', 'Seguir como ahora'],
+  filas: [
+    ['Coste', 'Puesta en marcha + cuota', 'Sueldo + Seguridad Social', 'Tus horas'],
+    ['Trabaja cada día', true, 'Su jornada', 'Cuando puedes'],
+    ['Vacaciones y bajas', 'No tiene', 'Sí', 'Te toca a ti'],
+    ['Seguimientos sin olvidos', true, 'Depende', false],
+    ['Todo visible en un panel', true, false, false],
+    ['Trato humano en lo delicado', 'Lo haces tú', true, true],
+  ],
+};
 
 const PROCESS = [
   { t: 'Llamada de diagnóstico', d: 'Vemos qué tareas se repiten en tu empresa y cuáles puede llevar ya un agente. Gratis y sin compromiso.' },
@@ -65,17 +87,50 @@ const jsonLd = () => ({
 
 const ROTA = ['contestan a tus clientes', 'siguen cada presupuesto', 'hacen tus vídeos', 'escriben tu blog', 'cuidan tu ficha de Google'];
 
+function OficinaInteractiva() {
+  const [sel, setSel] = useState(0);
+  const elegir = useCallback((i) => setSel(i), []);
+  const a = AGENTES[sel];
+  return (
+    <section className="ag-section ag-section--white" id="oficina-3d">
+      <div className="ag-wrap">
+        <div className="ag-head ag-head--split">
+          <h2 className="ag-h2">Entra en la oficina</h2>
+          <p className="ag-lead">Así trabaja un equipo de agentes de IA: cada uno en su mesa, con su tarea, y todo lo que hacen llega al panel. Gírala y toca a cualquier agente.</p>
+        </div>
+        <div className="o3-grid">
+          <Suspense fallback={<div className="o3-lienzo" />}>
+            <Oficina3D onSelect={elegir} seleccionado={sel} />
+          </Suspense>
+          <aside className="o3-ficha" aria-live="polite">
+            <span className="o3-ficha__tag"><i style={{ background: a.color }} /> Agente de {a.nombre.toLowerCase()}</span>
+            <h3 className="ag-h3">{a.nombre}</h3>
+            <p>{a.que}</p>
+            <ul>{a.tareas.map((t) => <li key={t}>{t}</li>)}</ul>
+            <div className="o3-chips" role="group" aria-label="Elige un agente">
+              {AGENTES.map((x, i) => <button key={x.id} type="button" aria-pressed={i === sel} onClick={() => setSel(i)}><i style={{ background: x.color }} />{x.nombre}</button>)}
+            </div>
+          </aside>
+        </div>
+        <p className="oi-extra">Escena ilustrativa: en tu empresa elegimos juntos qué agentes tiene la oficina.</p>
+      </div>
+    </section>
+  );
+}
+
 function HeroOficina() {
   const [listo, setListo] = useState(false);
   const [i, setI] = useState(0);
   const marcarListo = useCallback(() => setListo(true), []);
+  const hRef = useRef(null);
+  useSalidaHero(hRef);
   useEffect(() => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
     const id = setInterval(() => setI((n) => (n + 1) % ROTA.length), 2600);
     return () => clearInterval(id);
   }, []);
   return (
-    <header className={`oh ${listo ? 'oh--listo' : ''}`}>
+    <header ref={hRef} className={`oh ${listo ? 'oh--listo' : ''}`}>
       <Suspense fallback={null}><OficinaHero3D onListo={marcarListo} /></Suspense>
       <div className="oh-velo" aria-hidden="true" />
       <div className="ag-wrap oh-wrap">
@@ -109,15 +164,17 @@ function HeroOficina() {
 
 export default function OficinaIA() {
   useSeo({ ...SEO, path: '/oficina-ia', image: '/img/og-home.jpg', jsonLd: jsonLd() });
+  const raiz = useRef(null);
+  useAparecer(raiz);
   return (
-    <div className="ag oi-page">
+    <div className="ag oi-page" ref={raiz}>
       <Navbar cta={{ label: 'Pide una demo', href: '#propuesta' }} />
       <main>
         <HeroOficina />
         <div id="agentes-intro" />
+        <FraseScroll texto="Cada día tu empresa pierde horas contestando lo mismo, persiguiendo presupuestos y publicando cuando hay tiempo. Una oficina de IA hace ese trabajo por ti. Tú solo decides." destacadas={['oficina', 'IA', 'decides']} />
 
-
-        <Problems title="Lo que se queda sin hacer en una empresa pequeña" lead="No es falta de ganas: son tareas repetitivas que se comen las horas que necesitas para vender y atender." items={PROBLEMS} photo="reunion" photoAlt="Equipo de una pequeña empresa revisando el trabajo del día" />
+        <OficinaInteractiva />
 
         <Pillars id="agentes" title="Tu oficina de IA, agente a agente" lead="Elige los que necesitas. Cada uno tiene su tarea, sus reglas y su horario, y todos trabajan coordinados." items={PILLARS}>
           <div className="oi-real">
@@ -126,6 +183,9 @@ export default function OficinaIA() {
             <article><Check size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Probado en casa</h3><p>Es el mismo sistema con el que funciona Agutidesigns: lo usamos cada día antes de instalártelo a ti.</p></article>
           </div>
         </Pillars>
+
+        <RompeElNo items={OBJECIONES} />
+        <Balanza ventajas={VENTAJAS} desventajas={DESVENTAJAS} tabla={TABLA} />
 
         <section id="precios" className="ag-section">
           <div className="ag-wrap">
@@ -152,8 +212,10 @@ export default function OficinaIA() {
 
         <Process title="Cómo montamos tu oficina de IA" items={PROCESS} white />
         <Faq items={FAQ} title="Preguntas sobre la Oficina de IA" />
+        <Cierre />
         <LeadSection fuente="landing-oficina-ia" title="Pide una demo de tu oficina de IA" lead="Te enseñamos el panel funcionando y vemos juntos qué agentes tendrían más sentido en tu empresa. 30 minutos, sin compromiso." />
       </main>
+      <BotonFlotante />
       <Footer />
       <AIChatbot />
       <CookieBanner />
