@@ -35,7 +35,7 @@ export default function WebLeadForm({ fuente, ciudad = '', sector = '', title = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...f,
-          fuente,
+          fuente: (() => { try { const q = new URLSearchParams(window.location.search); const src = q.get('utm_source'), med = q.get('utm_medium'); return src ? `${fuente} · ${src}${med ? '-' + med : ''}` : fuente; } catch { return fuente; } })(),
           situacion: [sector && `Sector: ${sector}`, f.mensaje.trim()].filter(Boolean).join(' · '),
         }),
       });
