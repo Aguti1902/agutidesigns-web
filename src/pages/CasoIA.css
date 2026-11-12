@@ -2,17 +2,15 @@
 .cs-hero__in { display: grid; gap: 18px; justify-items: start; }
 .cs-volver { color: #9db8ff; font-size: .9rem; text-decoration: none; }
 .cs-volver::before { content: "← "; }
-.cs-logo { padding: 18px 26px; border-radius: 22px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); animation: oh-in .8s .05s both; }
-.cs-logo img { display: block; height: 64px; width: auto; }
-.cs-logo--osc { background: #fff; }
-.cs-logo--osc img { height: 40px; }
+.cs-logo { height: 70px; display: flex; align-items: center; animation: oh-in .8s .05s both; }
+.cs-logo img { height: 64px; width: auto; max-width: 340px; object-fit: contain; display: block; filter: brightness(0) invert(1); }
 .cs-k { margin: 0; color: #e5fc63; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: .8rem; }
 .cs-h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(2.4rem, 6.4vw, 5.6rem); line-height: .98; letter-spacing: -.045em; max-width: 16ch; text-wrap: balance; animation: oh-in .9s .15s both; }
-.cs-cifras { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
-.cs-cifra { padding: 18px 24px; border-radius: 22px; background: linear-gradient(160deg, #0047ff, #0030b0); display: grid; gap: 4px; min-width: 220px; animation: oh-in .9s .3s both; }
-.cs-cifra:nth-child(2) { background: #e5fc63; color: #050a1f; animation-delay: .42s; }
-.cs-cifra b { font-family: var(--font-display); font-size: clamp(2.4rem, 5vw, 3.8rem); letter-spacing: -.04em; line-height: 1; }
-.cs-cifra span { font-size: .95rem; opacity: .85; }
+.cs-cifras { display: flex; flex-wrap: wrap; gap: 20px 56px; margin-top: 18px; padding-top: 26px; border-top: 1px solid rgba(255,255,255,.14); }
+.cs-cifra { display: grid; gap: 8px; animation: oh-in .9s .3s both; }
+.cs-cifra + .cs-cifra { animation-delay: .45s; }
+.cs .cs-cifra__n { display: block; font-family: var(--font-display); font-weight: 700; font-size: clamp(3.6rem, 9vw, 7.5rem); line-height: .9; letter-spacing: -.05em; white-space: nowrap; background: linear-gradient(100deg, #fff 35%, #e5fc63); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cs-cifra__l { font-size: 1.05rem; color: #c5cdea; }
 .cs-res { margin: 8px 0 0; max-width: 58ch; color: #c5cdea; font-size: 1.1rem; line-height: 1.6; }
 .cs-linea { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; counter-reset: p; }
 .cs-paso { position: relative; padding: 28px; border-radius: 28px; background: #fff; border: 1px solid var(--ag-line); display: grid; gap: 10px; align-content: start; }
@@ -32,3 +30,20 @@
 .cs-web { margin-top: 18px; color: var(--ag-muted); }
 .cs-web a { color: #0047ff; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 .cs-tabla table { min-width: 560px; }
+
+@keyframes oh-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.cs-k--osc { color: #0047ff; }
+.cs-reto__in { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 30px; align-items: start; }
+.cs-reto__txt { display: grid; gap: 22px; max-width: 760px; }
+.cs-reto__txt p { margin: 0; font-family: var(--font-display); font-size: clamp(1.3rem, 2.3vw, 1.9rem); line-height: 1.35; letter-spacing: -.02em; color: #1d1d1f; font-weight: 500; }
+.cs-reto__txt p:first-child { font-weight: 700; }
+.cs-camb .cs-reto__txt p:last-child { font-weight: 700; color: #0047ff; }
+@media (max-width: 760px) { .cs-reto__in { grid-template-columns: 1fr; gap: 14px; } }
+.cs-ags { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cs-ag { padding: 26px; border-radius: 24px; background: #f5f5f7; display: grid; gap: 8px; align-content: start; transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.cs-ag:hover { transform: translateY(-5px); }
+.cs-ag__n { font-size: .8rem; font-weight: 700; color: #0047ff; letter-spacing: .1em; }
+.cs-ag h3 { margin: 0; font-family: var(--font-display); font-size: 1.35rem; letter-spacing: -.02em; }
+.cs-ag p { margin: 0; color: #424245; line-height: 1.55; }
+.cs-paso:nth-child(3) { background: #fff; color: #1d1d1f; border: 1px solid var(--ag-line); }
+.cs-paso:nth-child(3) .cs-paso__k { color: #0047ff; }

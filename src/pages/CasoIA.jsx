@@ -44,19 +44,27 @@ function CasoIA({ caso }) {
     <div className="ag oi-page cs" ref={raiz}>
       <Navbar minimal cta={{ label: 'Quiero mi oficina de IA', href: '/oficina-ia#propuesta' }} />
       <main>
-        <header className="cs-hero">
+        <header className="cs-hero" style={{ background: caso.hero }}>
           <div className="ag-wrap cs-hero__in">
             <a className="cs-volver" href="/oficina-ia">Oficina de IA</a>
-            <div className={`cs-logo ${caso.logoClaro ? '' : 'cs-logo--osc'}`}><img src={caso.logo} alt={caso.nombre} width="400" height="150" /></div>
+            <div className="cs-logo"><img src={caso.logo} alt={caso.nombre} width="400" height="150" /></div>
             <p className="cs-k">Caso de éxito · {caso.sector}</p>
             <h1 className="cs-h1">{caso.titular}</h1>
             <div className="cs-cifras">
-              <div className="cs-cifra"><b><Cuenta {...caso.cifra} /></b><span>{caso.cifra.l}</span></div>
-              {caso.cifra2 && <div className="cs-cifra"><b><Cuenta {...caso.cifra2} /></b><span>{caso.cifra2.l}</span></div>}
+              {[caso.cifra, caso.cifra2].filter(Boolean).map((c) => (
+                <div key={c.l} className="cs-cifra"><span className="cs-cifra__n"><Cuenta {...c} /></span><span className="cs-cifra__l">{c.l}</span></div>
+              ))}
             </div>
             <p className="cs-res">{caso.resumen}</p>
           </div>
         </header>
+
+        <section className="ag-section ag-section--white cs-reto">
+          <div className="ag-wrap cs-reto__in">
+            <p className="cs-k cs-k--osc">El reto</p>
+            <div className="cs-reto__txt">{caso.reto.map((t) => <p key={t}>{t}</p>)}</div>
+          </div>
+        </section>
 
         <section className="ag-section cs-hist">
           <div className="ag-wrap">
@@ -73,7 +81,18 @@ function CasoIA({ caso }) {
           </div>
         </section>
 
-        <section className="cs-ofi">
+        <section className="ag-section ag-section--white">
+          <div className="ag-wrap">
+            <div className="ag-head ag-head--split"><h2 className="ag-h2">Lo que le montamos</h2><p className="ag-lead">Las piezas de su oficina de IA, una a una.</p></div>
+            <div className="cs-ags">
+              {caso.agentes.map((a, i) => (
+                <article key={a.t} className="cs-ag"><span className="cs-ag__n">{String(i + 1).padStart(2, '0')}</span><h3>{a.t}</h3><p>{a.d}</p></article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="cs-ofi" style={{ background: caso.hero }}>
           <div className="ag-wrap">
             <div className="cs-ofi__head">
               <p className="cs-k">{bloque ? 'Su bloque de oficinas' : 'Su oficina de IA'}</p>
@@ -82,6 +101,13 @@ function CasoIA({ caso }) {
             </div>
             <Suspense fallback={<div className="oc-lienzo" />}><OficinasCaso caso={caso} /></Suspense>
             <p className="cs-nota">Representación ilustrativa de la oficina de IA. Los nombres de los agentes y sus mensajes son de ejemplo.</p>
+          </div>
+        </section>
+
+        <section className="ag-section cs-camb">
+          <div className="ag-wrap cs-reto__in">
+            <p className="cs-k cs-k--osc">Lo que ha cambiado</p>
+            <div className="cs-reto__txt">{caso.cambios.map((t) => <p key={t}>{t}</p>)}</div>
           </div>
         </section>
 

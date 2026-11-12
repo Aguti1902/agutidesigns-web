@@ -117,22 +117,45 @@ export function Cinta({ filas }) {
   );
 }
 
-/* ---------- El panel que se levanta al hacer scroll ---------- */
+/* ---------- El panel que se levanta al hacer scroll: estadísticas animadas ---------- */
 const FEED = [
   ['Ventas', 'Ha contestado a una petición de presupuesto', B],
   ['Contenido', 'Artículo del blog listo para revisar', '#0a8f5a'],
   ['Vídeos', 'Vídeos de mañana programados', '#e2553f'],
   ['Google Business', 'Publicación nueva en la ficha', '#c98a00'],
-  ['Clientes', 'Ha respondido una duda y anotado un cambio', '#6a4bd8'],
+  ['Clientes', 'Ha respondido una duda y anotado un cambio', '#8a6bff'],
   ['Publicidad', 'Campañas revisadas dentro del tope', '#1a9bb0'],
 ];
+const SEMANA = [38, 52, 47, 66, 74, 61, 88];
+const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const REPARTO = [['Ventas', 34, '#3d7bff'], ['Contenido', 22, '#3ee0a1'], ['Vídeos', 18, '#ff7a68'], ['Clientes', 14, '#b48cff'], ['Google', 12, '#ffc65c']];
+const AG_ESTADO = [['Ventas', 'Trabajando', 82, '#3d7bff'], ['Vídeos', 'Trabajando', 64, '#ff7a68'], ['Contenido', 'En cola', 40, '#3ee0a1'], ['Clientes', 'Trabajando', 71, '#b48cff']];
+
+function usaVisible(ref) {
+  const [v, setV] = useState(false);
+  useEffect(() => { const el = ref.current; if (!el) return undefined; const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setV(true); io.disconnect(); } }, { threshold: 0.25 }); io.observe(el); return () => io.disconnect(); }, [ref]);
+  return v;
+}
+function Contador({ v, on, suf = '' }) {
+  const [n, setN] = useState(0);
+  useEffect(() => { if (!on) return undefined; let raf = 0; const t0 = performance.now(); const paso = (t) => { const k = Math.min(1, (t - t0) / 1500); setN(Math.round(v * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(paso); }; raf = requestAnimationFrame(paso); return () => cancelAnimationFrame(raf); }, [on, v]);
+  return <>{n.toLocaleString('es-ES')}{suf}</>;
+}
 export function PanelEnVivo() {
-  const ref = useRef(null);
+  const ref = useRef(null), disp = useRef(null);
   const p = useProgreso(ref);
+  const on = usaVisible(disp);
   const [n, setN] = useState(3);
-  useEffect(() => { const id = setInterval(() => setN((x) => x + 1), 2200); return () => clearInterval(id); }, []);
+  useEffect(() => { const id = setInterval(() => setN((x) => x + 1), 2400); return () => clearInterval(id); }, []);
   const vis = Array.from({ length: 4 }, (_, k) => FEED[(n - k + FEED.length * 10) % FEED.length]);
   const e = Math.min(1, p * 1.6);
+  // gráfica de área
+  const W = 520, H = 170, mx = Math.max(...SEMANA) * 1.15;
+  const pts = SEMANA.map((v, i) => [12 + (i * (W - 24)) / (SEMANA.length - 1), H - 14 - (v / mx) * (H - 34)]);
+  const linea = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  const area = `${linea} L${pts[pts.length - 1][0]} ${H} L${pts[0][0]} ${H} Z`;
+  // donut
+  let acc = 0; const R = 54, C = 2 * Math.PI * R;
   return (
     <section ref={ref} className="pv">
       <div className="pv-pega">
@@ -141,26 +164,64 @@ export function PanelEnVivo() {
             <p className="pv-k">Tu panel</p>
             <h2 className="pv-h">Todo lo que hacen,<br /><span>en una sola pantalla.</span></h2>
           </div>
-          <div className="pv-disp" style={{ transform: `perspective(1400px) rotateX(${(1 - e) * 32}deg) scale(${0.86 + e * 0.14}) translateY(${(1 - e) * 40}px)`, opacity: 0.35 + e * 0.65 }}>
-            <div className="pv-bar"><i /><i /><i /><b>Panel de la oficina</b><span className="pv-live">En marcha</span></div>
-            <div className="pv-cuerpo">
-              <aside className="pv-lado">
-                {['Hoy', 'Agentes', 'Aprobaciones', 'Vídeos', 'Contenido', 'Leads'].map((t, i) => <span key={t} className={i === 0 ? 'on' : ''}>{t}</span>)}
-              </aside>
-              <div className="pv-main">
-                <div className="pv-kpis">
-                  {[['Agentes trabajando', '4 / 6'], ['Pendiente de tu OK', '2'], ['Hecho hoy', '✓']].map(([k, v]) => <div key={k} className="pv-kpi"><span>{k}</span><b>{v}</b></div>)}
+          <div ref={disp} className={`pv-disp ${on ? 'is-on' : ''}`} style={{ transform: `perspective(1400px) rotateX(${(1 - e) * 30}deg) scale(${0.86 + e * 0.14}) translateY(${(1 - e) * 40}px)`, opacity: 0.35 + e * 0.65 }}>
+            <div className="pv-bar"><i /><i /><i /><b>Panel de la oficina</b><span className="pv-tabs"><em className="on">Hoy</em><em>Semana</em><em>Mes</em></span><span className="pv-live">En marcha</span></div>
+            <div className="pv-dash">
+              <div className="pv-kpis">
+                {[['Tareas hechas esta semana', 426, '', '+18 %', '#3d7bff'], ['Respuestas a clientes', 128, '', '+24 %', '#3ee0a1'], ['Contenidos publicados', 21, '', '+3', '#ff7a68'], ['Horas que te ahorra', 37, ' h', 'esta semana', '#e5fc63']].map(([k, v, suf, d, c], i) => (
+                  <div key={k} className="pv-kpi" style={{ '--c': c, '--i': i }}>
+                    <span>{k}</span>
+                    <b><Contador v={v} on={on} suf={suf} /></b>
+                    <small>{d}</small>
+                    <svg viewBox="0 0 100 26" className="pv-spark" aria-hidden="true"><polyline points={[0, 18, 14, 20, 28, 12, 42, 15, 56, 8, 70, 11, 84, 4, 100, 6].join(',')} fill="none" stroke={c} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" /></svg>
+                  </div>
+                ))}
+              </div>
+              <div className="pv-graf">
+                <div className="pv-card pv-card--area">
+                  <div className="pv-card__h"><b>Actividad de la semana</b><span>tareas al día</span></div>
+                  <svg viewBox={`0 0 ${W} ${H}`} className="pv-area" aria-hidden="true">
+                    <defs><linearGradient id="pv-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3d7bff" stopOpacity=".55" /><stop offset="1" stopColor="#3d7bff" stopOpacity="0" /></linearGradient></defs>
+                    {[0.25, 0.5, 0.75].map((f) => <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="#1d2a5e" strokeDasharray="3 5" />)}
+                    <path d={area} fill="url(#pv-g)" className="pv-area__fill" />
+                    <path d={linea} fill="none" stroke="#7aa0ff" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" className="pv-area__line" pathLength="1" />
+                    {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i === pts.length - 1 ? 6 : 3.5} fill={i === pts.length - 1 ? '#e5fc63' : '#7aa0ff'} className="pv-area__pt" style={{ '--i': i }} />)}
+                  </svg>
+                  <div className="pv-dias">{DIAS.map((d) => <span key={d}>{d}</span>)}</div>
                 </div>
-                <ul className="pv-feed">
-                  {vis.map(([a, t, c], k) => (
-                    <li key={`${n}-${k}`} className={k === 0 ? 'nuevo' : ''}><span className="pv-dot" style={{ background: c }} /><span className="pv-a">{a}</span><span className="pv-t">{t}</span><span className="pv-ok"><Check size={14} /></span></li>
-                  ))}
-                </ul>
-                <div className="pv-apr"><span>¿Publicamos el artículo de hoy?</span><span className="pv-btns"><em>Revisar</em><b>Aprobar</b></span></div>
+                <div className="pv-card pv-card--donut">
+                  <div className="pv-card__h"><b>Trabajo por agente</b></div>
+                  <div className="pv-donut">
+                    <svg viewBox="0 0 140 140" aria-hidden="true">
+                      <circle cx="70" cy="70" r={R} fill="none" stroke="#16224f" strokeWidth="16" />
+                      {REPARTO.map(([k, v, c], i) => { const len = (v / 100) * C, off = acc; acc += len; return <circle key={k} cx="70" cy="70" r={R} fill="none" stroke={c} strokeWidth="16" strokeDasharray={`${on ? len - 2 : 0} ${C}`} strokeDashoffset={-off} transform="rotate(-90 70 70)" style={{ transition: `stroke-dasharray 1.2s cubic-bezier(.2,.8,.2,1) ${0.2 + i * 0.15}s` }} />; })}
+                      <text x="70" y="66" textAnchor="middle" className="pv-donut__n">6</text>
+                      <text x="70" y="86" textAnchor="middle" className="pv-donut__l">agentes</text>
+                    </svg>
+                    <ul>{REPARTO.map(([k, v, c]) => <li key={k}><i style={{ background: c }} />{k}<b>{v} %</b></li>)}</ul>
+                  </div>
+                </div>
+              </div>
+              <div className="pv-bajo">
+                <div className="pv-card">
+                  <div className="pv-card__h"><b>Agentes ahora</b><span>4 de 6 trabajando</span></div>
+                  <ul className="pv-est">
+                    {AG_ESTADO.map(([a, st, v, c], i) => <li key={a}><span className="pv-est__a"><i style={{ background: c }} />{a}</span><span className="pv-est__b"><span style={{ width: on ? `${v}%` : 0, background: c, transitionDelay: `${0.3 + i * 0.12}s` }} /></span><em className={st === 'Trabajando' ? 'w' : ''}>{st}</em></li>)}
+                  </ul>
+                </div>
+                <div className="pv-card">
+                  <div className="pv-card__h"><b>Lo último</b><span>en directo</span></div>
+                  <ul className="pv-feed">
+                    {vis.map(([a, t, c], k) => (
+                      <li key={`${n}-${k}`} className={k === 0 ? 'nuevo' : ''}><span className="pv-dot" style={{ background: c }} /><span className="pv-a">{a}</span><span className="pv-t">{t}</span><span className="pv-ok"><Check size={13} /></span></li>
+                    ))}
+                  </ul>
+                  <div className="pv-apr"><span>¿Publicamos el artículo de hoy?</span><span className="pv-btns"><em>Revisar</em><b>Aprobar</b></span></div>
+                </div>
               </div>
             </div>
           </div>
-          <p className="pv-nota">Ilustración del panel. Cada empresa tiene el suyo, con sus agentes.</p>
+          <p className="pv-nota">Ilustración del panel con datos de ejemplo. Cada empresa tiene el suyo, con sus agentes.</p>
         </div>
       </div>
     </section>
@@ -210,6 +271,8 @@ export function DiaEnLaOficina() {
 export function VideoComercial() {
   const ref = useRef(null), vid = useRef(null);
   const p = useProgreso(ref);
+  const [mudo, setMudo] = useState(true);
+  const sonido = () => { const v = vid.current; if (!v) return; v.muted = !v.muted; if (!v.muted) { v.currentTime = 0; v.play?.().catch(() => {}); } setMudo(v.muted); };
   useEffect(() => {
     const v = vid.current; if (!v) return undefined;
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play?.().catch(() => {}); else v.pause?.(); }, { threshold: 0.35 });
@@ -225,7 +288,8 @@ export function VideoComercial() {
             <h2 className="pv-h">Mira tu oficina de IA<br /><span>funcionando.</span></h2>
           </div>
           <div className="vc-marco" style={{ transform: `scale(${0.78 + e * 0.22})`, borderRadius: `${36 - e * 12}px` }}>
-            <video ref={vid} src="/video/oficina-ia.mp4" poster="/video/oficina-ia-poster.jpg" muted loop playsInline controls preload="metadata" aria-label="Vídeo: qué es una oficina de IA y casos de éxito" />
+            <video ref={vid} src="/video/oficina-ia.mp4" poster="/video/oficina-ia-poster.jpg" muted loop playsInline controls preload="metadata" aria-label="Vídeo: qué es una oficina de IA y casos de éxito" onVolumeChange={(e) => setMudo(e.currentTarget.muted)} />
+            {mudo && <button type="button" className="vc-sonido" onClick={sonido}><span aria-hidden="true">🔊</span> Activar sonido</button>}
           </div>
         </div>
       </div>

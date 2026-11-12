@@ -11,7 +11,7 @@ function tex(w, h, draw) {
 function etiqueta(texto, sub, color) {
   const { t } = tex(1024, 220, (g, w, h) => {
     g.font = '800 64px Inter,Arial'; const tw = Math.max(g.measureText(texto).width, 300); const bw = Math.min(w - 20, tw + 120), x = (w - bw) / 2;
-    g.fillStyle = 'rgba(5,10,31,.92)'; g.beginPath(); g.roundRect ? g.roundRect(x, 20, bw, 170, 40) : g.rect(x, 20, bw, 170); g.fill();
+    g.fillStyle = 'rgba(22,24,29,.94)'; g.beginPath(); g.roundRect ? g.roundRect(x, 20, bw, 170, 40) : g.rect(x, 20, bw, 170); g.fill();
     g.strokeStyle = color; g.lineWidth = 6; g.stroke();
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, w / 2, 82);
     g.fillStyle = color; g.font = '600 40px Inter,Arial'; g.fillText(sub, w / 2, 146);
@@ -32,24 +32,24 @@ export function montarEdificio(host, { oficinas, centro, onEntrar, quieto = fals
   Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 90 }); sun.shadow.bias = -0.0006; scene.add(sun);
   const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, metalness: 0.05, ...o });
   const box = (w, h, d, m, x, y, z, p = scene, sh = true) => { const k = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); k.position.set(x, y, z); k.castShadow = sh; k.receiveShadow = true; p.add(k); return k; };
-  const mDark = M(0x1a2244, { metalness: 0.3, roughness: 0.6 }), mWhite = M(0xf6f8fc, { roughness: 0.4 }), mBlack = M(0x0a0d18), mWall = M(0x0b1433, { roughness: 0.9 });
+  const mDark = M(0x1a2244, { metalness: 0.3, roughness: 0.6 }), mWhite = M(0xf6f8fc, { roughness: 0.4 }), mBlack = M(0x0a0d18), mWall = M(0x16181d, { roughness: 0.9 });
   const mGlass = new THREE.MeshStandardMaterial({ color: 0xb9d0ff, roughness: 0.05, transparent: true, opacity: 0.2, depthWrite: false });
 
   // base del bloque
-  box(42, 0.6, 42, M(0x0b1433), 0, -0.31, 0); const suelo = box(41, 0.06, 41, M(0xe9ecf3, { roughness: 0.55 }), 0, 0, 0); suelo.castShadow = false;
+  box(42, 0.6, 42, M(0x16181d), 0, -0.31, 0); const suelo = box(41, 0.06, 41, M(0xf4f5f7, { roughness: 0.35 }), 0, 0, 0); suelo.castShadow = false;
   // caminos hacia el centro
-  const mCam = M(0xd5dcef, { roughness: 0.8 });
+  const mCam = M(0xe2e4e9, { roughness: 0.8 });
   box(41, 0.02, 2.2, mCam, 0, 0.04, 0, scene, false); box(2.2, 0.02, 41, mCam, 0, 0.04, 0, scene, false);
 
   // torre central: panel único
   const torre = new THREE.Group(); scene.add(torre);
-  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.6, 0.5, 48), M(0x0047ff, { roughness: 0.45 })); cyl.position.y = 0.25; cyl.receiveShadow = true; torre.add(cyl);
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.6, 0.5, 48), M(0x16181d, { roughness: 0.45 })); cyl.position.y = 0.25; cyl.receiveShadow = true; torre.add(cyl);
   box(0.4, 3.4, 0.4, mDark, 0, 1.9, 0, torre);
   const pant = tex(1024, 640, () => {}); const drawPant = (tt) => {
-    const { g } = pant, w = 1024, h = 640; const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#071034'); gr.addColorStop(1, '#0a1f6e'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    const { g } = pant, w = 1024, h = 640; const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#16181d'); gr.addColorStop(1, '#2a2d35'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
     g.fillStyle = '#e5fc63'; g.beginPath(); g.arc(56, 62, 12, 0, 7); g.fill(); g.fillStyle = '#cfd8ff'; g.font = '600 34px Inter,Arial'; g.textBaseline = 'middle'; g.fillText(centro.titulo, 84, 64);
     g.fillStyle = '#fff'; g.font = '800 74px Inter,Arial'; g.fillText(centro.dominio, 50, 160);
-    oficinas.forEach((o, i) => { const y = 260 + i * 86; g.fillStyle = '#0b1847'; g.fillRect(50, y, w - 100, 70); g.fillStyle = o.color; g.fillRect(50, y, 10, 70);
+    oficinas.forEach((o, i) => { const y = 260 + i * 86; g.fillStyle = '#23262e'; g.fillRect(50, y, w - 100, 70); g.fillStyle = o.color; g.fillRect(50, y, 10, 70);
       g.fillStyle = '#fff'; g.font = '600 32px Inter,Arial'; g.fillText(o.nombre, 84, y + 36);
       const on = Math.sin(tt * 1.3 + i * 1.7) > -0.2; g.fillStyle = on ? '#e5fc63' : '#7aa0ff'; g.font = '600 26px Inter,Arial'; g.textAlign = 'right'; g.fillText(on ? 'Agentes trabajando' : 'En la oficina', w - 76, y + 36); g.textAlign = 'left'; });
     pant.t.needsUpdate = true; };
@@ -57,7 +57,7 @@ export function montarEdificio(host, { oficinas, centro, onEntrar, quieto = fals
   box(5.6, 3.6, 0.2, mBlack, 0, 5.2, 0, torre);
   const scr1 = new THREE.Mesh(new THREE.PlaneGeometry(5.3, 3.3), new THREE.MeshBasicMaterial({ map: pant.t })); scr1.position.set(0, 5.2, 0.11); torre.add(scr1);
   const scr2 = scr1.clone(); scr2.position.z = -0.11; scr2.rotation.y = Math.PI; torre.add(scr2);
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.08, 8, 64), new THREE.MeshBasicMaterial({ color: 0xe5fc63 })); halo.rotation.x = Math.PI / 2; halo.position.y = 0.55; torre.add(halo);
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.08, 8, 64), new THREE.MeshBasicMaterial({ color: 0xffffff })); halo.rotation.x = Math.PI / 2; halo.position.y = 0.55; torre.add(halo);
 
   // oficinas
   const pos = [[-10.5, -10.5], [10.5, -10.5], [-10.5, 10.5], [10.5, 10.5]];

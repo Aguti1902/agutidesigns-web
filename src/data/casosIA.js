@@ -12,9 +12,27 @@ export const SPA = {
   url: 'https://spaorganic.es',
   logo: '/img/logo-spaorganic.webp',
   logoClaro: true,
+  fondo: 'radial-gradient(90% 80% at 50% 30%, #3a4034 0%, #1b1d19 75%)',
+  hero: 'radial-gradient(80% 90% at 70% 0%, #3d4436 0%, #161814 70%)',
   titular: 'Estaba a punto de cerrar. Hoy factura más del doble.',
   cifra: { v: 120, pre: '+', suf: ' %', l: 'de facturación en 3 meses' },
   resumen: 'Spa Organic tenía un buen servicio, pero muy pocos clientes nuevos y una web que casi nadie encontraba. Le montamos una empresa con empleados digitales y en 3 meses su facturación creció más de un 120 %.',
+  reto: [
+    'Spa Organic es un centro de salud capilar en Castelldefels con tratamientos orgánicos y un trato muy cuidado. El problema no era el servicio: era que casi nadie lo conocía.',
+    'Su web apenas aparecía cuando alguien buscaba un tratamiento capilar en la zona, las consultas llegaban con cuentagotas y muchas se contestaban tarde, cuando había un hueco entre cliente y cliente. Sin clientes nuevos, el negocio estaba a punto de cerrar.',
+  ],
+  agentes: [
+    { t: 'Agente de reservas', d: 'Contesta cada consulta que llega desde la web, resuelve las dudas sobre los tratamientos y propone una cita.' },
+    { t: 'Agente de contenido', d: 'Escribe artículos sobre salud capilar que responden a lo que la gente busca en Google, con el tono de Spa Organic.' },
+    { t: 'Agente de Google', d: 'Mantiene viva la ficha de Google con publicaciones regulares para que el centro aparezca en las búsquedas de la zona.' },
+    { t: 'Agente de seguimiento', d: 'Recuerda las citas, vuelve a contactar a quien preguntó y no reservó, y avisa cuando toca el siguiente tratamiento.' },
+    { t: 'Panel de dirección', d: 'Todo lo que hacen los agentes se ve en un panel, y lo delicado espera la aprobación de Spa Organic.' },
+  ],
+  cambios: [
+    'Lo primero que cambió fue la visibilidad: con contenido nuevo cada semana y la ficha de Google cuidada, Spa Organic empezó a aparecer donde sus clientes la buscaban.',
+    'Lo segundo, la respuesta: ninguna consulta se queda esperando. Los agentes contestan, proponen cita y hacen el seguimiento, y el equipo del centro se dedica a lo que mejor sabe hacer, cuidar a sus clientes.',
+    'El resultado, en solo tres meses: la facturación creció más de un 120 %. Un negocio que estaba a punto de cerrar hoy factura más del doble.',
+  ],
   historia: [
     { k: 'Antes', t: 'A punto de bajar la persiana', d: 'Faltaba clientela y la web no se veía: casi nadie llegaba a Spa Organic desde internet, y sin clientes nuevos el negocio no se sostenía.' },
     { k: 'Lo que montamos', t: 'Una empresa con empleados digitales', d: 'Una oficina de IA con agentes que atienden cada consulta de la web, publican contenido, cuidan su presencia en Google y hacen el seguimiento de cada cliente, todo visible en un panel.' },
@@ -27,6 +45,7 @@ export const SPA = {
     { k: 'Seguimiento', a: 'A mano, si se acordaban', d: 'Recordatorios y seguimiento automáticos' },
   ],
   marca: {
+    tema: 'spa', ventana: 0xcfe0c4, inicial: 'S', acentoCss: '#e3d3b5', pantallaA: '#2b2f2a', pantallaB: '#5f6b48', codigo: ['#e3d3b5', '#a7b98a', '#ffffff', '#c7865b', '#d9c09a'],
     placa: 'SPA ORGANIC', ceo: 'Dirección', logo: '/img/logo-spaorganic.webp', lema: 'SALUD CAPILAR · CASTELLDEFELS', pantalla: 'SPA ORGANIC · EN DIRECTO',
     pizarra: ['Hoy en el spa', '+ visibilidad = + reservas'], nombres: NOMBRES_SPA,
     deptos: { direccion: 'Dirección', ventas: 'Reservas', marketing: 'Marketing', clientes: 'Clientes', finanzas: 'Gestión' },
@@ -69,7 +88,7 @@ const CHARLA_ESTETICA = [
 ];
 const neg = (i, nombre, corto, tipo, color, lema, charla) => ({
   nombre, corto, tipo, color,
-  marca: { placa: corto.toUpperCase(), ceo: 'Dirección', logo: '/img/logo-velasegala.webp', lema, pantalla: `${corto.toUpperCase()} · EN DIRECTO`, pizarra: ['Hoy en el centro', '+ citas = + pacientes'], nombres: NOMBRES[i],
+  marca: { tema: 'clinica', acento: parseInt(color.slice(1), 16), acentoCss: color, inicial: 'V', pantallaA: '#16181d', pantallaB: color, placa: corto.toUpperCase(), ceo: 'Dirección', logo: '/img/logo-velasegala.webp', lema, pantalla: `${corto.toUpperCase()} · EN DIRECTO`, pizarra: ['Hoy en el centro', '+ citas = + pacientes'], nombres: NOMBRES[i],
     deptos: { direccion: 'Dirección', ventas: 'Citas', marketing: 'Marketing', clientes: tipo === 'Clínica dental' ? 'Pacientes' : 'Clientas', finanzas: 'Gestión' }, charla },
 });
 
@@ -81,10 +100,29 @@ export const VELA_IA = {
   url: 'https://velasegala.com',
   logo: '/img/logo-velasegala.webp',
   logoClaro: false,
+  fondo: 'radial-gradient(90% 80% at 50% 30%, #2e3138 0%, #0d0e11 75%)',
+  hero: 'radial-gradient(80% 90% at 70% 0%, #2c2f36 0%, #0b0c0f 70%)',
   titular: 'Cuatro negocios, cuatro webs. Ahora, una sola oficina.',
   cifra: { v: 20000, pre: '+', suf: ' €', l: 'facturados en 3 meses' },
   cifra2: { v: 80, pre: '+', suf: ' %', l: 'de facturación' },
   resumen: 'Vela-Segalà tenía cuatro negocios con cuatro webs distintas: dos clínicas dentales y dos centros de estética. Las unificamos y le pusimos a cada negocio su propia oficina de IA, todas conectadas a un mismo panel.',
+  reto: [
+    'Clínicas Vela-Segalà son dos clínicas dentales, en Viladecans y Sant Celoni, y dos centros de estética. Un equipo de referencia en implantología y estética dental, con cuatro negocios que funcionaban cada uno por su lado.',
+    'Cada negocio tenía su propia web: cuatro sitios distintos que mantener, cuatro formas diferentes de pedir cita y cuatro bandejas de entrada. Las citas solo se pedían por teléfono y en horario de clínica, y las consultas que llegaban fuera de horario se quedaban sin contestar.',
+  ],
+  agentes: [
+    { t: 'Una sola web', d: 'Unificamos las cuatro webs en velasegala.com: una marca, cuatro negocios y una forma clara de pedir cita en cada uno.' },
+    { t: 'Una oficina por negocio', d: 'Cada clínica y cada centro de estética tiene su propia oficina de IA, con agentes que conocen sus tratamientos y su agenda.' },
+    { t: 'Citas a cualquier hora', d: 'Los pacientes piden cita por la web y por WhatsApp, también fuera del horario de la clínica.' },
+    { t: 'Asistente IA', d: 'Responde al momento las consultas sobre tratamientos y deja cada petición en el negocio que le toca.' },
+    { t: 'Recordatorios automáticos', d: 'Antes de cada cita, el paciente recibe su recordatorio sin que nadie tenga que hacerlo a mano.' },
+    { t: 'Un panel único', d: 'La dirección ve en un solo panel lo que pasa en los cuatro negocios.' },
+  ],
+  cambios: [
+    'Con todo unificado, Vela-Segalà dejó de gestionar cuatro webs por separado y pasó a ver sus cuatro negocios en un mismo sitio.',
+    'Las citas ya no dependen del teléfono ni del horario: se piden a cualquier hora, el asistente responde al momento y los recordatorios salen solos. Además, la clínica aparece en las búsquedas locales de Google.',
+    'En tres meses, más de 20.000 € facturados y un 80 % más de facturación.',
+  ],
   historia: [
     { k: 'Antes', t: 'Cuatro webs que no hablaban entre sí', d: 'Dos webs para sus clínicas dentales y dos para sus centros de estética: cuatro sitios que mantener, cuatro formas de pedir cita y ninguna visión de conjunto.' },
     { k: 'Lo que montamos', t: 'Una web, cuatro oficinas, un panel', d: 'Unificamos las cuatro webs en una sola y cada negocio tiene su oficina de IA: atienden las peticiones de cita, envían recordatorios y responden al momento. Todo se ve desde un panel único.' },

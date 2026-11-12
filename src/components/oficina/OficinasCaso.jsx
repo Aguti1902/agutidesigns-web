@@ -7,7 +7,7 @@ import { montarEdificio } from './edificio';
 
 const reduce = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function OficinaMarca({ marca, titulo, color = '#e5fc63' }) {
+export function OficinaMarca({ marca, titulo, color = '#e5fc63', fondo }) {
   const ref = useRef(null), ctl = useRef(null);
   useEffect(() => {
     const host = ref.current; if (!host) return undefined;
@@ -17,7 +17,7 @@ export function OficinaMarca({ marca, titulo, color = '#e5fc63' }) {
     return () => off?.();
   }, [marca]);
   return (
-    <div className="oc-lienzo" ref={ref}>
+    <div className="oc-lienzo" ref={ref} style={fondo ? { background: fondo } : undefined}>
       <div className="oc-hud">
         <span className="oc-pill"><i style={{ background: color }} />{titulo}</span>
         <span className="oc-ctl"><button type="button" aria-label="Acercar" onClick={() => ctl.current?.zoom?.(-1)}><Plus size={16} /></button><button type="button" aria-label="Alejar" onClick={() => ctl.current?.zoom?.(1)}><Minus size={16} /></button></span>
@@ -47,11 +47,11 @@ export function BloqueOficinas({ caso }) {
       </div>
       {o ? (
         <div className="bq-dentro" key={dentro}>
-          <OficinaMarca marca={o.marca} titulo={`${o.nombre} · ${o.tipo}`} color={o.color} />
+          <OficinaMarca marca={o.marca} titulo={`${o.nombre} · ${o.tipo}`} color={o.color} fondo={caso.fondo} />
           <button type="button" className="bq-volver" onClick={() => setDentro(-1)}><ArrowLeft size={16} /> Volver al bloque</button>
         </div>
       ) : (
-        <div className="oc-lienzo oc-lienzo--bloque" ref={ref}>
+        <div className="oc-lienzo oc-lienzo--bloque" ref={ref} style={{ background: caso.fondo }}>
           <div className="oc-hud">
             <span className="oc-pill"><i style={{ background: '#e5fc63' }} />4 negocios · 4 oficinas · 1 panel</span>
             <span className="oc-ctl"><button type="button" aria-label="Acercar" onClick={() => ctl.current?.zoom?.(-1)}><Plus size={16} /></button><button type="button" aria-label="Alejar" onClick={() => ctl.current?.zoom?.(1)}><Minus size={16} /></button></span>
