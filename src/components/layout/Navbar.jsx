@@ -11,7 +11,7 @@ const LINKS = [
 ];
 
 /** Navegación común de la web pública. `cta` opcional: { label, href }. */
-export default function Navbar({ cta }) {
+export default function Navbar({ cta, minimal = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const path = typeof window !== 'undefined' ? window.location.pathname : '/';
@@ -49,25 +49,25 @@ export default function Navbar({ cta }) {
   const actionHref = action.href;
 
   return (
-    <header className={`nav ${scrolled ? 'nav--scrolled' : ''}`}>
+    <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${minimal ? 'nav--minimal' : ''}`}>
       <div className="nav__inner">
         <a href="/" className="nav__logo" aria-label="Agutidesigns, ir al inicio">
           <img src="/images/logoazul.png" alt="Agutidesigns" width="120" height="33" />
         </a>
-        <nav className="nav__links" aria-label="Principal">
+        {!minimal && <nav className="nav__links" aria-label="Principal">
           {LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={(e) => go(e, l.href)} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a>
           ))}
-        </nav>
+        </nav>}
         <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary ag-btn--sm nav__cta">{action.label}</a>
-        <button className="nav__toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? 'Cerrar menú' : 'Abrir menú'}>
+        {!minimal && <button className="nav__toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? 'Cerrar menú' : 'Abrir menú'}>
           {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        </button>}
       </div>
-      <div id="nav-mobile" className={`nav__mobile ${open ? 'is-open' : ''}`} hidden={!open}>
+      {!minimal && <div id="nav-mobile" className={`nav__mobile ${open ? 'is-open' : ''}`} hidden={!open}>
         {LINKS.map((l) => <a key={l.href} href={l.href} onClick={(e) => go(e, l.href)}>{l.label}</a>)}
         <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary">{action.label}</a>
-      </div>
+      </div>}
     </header>
   );
 }

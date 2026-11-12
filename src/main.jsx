@@ -5,6 +5,7 @@ import Home from './pages/Home.jsx';
 const CalculadoraLanding = lazy(() => import('./pages/CalculadoraLanding.jsx'));
 import ClinicasDentales from './pages/ClinicasDentales.jsx';
 import OficinaIA from './pages/OficinaIA.jsx';
+import { CasoSpaOrganic, CasoVelaSegala } from './pages/CasoIA';
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 import ScrollManager from './components/ScrollManager.jsx';
 const ClinicasConsulta = lazy(() => import('./pages/ClinicasConsulta.jsx'));
@@ -36,6 +37,8 @@ createRoot(document.getElementById('root')).render(
           <Route path="/oficina-ia" element={<OficinaIA />} />
           <Route path="/clinicas-dentales/consulta" element={<ClinicasConsulta />} />
           <Route path="/casos" element={<Casos />} />
+          <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />
+          <Route path="/casos/vela-segala" element={<CasoVelaSegala />} />
 
           {/* SEO por nicho + ciudad (src/data/landings/*.json) */}
           <Route path="/diseno-web" element={<DisenoWebIndex />} />

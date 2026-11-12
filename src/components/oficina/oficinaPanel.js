@@ -15,6 +15,8 @@ const DEPT_OF={ceo:'direccion',resumen:'direccion',semanal:'direccion',analista:
 const HEADS={direccion:'ceo',ventas:'pipeline',marketing:'contenido',clientes:'cs',finanzas:'finanzas'};
 
 let OF={};
+const MARCA_BASE={placa:'GUTI · CEO',ceo:'GUTI',logo:'/logoazul.png',lema:'SIN PLANTILLAS · SOLO RESULTADOS',pantalla:'AGUTIDESIGNS · EN DIRECTO',pizarra:['Plan del día','+ respuestas = + clientes'],nombres:{},deptos:{},charla:null};
+let MARCA=MARCA_BASE;
 
 /* Actividad simulada: cada agente entra y sale de su turno en ciclos propios */
 const SIM={};
@@ -86,7 +88,7 @@ function initOffice(host){
   DEPTS.forEach(d=>{ const [x0,x1,z0,z1]=ZONES[d.id]; const rug=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),new THREE.MeshStandardMaterial({color:d.hex,roughness:.95,transparent:true,opacity:.14,depthWrite:false}));
     rug.rotation.x=-Math.PI/2; rug.position.set((x0+x1)/2,0.036,(z0+z1)/2); rug.receiveShadow=true; scene.add(rug);
     const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(x1-x0,z1-z0)),new THREE.LineBasicMaterial({color:d.hex,transparent:true,opacity:.7})); edge.rotation.x=-Math.PI/2; edge.position.set((x0+x1)/2,0.04,(z0+z1)/2); scene.add(edge);
-    const lab=makeCanvasTex(1024,128,(g,w,h)=>{ g.fillStyle=d.color; g.font='800 84px Archivo,Arial'; g.textBaseline='middle'; g.fillText(d.name.toUpperCase(),6,h/2+4); });
+    const lab=makeCanvasTex(1024,128,(g,w,h)=>{ g.fillStyle=d.color; g.font='800 84px Archivo,Arial'; g.textBaseline='middle'; g.fillText((MARCA.deptos[d.id]||d.name).toUpperCase(),6,h/2+4); });
     const lw=Math.min(x1-x0-0.6,8.5); const pl=new THREE.Mesh(new THREE.PlaneGeometry(lw,lw/8),new THREE.MeshBasicMaterial({map:lab.t,transparent:true,depthWrite:false}));
     pl.rotation.x=-Math.PI/2; pl.position.set(x0+0.3+lw/2,0.045,z1-0.25-lw/16); scene.add(pl); });
   // mesas
@@ -118,7 +120,7 @@ function initOffice(host){
       if(along==='x') gBlock(x0+a,z0-0.05,x0+b,z0+0.05,0.08); else gBlock(x0-0.05,z0+a,x0+0.05,z0+b,0.08); }); };
   glassWall(-15.6,-6.0,-10.4,-6.0,[2.8,4.0]); glassWall(-10.4,-10.6,-10.4,-6.0);
   desk('ceo',-13.0,-8.5,'s',true);
-  const plaque=makeCanvasTex(512,96,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='800 54px Archivo,Arial'; g.textBaseline='middle'; g.fillText('GUTI · CEO',8,h/2+3); });
+  const plaque=makeCanvasTex(512,96,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='800 54px Archivo,Arial'; g.textBaseline='middle'; g.fillText(MARCA.placa,8,h/2+3); });
   const pq=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.41),new THREE.MeshBasicMaterial({map:plaque.t,transparent:true})); pq.position.set(-14.3,2.2,-5.96); scene.add(pq);
   box(2.2,0.8,0.5,mWall,-14.6,0.4,-10.4); const award=cyl(0.12,0.16,0.3,mLime,-14.6,0.95,-10.4,scene,10);
   desk('resumen',-14.2,-4.2); desk('semanal',-11.6,-4.2); desk('analista',-9.0,-4.2);
@@ -126,15 +128,15 @@ function initOffice(host){
   [[-14.2,0.0],[-11.6,0.0],[-9.0,0.0],[-6.4,0.0],[-14.2,4.6],[-11.6,4.6],[-9.0,4.6]].forEach(([x,z],i)=>desk(['pipeline','prospector','demos','redactor','recontacto','seguimiento','webleads'][i],x,z));
   // pizarra de ventas
   const wb=makeCanvasTex(512,320,(g,w,h)=>{ g.fillStyle='#fbfcff'; g.fillRect(0,0,w,h); g.strokeStyle='#0047ff'; g.lineWidth=6; g.beginPath(); g.moveTo(30,260); g.lineTo(150,200); g.lineTo(260,215); g.lineTo(360,120); g.lineTo(480,60); g.stroke();
-    g.fillStyle='#0b1433'; g.font='700 34px Inter,Arial'; g.fillText('Plan del día',30,50); g.fillStyle='#ff6b5a'; g.font='600 26px Inter,Arial'; g.fillText('+ respuestas = + clientes',30,100); });
+    g.fillStyle='#0b1433'; g.font='700 34px Inter,Arial'; g.fillText(MARCA.pizarra[0],30,50); g.fillStyle='#ff6b5a'; g.font='600 26px Inter,Arial'; g.fillText(MARCA.pizarra[1],30,100); });
   const board=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.6),new THREE.MeshBasicMaterial({map:wb.t})); board.position.set(-16.02,2.4,-1.0+0.001); board.rotation.y=Math.PI/2; board.visible=false;
   const stand=new THREE.Group(); stand.position.set(-5.2,0,8.6); stand.rotation.y=-0.5; scene.add(stand); box(2.4,1.5,0.06,mWhite,0,1.6,0,stand); const bm=new THREE.Mesh(new THREE.PlaneGeometry(2.3,1.42),new THREE.MeshBasicMaterial({map:wb.t})); bm.position.set(0,1.6,0.035); stand.add(bm);
   box(0.05,0.9,0.05,mDark,-1.0,0.45,0,stand); box(0.05,0.9,0.05,mDark,1.0,0.45,0,stand); gBlock(-6.4,8.2,-4.0,9.0);
   // Marketing (4) + logo
   [['contenido',-3.6,-9.0],['seo',-1.0,-9.0],['publicador',-3.6,-5.0],['ads',-1.0,-5.0]].forEach(([id,x,z])=>desk(id,x,z));
   const logoImg=new Image(); logoImg.onload=()=>{ const {t}=makeCanvasTex(1024,282,(g,w,h)=>{ g.drawImage(logoImg,0,0,w,h); g.globalCompositeOperation='source-in'; g.fillStyle='#ffffff'; g.fillRect(0,0,w,h); });
-    const p=new THREE.Mesh(new THREE.PlaneGeometry(8,8*282/1024),new THREE.MeshBasicMaterial({map:t,transparent:true})); p.position.set(1.4,3.55,-11.03); scene.add(p); }; logoImg.src='/logoazul.png';
-  const tagTex=makeCanvasTex(1024,64,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='600 34px "JetBrains Mono",monospace'; g.textBaseline='middle'; g.fillText('SIN PLANTILLAS · SOLO RESULTADOS',8,h/2); });
+    const p=new THREE.Mesh(new THREE.PlaneGeometry(8,8*282/1024),new THREE.MeshBasicMaterial({map:t,transparent:true})); p.position.set(1.4,3.55,-11.03); scene.add(p); }; logoImg.src=MARCA.logo;
+  const tagTex=makeCanvasTex(1024,64,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='600 34px "JetBrains Mono",monospace'; g.textBaseline='middle'; g.fillText(MARCA.lema,8,h/2); });
   const tag=new THREE.Mesh(new THREE.PlaneGeometry(8,0.5),new THREE.MeshBasicMaterial({map:tagTex.t,transparent:true})); tag.position.set(1.4,2.25,-11.03); scene.add(tag);
   // Clientes y producción (2) + Finanzas (2)
   desk('cs',0.6,0.2); desk('produccion',3.2,0.2); desk('finanzas',0.6,6.4); desk('cartera',3.2,6.4);
@@ -174,7 +176,7 @@ function initOffice(host){
     {k:'plant',x:7.4,z:9.6,ry:Math.PI},{k:'plant',x:-6.6,z:-2.9,ry:Math.PI}];
   OF.pois.forEach(p=>p.busy=null); OF.comite.forEach(p=>p.busy=null);
   // Personas
-  OF.people=AGENTS.map(a=>makePerson(a,OF.desks[a.id]||OF.desks.pipeline));
+  OF.people=AGENTS.map(a=>makePerson({...a,nick:MARCA.nombres[a.id]||a.nick},OF.desks[a.id]||OF.desks.pipeline));
   OF.people.forEach(p=>{ placeAt(p,p.desk.seat); sitPose(p,0.47); p.mode='sit'; p.act='desk'; p.timer=1+Math.random()*8; });
   OF.byId=Object.fromEntries(OF.people.map(p=>[p.a.id,p]));
   OF.clock=new THREE.Clock(); OF.target=new THREE.Vector3(0,1.2,-0.4); OF.tgt=new THREE.Vector3();
@@ -183,7 +185,7 @@ function initOffice(host){
 
 function deptOf(a){ return DEPTS.find(d=>d.id===DEPT_OF[a.id])||DEPTS[1]; }
 function labelTex(p){ const st=agentWorking(p.a)?'w':agentStale(p.a)?'s':'i'; if(p.lblSt===st&&p.lbl) return; p.lblSt=st;
-  const {g,t}=p.lblTex||(p.lblTex=makeCanvasTex(320,72)); g.clearRect(0,0,320,72); const name=p.a.id==='ceo'?'GUTI · CEO':p.a.nick;
+  const {g,t}=p.lblTex||(p.lblTex=makeCanvasTex(320,72)); g.clearRect(0,0,320,72); const name=p.a.id==='ceo'?MARCA.placa:p.a.nick;
   g.font='700 34px Inter,Arial'; const tw=g.measureText(name).width; const w=tw+58, x=(320-w)/2;
   g.fillStyle='rgba(5,10,31,.9)'; g.beginPath(); g.roundRect?g.roundRect(x,10,w,48,24):g.rect(x,10,w,48); g.fill();
   g.strokeStyle=st==='w'?'#e5fc63':deptOf(p.a).color; g.lineWidth=st==='w'?3:2; g.stroke();
@@ -243,7 +245,7 @@ function decide(p){
   freePoi(p);
   if(kind==='desk'){ p.act='desk'; p.next={k:'seat'}; routeTo(p,p.desk.seat); return; }
   if(kind==='visit'){ const mates=OF.people.filter(o=>o!==p&&o.mode==='sit'&&(o.act==='desk'||o.act==='work')&&(DEPT_OF[o.a.id]===DEPT_OF[p.a.id]||Math.random()<0.35));
-    if(mates.length){ const o=mates[Math.floor(Math.random()*mates.length)]; p.with=o.a.id==='ceo'?'GUTI':o.a.nick; visitPos(p,o,'visit'); return; } kind='coffee'; }
+    if(mates.length){ const o=mates[Math.floor(Math.random()*mates.length)]; p.with=o.a.id==='ceo'?MARCA.ceo:o.a.nick; visitPos(p,o,'visit'); return; } kind='coffee'; }
   const opts=OF.pois.filter(q=>q.k===kind&&!q.busy); if(!opts.length){ p.act='desk'; p.next={k:'seat'}; routeTo(p,p.desk.seat); return; }
   const q=opts[Math.floor(Math.random()*opts.length)]; q.busy=p; p.poi=q; p.act=kind; p.next={k:q.sit?'sit':'stand',ry:q.ry,sitY:q.sitY}; routeTo(p,q);
 }
@@ -303,10 +305,10 @@ const CHARLA=[
   ['prospector','demos','Tres empresas nuevas para preparar demo.'],
 ];
 function talkTick(){
-  if(!OF.byId) return; OF.ti=(OF.ti||0)+1; const [from,toId,text]=CHARLA[(OF.ti-1)%CHARLA.length];
+  if(!OF.byId) return; OF.ti=(OF.ti||0)+1; const CH=MARCA.charla||CHARLA; const [from,toId,text]=CH[(OF.ti-1)%CH.length];
   const p=OF.byId[from]; const to=OF.byId[toId]||OF.byId[HEADS[toId]]||null; if(!p) return;
-  const txt=(to&&to!==p?'@'+(to.a.id==='ceo'?'GUTI':to.a.nick)+' ':toId==='todos'?'@todos ':'')+text;
-  if(to&&to!==p&&p.act!=='work'&&p.act!=='comite'&&p.mode!=='walk'){ freePoi(p); p.with=to.a.id==='ceo'?'GUTI':to.a.nick; p.say=txt; visitPos(p,to,'talk'); }
+  const txt=(to&&to!==p?'@'+(to.a.id==='ceo'?MARCA.ceo:to.a.nick)+' ':toId==='todos'?'@todos ':'')+text;
+  if(to&&to!==p&&p.act!=='work'&&p.act!=='comite'&&p.mode!=='walk'){ freePoi(p); p.with=to.a.id==='ceo'?MARCA.ceo:to.a.nick; p.say=txt; visitPos(p,to,'talk'); }
   else showBubble(p,txt);
 }
 
@@ -317,7 +319,7 @@ function updateWall(){
   if(!OF.wall) return; const {g,t}=OF.wall, w=1024,h=560;
   const gr=g.createLinearGradient(0,0,w,h); gr.addColorStop(0,'#071034'); gr.addColorStop(1,'#0a1f6e'); g.fillStyle=gr; g.fillRect(0,0,w,h);
   g.fillStyle='#e5fc63'; g.beginPath(); g.arc(46,52,10,0,7); g.fill();
-  g.font='600 26px "JetBrains Mono",monospace'; g.fillStyle='#cfd8ff'; g.textBaseline='middle'; g.fillText('AGUTIDESIGNS · EN DIRECTO',70,53);
+  g.font='600 26px "JetBrains Mono",monospace'; g.fillStyle='#cfd8ff'; g.textBaseline='middle'; g.fillText(MARCA.pantalla,70,53);
   const now=madridNow(); g.textAlign='right'; g.fillText(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),w-40,53); g.textAlign='left';
   const n=OF.people?OF.people.filter(p=>agentWorking(p.a)).length:0, tot=OF.people?OF.people.length:AGENTS.length;
   g.fillStyle='#8d9ac4'; g.font='600 24px Inter,Arial'; g.fillText('AGENTES TRABAJANDO AHORA',44,128);
@@ -327,7 +329,7 @@ function updateWall(){
   const deps=DEPTS.filter(d=>d.id!=='direccion');
   deps.forEach((d,i)=>{ const ps=OF.people?OF.people.filter(p=>DEPT_OF[p.a.id]===d.id):[], k=ps.filter(p=>agentWorking(p.a)).length; const x=44+i*((w-88)/4);
     g.fillStyle='#0b1847'; g.fillRect(x,340,(w-88)/4-14,170); g.fillStyle=d.color; g.font='800 76px Archivo,Inter,Arial'; g.fillText(String(k),x+20,420);
-    g.fillStyle='#8d9ac4'; g.font='500 22px Inter,Arial'; g.fillText(d.name.split(' ')[0],x+20,480); });
+    g.fillStyle='#8d9ac4'; g.font='500 22px Inter,Arial'; g.fillText((MARCA.deptos[d.id]||d.name).split(' ')[0],x+20,480); });
   t.needsUpdate=true; }
 function dayLight(){ const n=madridNow(), h=n.getHours()+n.getMinutes()/60; const day=h>=7.5&&h<19.5, dusk=(h>=19.5&&h<21)||(h>=6.5&&h<7.5);
   const col=day?0x9cc4ff:dusk?0x5a5fc0:0x101a4a; OF.windows.forEach(w=>w.material.color.setHex(col)); OF.hemi.intensity=(day?0.85:0.6)*Math.PI; OF.sun.intensity=(day?1.15:0.6)*Math.PI; OF.sun.color.setHex(day?0xffffff:0x9db8ff); }
@@ -335,8 +337,16 @@ function dayLight(){ const n=madridNow(), h=n.getHours()+n.getMinutes()/60; cons
 /* Recorrido de cámara: pasa por las zonas de la oficina sin parar */
 const RUTA=[{x:0,z:-0.4,zoom:1},{x:-10,z:2,zoom:0.72},{x:-5,z:-7,zoom:0.74},{x:12,z:-7.5,zoom:0.7},{x:12,z:6.5,zoom:0.74},{x:2,z:3,zoom:0.8}];
 
-export function montarOficina(host,{quieto=false}={}){
+export function montarOficina(host,{quieto=false,marca=null,interactivo=false}={}){
+  MARCA={...MARCA_BASE,...(marca||{})};
   OF={}; if(!initOffice(host)) return null;
+  OF.uaz=0; OF.uel=0; OF.uz=1; let pausa=0;
+  if(interactivo){ const cv=OF.renderer.domElement; let drag=null; cv.style.cursor='grab'; cv.style.touchAction='pan-y';
+    cv.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,az:OF.uaz,el:OF.uel}; cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; pausa=12; });
+    cv.addEventListener('pointermove',e=>{ if(!drag) return; OF.uaz=drag.az-(e.clientX-drag.x)*0.008; OF.uel=Math.max(-0.3,Math.min(0.5,drag.el+(e.clientY-drag.y)*0.004)); pausa=12; });
+    cv.addEventListener('pointerup',()=>{ drag=null; cv.style.cursor='grab'; });
+    cv.addEventListener('wheel',e=>{ if(!e.ctrlKey&&!e.metaKey&&Math.abs(e.deltaY)<40) return; e.preventDefault(); OF.uz=Math.max(0.45,Math.min(1.6,OF.uz*(1+Math.sign(e.deltaY)*0.08))); pausa=12; },{passive:false});
+    OF.zoomIn=()=>{ OF.uz=Math.max(0.45,OF.uz*0.85); pausa=12; }; OF.zoomOut=()=>{ OF.uz=Math.min(1.6,OF.uz*1.18); pausa=12; }; }
   const sizeOffice=()=>{ const w=host.clientWidth, h=host.clientHeight; OF.renderer.setSize(w,h,false); OF.aspect=w/Math.max(1,h); };
   const ro=new ResizeObserver(sizeOffice); ro.observe(host); sizeOffice();
   let visible=true; const io=new IntersectionObserver(([e])=>{ visible=e.isIntersecting; }); io.observe(host);
@@ -354,18 +364,20 @@ export function montarOficina(host,{quieto=false}={}){
     if(Math.floor(t*8)!==OF.lastCode){ OF.lastCode=Math.floor(t*8); drawWork(); }
     const pl=OF.pois.filter(q=>q.k==='pingpong'&&q.busy&&q.busy.mode==='stand'&&q.busy.act==='pingpong');
     if(pl.length===2){ OF.ball.visible=true; const s=(Math.sin(t*4)+1)/2; OF.ball.position.set(10.9+s*2.6,0.85+Math.abs(Math.sin(t*8))*0.35,4.4+Math.sin(t*2)*0.3); } else OF.ball.visible=false;
-    if(!quieto) camT+=dt;
+    if(pausa>0) pausa-=dt; else if(!quieto) camT+=dt;
     const a=OF.aspect||1.6, base=a<1?15:a<1.4?12:Math.max(10.5,18.5/a);
     const seg=9, k=camT/seg, i=Math.floor(k)%RUTA.length, f=k-Math.floor(k), e=f<0.35?0:(f-0.35)/0.65, s=e*e*(3-2*e);
     const A=RUTA[i], B=RUTA[(i+1)%RUTA.length], zm=A.zoom+(B.zoom-A.zoom)*s;
     OF.tgt.set(A.x+(B.x-A.x)*s,1.0,A.z+(B.z-A.z)*s); if(camT===0) OF.target.copy(OF.tgt); else OF.target.lerp(OF.tgt,Math.min(1,dt*2));
-    OF.az=Math.PI/4.6+Math.sin(camT*0.07)*0.42; OF.el=0.62+Math.sin(camT*0.05)*0.08;
-    const c=OF.cam, z=base*(a<1?Math.max(zm,0.85):zm); c.left=-z*a; c.right=z*a; c.top=z; c.bottom=-z; c.updateProjectionMatrix();
+    OF.az=Math.PI/4.6+Math.sin(camT*0.07)*0.42+OF.uaz; OF.el=Math.max(0.3,Math.min(1.25,0.62+Math.sin(camT*0.05)*0.08+OF.uel));
+    const c=OF.cam, z=base*(a<1?Math.max(zm,0.85):zm)*OF.uz; c.left=-z*a; c.right=z*a; c.top=z; c.bottom=-z; c.updateProjectionMatrix();
     const R=50; c.position.set(OF.target.x+R*Math.cos(OF.el)*Math.sin(OF.az),R*Math.sin(OF.el),OF.target.z+R*Math.cos(OF.el)*Math.cos(OF.az)); c.lookAt(OF.target);
     OF.renderer.render(OF.scene,c);
   };
   loop();
-  return ()=>{ cancelAnimationFrame(raf); clearInterval(iv1); clearInterval(iv2); ro.disconnect(); io.disconnect();
+  const off=()=>{ cancelAnimationFrame(raf); clearInterval(iv1); clearInterval(iv2); ro.disconnect(); io.disconnect();
     OF.scene.traverse(o=>{ if(o.geometry) o.geometry.dispose(); const m=o.material; if(m){ (Array.isArray(m)?m:[m]).forEach(x=>{ if(x.map) x.map.dispose(); x.dispose(); }); } });
     OF.renderer.dispose(); OF.renderer.domElement.remove(); OF={}; };
+  off.zoom=(k)=>{ if(k<0) OF.zoomIn?.(); else OF.zoomOut?.(); };
+  return off;
 }

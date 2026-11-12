@@ -1,4 +1,4 @@
-import { Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench, ChevronDown } from 'lucide-react';
+import { ArrowRight, Check, Bot, Video, PenLine, MapPin, Headphones, Megaphone, LayoutDashboard, Wrench, ChevronDown } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
@@ -14,6 +14,9 @@ import { useAparecer, useSalidaHero, FraseScroll, RompeElNo, Balanza, Cierre, Bo
 import '../components/oficina/Animado.css';
 import { AgentesIlustrados, Cinta, PanelEnVivo, DiaEnLaOficina } from '../components/oficina/Ilustraciones';
 import '../components/oficina/Ilustraciones.css';
+import { CASOS_IA } from '../data/casosIA';
+import { Cuenta } from './CasoIA';
+import './CasoIA.css';
 import './OficinaIA.css';
 
 const SEO = {
@@ -164,16 +167,57 @@ function HeroOficina() {
   );
 }
 
+function Logos() {
+  return (
+    <section className="lg" aria-label="Empresas que ya trabajan con su oficina de IA">
+      <div className="ag-wrap lg-in">
+        <p className="lg-t">Ya trabajan con su oficina de IA</p>
+        <div className="lg-row">
+          <a href="/casos/spa-organic" className="lg-logo lg-logo--osc"><img src="/img/logo-spaorganic.webp" alt="Spa Organic" width="400" height="151" /></a>
+          <a href="/casos/vela-segala" className="lg-logo"><img src="/img/logo-velasegala.webp" alt="Clínicas Vela-Segalà" width="400" height="48" /></a>
+          <span className="lg-logo lg-logo--ag"><img src="/images/logoazul.png" alt="Agutidesigns" width="120" height="33" /></span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CasosExito() {
+  return (
+    <section className="ce" id="casos">
+      <div className="ag-wrap">
+        <div className="ce-head">
+          <p className="pv-k">Casos de éxito</p>
+          <h2 className="pv-h">No es una promesa.<br /><span>Ya está funcionando.</span></h2>
+        </div>
+        <div className="ce-grid">
+          {CASOS_IA.map((c) => (
+            <a key={c.slug} href={`/casos/${c.slug}`} className={`ce-card ce-card--${c.slug}`}>
+              <div className={`ce-logo ${c.logoClaro ? '' : 'ce-logo--osc'}`}><img src={c.logo} alt={c.nombre} width="400" height="150" /></div>
+              <p className="ce-sector">{c.sector}</p>
+              <p className="ce-num"><Cuenta {...c.cifra} /></p>
+              <p className="ce-num-l">{c.cifra.l}{c.cifra2 ? ` · ${c.cifra2.pre}${c.cifra2.v} ${c.cifra2.suf.trim()} ${c.cifra2.l}` : ''}</p>
+              <h3>{c.titular}</h3>
+              <span className="ce-ver">Ver el caso y su oficina 3D <ArrowRight size={18} /></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function OficinaIA() {
   useSeo({ ...SEO, path: '/oficina-ia', image: '/img/og-home.jpg', jsonLd: jsonLd() });
   const raiz = useRef(null);
   useAparecer(raiz);
   return (
     <div className="ag oi-page" ref={raiz}>
-      <Navbar cta={{ label: 'Pide una demo', href: '#propuesta' }} />
+      <Navbar minimal cta={{ label: 'Pide una demo', href: '#propuesta' }} />
       <main>
         <HeroOficina />
         <div id="agentes-intro" />
+        <Logos />
         <FraseScroll texto="Cada día tu empresa pierde horas contestando lo mismo, persiguiendo presupuestos y publicando cuando hay tiempo. Una oficina de IA hace ese trabajo por ti. Tú solo decides." destacadas={['oficina', 'IA', 'decides']} />
 
         <Cinta filas={[['Contesta presupuestos', 'Hace seguimiento', 'Propone llamadas', 'Escribe el blog', 'Prepara posts de LinkedIn', 'Hace vídeos', 'Programa redes'], ['Publica en Google', 'Atiende a clientes', 'Anota cambios', 'Revisa anuncios', 'Respeta tu tope de gasto', 'Te pide aprobación', 'Lo deja todo en el panel']]} />
@@ -189,6 +233,7 @@ export default function OficinaIA() {
         </AgentesIlustrados>
 
         <DiaEnLaOficina />
+        <CasosExito />
         <RompeElNo items={OBJECIONES} />
         <Balanza ventajas={VENTAJAS} desventajas={DESVENTAJAS} tabla={TABLA} />
 

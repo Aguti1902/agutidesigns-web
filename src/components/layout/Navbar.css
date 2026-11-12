@@ -18,3 +18,4 @@
   .nav__mobile a:not(.ag-btn) { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; color: #1d1d1f; text-decoration: none; padding: 12px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
   .nav__mobile .ag-btn { margin-top: 20px; }
 }
+.nav--minimal .nav__cta { margin-left: auto; }
