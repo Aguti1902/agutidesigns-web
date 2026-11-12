@@ -2,7 +2,7 @@
 // Todo lo que se dice de la clínica sale de su web (clinicalluchmajor.es, 12-nov-2026).
 // Las únicas cifras de resultados son las de Vela-Segalà (+20.000 € en 3 meses, +80 %).
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck, Megaphone, PenLine, Lock, Compass, Video, MapPin, Brain, Zap, BarChart3, Play, Pause } from 'lucide-react';
+import { ArrowRight, Check, Clock, MessageCircle, FileText, Star, Users, Bell, LayoutDashboard, CalendarCheck, Moon, ShieldCheck, Megaphone, PenLine, Lock, Compass, Video, MapPin, Brain, Zap, BarChart3, Play, Pause, Download } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import { LeadSection } from '../../components/site/Sections';
@@ -295,6 +295,7 @@ export default function PropuestaLluchmajor() {
             <div className="ag-actions">
               <a href="#dia" className="ag-btn ag-btn--primary">Ver un día de trabajo <ArrowRight size={18} /></a>
               <a href="#inversion" className="ag-btn ag-btn--ghost">Ver la inversión</a>
+              <a href="/propuestas/Propuesta-Clinica-Dental-Lluchmajor.pdf" download className="ag-btn ag-btn--ghost"><Download size={17} /> Descargar en PDF</a>
             </div>
           </div>
         </header>
@@ -407,6 +408,7 @@ export default function PropuestaLluchmajor() {
               </article>
             </div>
             <p className="oi-extra">Precios sin IVA. Las licencias de IA y de las herramientas necesarias van a nombre de la clínica y se pagan aparte.</p>
+            <p className="pz-pdf"><a href="/propuestas/Propuesta-Clinica-Dental-Lluchmajor.pdf" download><Download size={16} /> Descargar la propuesta completa en PDF</a></p>
           </div>
         </section>
 

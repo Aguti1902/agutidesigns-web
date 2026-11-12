@@ -193,3 +193,7 @@
 .pz-reloj__txt { top: 50%; translate: -50% -50%; }
 .pz-reloj__txt b { font-size: clamp(2rem, 4vw, 2.8rem); }
 @media (max-width: 640px) { .pz-dia__lista ol { grid-template-columns: 1fr 1fr; } .pz-dia__lista ol button { font-size: .82rem; padding: 8px 10px; } }
+.pz-hero .ag-actions .ag-btn svg { margin-right: 4px; }
+.pz-pdf { margin: 14px 0 0; }
+.pz-pdf a { display: inline-flex; gap: 8px; align-items: center; color: var(--pz-deep); font-weight: 600; text-decoration: none; }
+.pz-pdf a:hover { text-decoration: underline; }
