@@ -1,0 +1,9 @@
+// Los agentes de la Oficina de IA (para la escena 3D y su ficha).
+export const AGENTES = [
+  { id: 'ventas', nombre: 'Ventas', color: '#0047ff', tareas: ['Contestando a un presupuesto nuevo de la web', 'Enviando el seguimiento a un cliente', 'Avisando: un cliente quiere llamada'], que: 'Contesta a quien pide presupuesto o información, hace el seguimiento por correo y te avisa cuando alguien quiere una llamada.' },
+  { id: 'videos', nombre: 'Vídeos', color: '#ec6746', tareas: ['Escribiendo el guion de mañana', 'Animando el vídeo de las 14:00', 'Programando 3 vídeos en redes'], que: 'Prepara guion, voz, animación, portada y descripciones, y programa los vídeos en Instagram, TikTok, YouTube y LinkedIn.' },
+  { id: 'contenido', nombre: 'Contenido', color: '#0a8f5a', tareas: ['Escribiendo el artículo del blog', 'Preparando el post de LinkedIn', 'Revisando enlaces y fuentes'], que: 'Escribe los artículos del blog y los posts de LinkedIn con tu tono, y los deja publicados o listos para revisar.' },
+  { id: 'google', nombre: 'Google Business', color: '#e0a100', tareas: ['Publicando en la ficha de Google', 'Preparando la respuesta a una reseña', 'Revisando la ficha'], que: 'Mantiene viva tu ficha de Google con publicaciones regulares y te prepara las respuestas a las reseñas.' },
+  { id: 'clientes', nombre: 'Clientes', color: '#7a5cc6', tareas: ['Contestando a un cliente', 'Anotando un cambio que ha pedido', 'Pasando el cambio a producción'], que: 'Responde las dudas de tus clientes por correo y anota lo que piden para que no se pierda nada.' },
+  { id: 'anuncios', nombre: 'Publicidad', color: '#2aa6b8', tareas: ['Revisando las campañas de Google Ads', 'Quitando búsquedas que no convierten', 'Comprobando el tope de gasto'], que: 'Revisa tus campañas de Google Ads, quita lo que gasta sin traer clientes y nunca pasa del tope que tú le pongas.' },
+];

@@ -4,7 +4,11 @@ import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
 import { Problems, Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
+import { lazy, Suspense, useState, useCallback } from 'react';
 import useSeo from '../hooks/useSeo';
+import { AGENTES } from '../components/oficina/agentes';
+import '../components/oficina/Oficina3D.css';
+const Oficina3D = lazy(() => import('../components/oficina/Oficina3D'));
 import './OficinaIA.css';
 
 const SEO = {
@@ -69,6 +73,37 @@ const jsonLd = () => ({
   ],
 });
 
+function OficinaInteractiva() {
+  const [sel, setSel] = useState(0);
+  const elegir = useCallback((i) => setSel(i), []);
+  const a = AGENTES[sel];
+  return (
+    <section className="ag-section ag-section--white" id="oficina-3d">
+      <div className="ag-wrap">
+        <div className="ag-head ag-head--split">
+          <h2 className="ag-h2">Entra en la oficina</h2>
+          <p className="ag-lead">Así trabaja un equipo de agentes de IA: cada uno en su mesa, con su tarea, y todo lo que hacen llega al panel. Gírala y toca a cualquier agente.</p>
+        </div>
+        <div className="o3-grid">
+          <Suspense fallback={<div className="o3-lienzo" />}>
+            <Oficina3D onSelect={elegir} seleccionado={sel} />
+          </Suspense>
+          <aside className="o3-ficha" aria-live="polite">
+            <span className="o3-ficha__tag"><i style={{ background: a.color }} /> Agente de {a.nombre.toLowerCase()}</span>
+            <h3 className="ag-h3">{a.nombre}</h3>
+            <p>{a.que}</p>
+            <ul>{a.tareas.map((t) => <li key={t}>{t}</li>)}</ul>
+            <div className="o3-chips" role="group" aria-label="Elige un agente">
+              {AGENTES.map((x, i) => <button key={x.id} type="button" aria-pressed={i === sel} onClick={() => setSel(i)}><i style={{ background: x.color }} />{x.nombre}</button>)}
+            </div>
+          </aside>
+        </div>
+        <p className="oi-extra">Escena ilustrativa: en tu empresa elegimos juntos qué agentes tiene la oficina.</p>
+      </div>
+    </section>
+  );
+}
+
 export default function OficinaIA() {
   useSeo({ ...SEO, path: '/oficina-ia', image: '/img/og-home.jpg', jsonLd: jsonLd() });
   return (
@@ -83,7 +118,7 @@ export default function OficinaIA() {
               <p className="ag-lead">Contestan a tus clientes, hacen el seguimiento de cada presupuesto, preparan tus vídeos y tu contenido y cuidan tu ficha de Google. Tú lo ves todo en un panel y decides qué revisas.</p>
               <div className="ag-actions">
                 <a href="#propuesta" className="ag-btn ag-btn--primary">Pide una demo</a>
-                <a href="#agentes" className="ag-btn ag-btn--ghost">Qué hace cada agente</a>
+                <a href="#oficina-3d" className="ag-btn ag-btn--ghost">Entra en la oficina 3D</a>
               </div>
               <ul className="ag-hero__trust">
                 <li><Check size={16} /> Lo usamos cada día en Agutidesigns</li>
@@ -106,6 +141,8 @@ export default function OficinaIA() {
             </figure>
           </div>
         </header>
+
+        <OficinaInteractiva />
 
         <Problems title="Lo que se queda sin hacer en una empresa pequeña" lead="No es falta de ganas: son tareas repetitivas que se comen las horas que necesitas para vender y atender." items={PROBLEMS} photo="reunion" photoAlt="Equipo de una pequeña empresa revisando el trabajo del día" />
 
