@@ -523,7 +523,7 @@ export function montarOficina(host,{quieto=false,marca=null,interactivo=false}={
     cv.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,az:OF.uaz,el:OF.uel}; cv.setPointerCapture(e.pointerId); cv.style.cursor='grabbing'; pausa=12; });
     cv.addEventListener('pointermove',e=>{ if(!drag) return; OF.uaz=drag.az-(e.clientX-drag.x)*0.008; OF.uel=Math.max(-0.3,Math.min(0.5,drag.el+(e.clientY-drag.y)*0.004)); pausa=12; });
     cv.addEventListener('pointerup',()=>{ drag=null; cv.style.cursor='grab'; });
-    cv.addEventListener('wheel',e=>{ if(!e.ctrlKey&&!e.metaKey&&Math.abs(e.deltaY)<40) return; e.preventDefault(); OF.uz=Math.max(0.45,Math.min(1.6,OF.uz*(1+Math.sign(e.deltaY)*0.08))); pausa=12; },{passive:false});
+    cv.addEventListener('wheel',e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); OF.uz=Math.max(0.45,Math.min(1.6,OF.uz*(1+Math.sign(e.deltaY)*0.08))); pausa=12; },{passive:false});
     OF.zoomIn=()=>{ OF.uz=Math.max(0.45,OF.uz*0.85); pausa=12; }; OF.zoomOut=()=>{ OF.uz=Math.min(1.6,OF.uz*1.18); pausa=12; }; }
   const sizeOffice=()=>{ const w=host.clientWidth, h=host.clientHeight; OF.renderer.setSize(w,h,false); OF.aspect=w/Math.max(1,h); };
   const ro=new ResizeObserver(sizeOffice); ro.observe(host); sizeOffice();

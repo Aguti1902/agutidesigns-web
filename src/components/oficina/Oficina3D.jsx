@@ -67,6 +67,7 @@ export default function Oficina3D({ onSelect, seleccionado }) {
     const DIR = new THREE.Vector3(11, 9.5, 13).normalize(); let tocado = false;
     cam.position.copy(DIR).multiplyScalar(21);
     const controls = new OrbitControls(cam, renderer.domElement);
+    controls.enableZoom = false; // la rueda del ratón hace scroll en la página, no zoom
     controls.target.set(0, 1.2, 0); controls.enableDamping = true; controls.enablePan = false;
     controls.minDistance = 10; controls.maxDistance = 34; controls.minPolarAngle = 0.35; controls.maxPolarAngle = 1.25;
     controls.autoRotate = !reduce; controls.autoRotateSpeed = 0.6;
