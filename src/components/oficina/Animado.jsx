@@ -25,7 +25,7 @@ export function useAparecer(raiz) {
 }
 
 /* Progreso de scroll (0→1) de un bloque alto con contenido «sticky». */
-function useProgreso(ref) {
+export function useProgreso(ref) {
   const [p, setP] = useState(0);
   useEffect(() => {
     const el = ref.current;

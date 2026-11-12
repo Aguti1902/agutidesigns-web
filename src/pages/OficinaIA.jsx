@@ -3,7 +3,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AIChatbot from '../components/chat/LazyChatbot';
 import CookieBanner from '../components/ui/LazyCookieBanner';
-import { Pillars, Process, Faq, LeadSection } from '../components/site/Sections';
+import { Process, Faq, LeadSection } from '../components/site/Sections';
 import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import useSeo from '../hooks/useSeo';
 const OficinaHero3D = lazy(() => import('../components/oficina/OficinaHero3D'));
@@ -12,6 +12,8 @@ import { AGENTES } from '../components/oficina/agentes';
 import '../components/oficina/Oficina3D.css';
 import { useAparecer, useSalidaHero, FraseScroll, RompeElNo, Balanza, Cierre, BotonFlotante } from '../components/oficina/Animado';
 import '../components/oficina/Animado.css';
+import { AgentesIlustrados, Cinta, PanelEnVivo, DiaEnLaOficina } from '../components/oficina/Ilustraciones';
+import '../components/oficina/Ilustraciones.css';
 import './OficinaIA.css';
 
 const SEO = {
@@ -174,16 +176,19 @@ export default function OficinaIA() {
         <div id="agentes-intro" />
         <FraseScroll texto="Cada día tu empresa pierde horas contestando lo mismo, persiguiendo presupuestos y publicando cuando hay tiempo. Una oficina de IA hace ese trabajo por ti. Tú solo decides." destacadas={['oficina', 'IA', 'decides']} />
 
+        <Cinta filas={[['Contesta presupuestos', 'Hace seguimiento', 'Propone llamadas', 'Escribe el blog', 'Prepara posts de LinkedIn', 'Hace vídeos', 'Programa redes'], ['Publica en Google', 'Atiende a clientes', 'Anota cambios', 'Revisa anuncios', 'Respeta tu tope de gasto', 'Te pide aprobación', 'Lo deja todo en el panel']]} />
         <OficinaInteractiva />
+        <PanelEnVivo />
 
-        <Pillars id="agentes" title="Tu oficina de IA, agente a agente" lead="Elige los que necesitas. Cada uno tiene su tarea, sus reglas y su horario, y todos trabajan coordinados." items={PILLARS}>
+        <AgentesIlustrados id="agentes" title="Tu oficina de IA, agente a agente" lead="Elige los que necesitas. Cada uno tiene su tarea, sus reglas y su horario, y todos trabajan coordinados." items={PILLARS}>
           <div className="oi-real">
             <article><LayoutDashboard size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Un panel para verlo todo</h3><p>Qué ha hecho cada agente, qué está pendiente de tu aprobación y qué viene después.</p></article>
             <article><Wrench size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Hecho a medida</h3><p>Lo adaptamos a tu sector, a tu forma de trabajar y a las herramientas que ya usas.</p></article>
             <article><Check size={22} /><h3 className="ag-h3" style={{ marginTop: 10 }}>Probado en casa</h3><p>Es el mismo sistema con el que funciona Agutidesigns: lo usamos cada día antes de instalártelo a ti.</p></article>
           </div>
-        </Pillars>
+        </AgentesIlustrados>
 
+        <DiaEnLaOficina />
         <RompeElNo items={OBJECIONES} />
         <Balanza ventajas={VENTAJAS} desventajas={DESVENTAJAS} tabla={TABLA} />
 
