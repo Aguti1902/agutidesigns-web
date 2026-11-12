@@ -171,7 +171,7 @@ export function BotonFlotante() {
   }, []);
   return (
     <div className={`flota ${ver ? 'is-on' : ''}`} aria-hidden={!ver}>
-      <span className="flota__t">Oficina de IA · desde 290 €/mes</span>
+      <span className="flota__t"><span className="flota__x">Oficina de IA · </span>desde 290 €/mes</span>
       <a href="#propuesta" className="ag-btn ag-btn--primary ag-btn--sm" tabIndex={ver ? 0 : -1}>Pide una demo</a>
     </div>
   );
