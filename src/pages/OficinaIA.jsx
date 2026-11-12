@@ -238,7 +238,7 @@ export default function OficinaIA() {
                   <p className="sx-plan__setup">+ {p.setup} € de puesta en marcha</p>
                   <p className="sx-plan__pitch">{p.pitch}</p>
                   <ul className="ag-checks">{p.includes.map((i) => <li key={i}><Check size={16} />{i}</li>)}</ul>
-                  <a href="#propuesta" className={`ag-btn ${p.recommended ? 'ag-btn--primary' : 'ag-btn--ghost'}`}>Quiero {p.name.toLowerCase()}</a>
+                  <a href="#propuesta" className={`ag-btn ${p.recommended ? 'ag-btn--primary' : 'ag-btn--ghost'}`}>Quiero {p.name.toLowerCase().replace(" ia", " IA")}</a>
                 </article>
               ))}
             </div>

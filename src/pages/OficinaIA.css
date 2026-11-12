@@ -86,3 +86,4 @@
 .oi-page .nav:not(.nav--scrolled):not(:has(.nav__mobile.is-open)) .nav__logo img { filter: brightness(0) invert(1); }
 .oi-page .nav:not(.nav--scrolled):not(:has(.nav__mobile.is-open)) .nav__links a { color: #fff; }
 .oi-page .nav:not(.nav--scrolled):not(:has(.nav__mobile.is-open)) .nav__toggle { color: #fff; }
+.oi-page .sx-plan:not(.sx-plan--rec) { background: #fff; border-color: var(--ag-line, #e5e5ea); box-shadow: 0 20px 40px -32px rgba(7, 13, 36, .25); }
