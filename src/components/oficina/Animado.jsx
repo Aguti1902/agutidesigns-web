@@ -97,8 +97,8 @@ export function RompeElNo({ items }) {
                 <h3 className="no-card__pero">«{o.pero}»</h3>
                 <p className="no-card__resp">{o.resp}</p>
                 <div className="no-card__pc">
-                  <p className="pc pc--si"><Check size={18} /><span><b>Ventaja</b>{o.si}</span></p>
-                  <p className="pc pc--ojo"><span className="pc__ico" aria-hidden="true">!</span><span><b>Lo que tienes que saber</b>{o.ojo}</span></p>
+                  <p className="opc opc--si"><Check size={18} /><span><b>Ventaja</b>{o.si}</span></p>
+                  <p className="opc opc--ojo"><span className="opc__ico" aria-hidden="true">!</span><span><b>Lo que tienes que saber</b>{o.ojo}</span></p>
                 </div>
               </div>
             </article>
