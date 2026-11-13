@@ -12,7 +12,7 @@ export default function KitInstalar() {
   const plan = useMemo(() => (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('plan') : null) || 'pro', []);
   return (
     <div className="ag oi-page kt kt2">
-      <Navbar minimal cta={{ label: 'Ayuda', href: 'mailto:info@agutidesigns.io' }} />
+      <Navbar minimal cta={false} />
       <main className="kt2-instalar"><GuiaInteractiva planId={plan} /></main>
       <Footer />
     </div>

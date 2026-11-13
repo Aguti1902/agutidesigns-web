@@ -24,7 +24,7 @@ export default function KitGracias() {
   }, []);
   return (
     <div className="ag oi-page kt kt2">
-      <Navbar minimal cta={{ label: 'Ayuda', href: 'mailto:info@agutidesigns.io' }} />
+      <Navbar minimal cta={false} />
       <main>
         <header className="kt2-gracias">
           <div className="ag-wrap kt2-gracias__in">

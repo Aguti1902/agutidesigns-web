@@ -10,7 +10,7 @@ const LINKS = [
   { label: 'Blog', href: '/blog' },
 ];
 
-/** Navegación común de la web pública. `cta` opcional: { label, href }. */
+/** Navegación común de la web pública. `cta` opcional: { label, href }, o `false` para no mostrar botón. */
 export default function Navbar({ cta, minimal = false }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -45,8 +45,8 @@ export default function Navbar({ cta, minimal = false }) {
     }
   };
 
-  const action = cta || { label: 'Pide tu propuesta', href: '#propuesta' };
-  const actionHref = action.href;
+  const action = cta === false ? null : (cta || { label: 'Pide tu propuesta', href: '#propuesta' });
+  const actionHref = action?.href;
 
   return (
     <header className={`nav ${scrolled ? 'nav--scrolled' : ''} ${minimal ? 'nav--minimal' : ''}`}>
@@ -59,14 +59,14 @@ export default function Navbar({ cta, minimal = false }) {
             <a key={l.href} href={l.href} onClick={(e) => go(e, l.href)} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a>
           ))}
         </nav>}
-        <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary ag-btn--sm nav__cta">{action.label}</a>
+        {action && <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary ag-btn--sm nav__cta">{action.label}</a>}
         {!minimal && <button className="nav__toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? 'Cerrar menú' : 'Abrir menú'}>
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>}
       </div>
       {!minimal && <div id="nav-mobile" className={`nav__mobile ${open ? 'is-open' : ''}`} hidden={!open}>
         {LINKS.map((l) => <a key={l.href} href={l.href} onClick={(e) => go(e, l.href)}>{l.label}</a>)}
-        <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary">{action.label}</a>
+        {action && <a href={actionHref} onClick={(e) => go(e, actionHref)} className="ag-btn ag-btn--primary">{action.label}</a>}
       </div>}
     </header>
   );
