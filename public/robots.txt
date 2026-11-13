@@ -6,6 +6,7 @@ Disallow: /cliente/
 Disallow: /propuesta/
 Disallow: /propuestas/
 Disallow: /kit-oficina-ia/gracias
+Disallow: /kit-oficina-ia/instalar
 
 # Block common attack paths
 Disallow: /wp-admin

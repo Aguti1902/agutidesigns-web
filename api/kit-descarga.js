@@ -56,7 +56,7 @@ function correoHtml(url, p) {
 <tr><td style="padding:28px 32px;color:#3d4458;font-size:15px;line-height:1.6">
 <p style="margin:0 0 14px">Gracias por tu compra. Aquí tienes tu kit: el panel con la oficina 3D, los ${p.agentes} agentes y la guía de instalación paso a paso.</p>
 <p style="margin:0 0 22px"><a href="${url}" style="display:inline-block;background:#2f6bff;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:999px">Descargar el kit</a></p>
-<p style="margin:0 0 10px"><b>Por dónde empezar:</b> abre <b>EMPIEZA-AQUI.md</b> y la guía en PDF. En unos 30-60 minutos lo tienes funcionando con Claude.</p>
+<p style="margin:0 0 10px"><b>Por dónde empezar:</b> sigue la <a href="${SITIO}/kit-oficina-ia/instalar?plan=${p.plan.toLowerCase()}" style="color:#2f6bff;font-weight:700">guía interactiva de instalación</a> (o el PDF del kit). En unos 30-60 minutos lo tienes funcionando con Claude.</p>
 <p style="margin:0 0 10px;font-size:13px;color:#6b7286">El enlace caduca en ${DIAS} días: descárgalo y guárdalo. Si tienes cualquier problema, responde a este correo.</p>
 <p style="margin:18px 0 0">Un abrazo,<br>Alejandro · Agutidesigns</p></td></tr></table></td></tr></table></body></html>`;
 }

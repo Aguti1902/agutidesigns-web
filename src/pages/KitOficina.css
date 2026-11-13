@@ -211,3 +211,11 @@
   .kt2-brillo::after, .kt2-plan--rec::before, .kt2-aviso { animation: none; }
   .kt2-ag { opacity: 1; transform: none; transition: none; }
 }
+
+/* Página de gracias (oscura) y guía */
+.kt2-gracias { background: radial-gradient(70% 90% at 80% 0%, #16286f 0%, #050a1f 65%); color: #fff; padding-block: clamp(130px, 16vw, 190px) clamp(40px, 6vw, 70px); }
+.kt2-gracias__in { display: grid; gap: 18px; justify-items: start; }
+.kt2-gracias .kt2-lead { margin-top: 0; }
+.kt2-nota { margin: 0; display: flex; gap: 8px; align-items: flex-start; color: #c5cdea; font-size: .95rem; max-width: 62ch; }
+.kt2-nota svg { flex: none; margin-top: 3px; color: #e5fc63; }
+.kt2-instalar { padding-top: 70px; background: #050a1f; }
