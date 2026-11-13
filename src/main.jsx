@@ -12,6 +12,7 @@ const KitGracias = lazy(() => import('./pages/KitGracias.jsx'));
 const KitInstalar = lazy(() => import('./pages/KitInstalar.jsx'));
 const PropuestaLluchmajor = lazy(() => import('./pages/propuestas/PropuestaLluchmajor.jsx'));
 import ScrollManager from './components/ScrollManager.jsx';
+import { Analytics } from '@vercel/analytics/react';
 const ClinicasConsulta = lazy(() => import('./pages/ClinicasConsulta.jsx'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin.jsx'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.jsx'));
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
         <ScrollManager />
+        <Analytics />
         <Suspense fallback={<div className="ag" style={{ minHeight: '100vh' }} />}>
         <Routes>
           {/* Pública */}
