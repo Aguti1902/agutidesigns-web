@@ -124,7 +124,7 @@
 .kt2 .cinta { background: var(--n0); }
 
 /* Plantilla: contrata a tu equipo */
-.kt2-plantilla { background: radial-gradient(70% 60% at 50% 0%, #12235f 0%, var(--n0) 70%); padding-block: clamp(90px, 11vw, 150px); color: #fff; }
+.kt2-plantilla { background: radial-gradient(70% 45% at 50% 32%, #12235f 0%, var(--n0) 100%); padding-block: clamp(90px, 11vw, 150px); color: #fff; }
 .kt2-sel { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
 .kt2-sel button { flex: 1 1 160px; display: grid; gap: 2px; text-align: left; padding: 14px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; font: inherit; transition: background .25s, border-color .25s, transform .25s; }
 .kt2-sel button b { font-size: 1.05rem; } .kt2-sel button span { color: var(--tx2); font-size: .88rem; }
@@ -221,3 +221,17 @@
 .kt2-nota { margin: 0; display: flex; gap: 8px; align-items: flex-start; color: #c5cdea; font-size: .95rem; max-width: 62ch; }
 .kt2-nota svg { flex: none; margin-top: 3px; color: #e5fc63; }
 .kt2-instalar { padding-top: 70px; background: #050a1f; }
+
+/* Frase que se ilumina y cinta de tareas, adaptadas al fondo oscuro */
+.kt2 .fs-txt span { color: rgba(255,255,255,.13); }
+.kt2 .fs-txt span.on { color: #fff; }
+.kt2 .fs-txt span.dest { color: rgba(229,252,99,.16); }
+.kt2 .fs-txt span.dest.on { color: #e5fc63; }
+.kt2 .cinta { position: relative; background: #050a1f; -webkit-mask-image: none; mask-image: none; padding-block: 10px 80px; }
+.kt2 .cinta::before, .kt2 .cinta::after { content: ""; position: absolute; top: 0; bottom: 0; width: 14%; z-index: 1; pointer-events: none; }
+.kt2 .cinta::before { left: 0; background: linear-gradient(90deg, #050a1f, rgba(5,10,31,0)); }
+.kt2 .cinta::after { right: 0; background: linear-gradient(270deg, #050a1f, rgba(5,10,31,0)); }
+.kt2 .cinta__chip { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #fff; }
+.kt2 .cinta__chip i { background: #7aa0ff; box-shadow: 0 0 10px #7aa0ff; }
+.kt2 .cinta__fila--inv .cinta__chip { background: rgba(47,107,255,.14); border-color: rgba(122,160,255,.3); }
+.kt2 .cinta__fila--inv .cinta__chip i { background: #e5fc63; box-shadow: 0 0 10px #e5fc63; }
