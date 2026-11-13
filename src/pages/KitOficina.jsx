@@ -147,15 +147,17 @@ const AVISOS = [
   ['Diego', 'Guion del vídeo de mañana: 30 segundos', '#3ee0a1'],
 ];
 function Avisos() {
-  const [n, setN] = useState(0);
-  useEffect(() => { if (reduce()) return undefined; const id = setInterval(() => setN((x) => x + 1), 2600); return () => clearInterval(id); }, []);
-  const vis = [0, 1, 2].map((k) => AVISOS[(n + k) % AVISOS.length]);
+  // Feed como el del panel: el aviso nuevo entra arriba y los anteriores bajan un puesto; el más viejo se desvanece.
+  const [n, setN] = useState(3);
+  useEffect(() => { if (reduce()) return undefined; const id = setInterval(() => setN((x) => x + 1), 2800); return () => clearInterval(id); }, []);
+  const vis = [0, 1, 2, 3].map((k) => ({ id: n - k, k, a: AVISOS[(((n - k) % AVISOS.length) + AVISOS.length) % AVISOS.length] }));
+  const orden = [...vis].sort((x, y) => x.id - y.id); // nodos en orden estable: React no los recrea, solo cambia su posición
   return (
     <div className="kt2-avisos" aria-hidden="true">
-      {vis.map(([a, t, c], k) => (
-        <div key={`${n}-${k}`} className={`kt2-aviso ${k === 0 ? 'nuevo' : ''}`} style={{ '--c': c }}>
-          <span className="kt2-aviso__av">{a[0]}</span>
-          <span><b>{a}</b>{t}</span>
+      {orden.map(({ id, k, a: [nom, t, c] }) => (
+        <div key={id} className={`kt2-aviso ${k === 0 ? 'nuevo' : ''} ${k === 3 ? 'sale' : ''}`} style={{ '--c': c, '--k': k }}>
+          <span className="kt2-aviso__av">{nom[0]}</span>
+          <span className="kt2-aviso__t"><b>{nom}</b>{t}</span>
           <span className="kt2-aviso__ok"><Check size={13} /></span>
         </div>
       ))}

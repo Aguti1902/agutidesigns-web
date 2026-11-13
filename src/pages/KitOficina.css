@@ -108,15 +108,17 @@
 /* Mientras lees esto: avisos en directo */
 .kt2-vivo { background: var(--n0); padding-block: clamp(70px, 9vw, 120px) clamp(40px, 6vw, 70px); }
 .kt2-vivo__in { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; }
-.kt2-avisos { display: grid; gap: 12px; min-height: 230px; align-content: start; }
-.kt2-aviso { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #fff; animation: kt2-entra .6s cubic-bezier(.2,.8,.2,1) both; }
-.kt2-aviso:nth-child(2) { opacity: .7; } .kt2-aviso:nth-child(3) { opacity: .4; }
-.kt2-aviso.nuevo { background: rgba(47,107,255,.14); border-color: color-mix(in srgb, var(--c) 60%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 25%, transparent), 0 20px 50px -30px var(--c); }
+.kt2-avisos { --h: 76px; --g: 12px; position: relative; height: calc(var(--h) * 3 + var(--g) * 2); }
+.kt2-aviso { position: absolute; left: 0; right: 0; top: 0; height: var(--h); box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 0 16px; border-radius: 18px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #fff;
+  transform: translateY(calc(var(--k) * (var(--h) + var(--g)))); opacity: calc(1 - var(--k) * .3);
+  transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s, background .6s, border-color .6s, box-shadow .6s; }
+.kt2-aviso.nuevo { background: rgba(47,107,255,.14); border-color: color-mix(in srgb, var(--c) 60%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 25%, transparent), 0 20px 50px -30px var(--c); animation: kt2-entra .6s cubic-bezier(.2,.8,.2,1) both; }
+.kt2-aviso.sale { opacity: 0; pointer-events: none; }
 .kt2-aviso__av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; color: #050a1f; background: var(--c); }
+.kt2-aviso__t { min-width: 0; font-size: .98rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .kt2-aviso b { display: block; font-size: .82rem; color: var(--c); margin-bottom: 2px; }
-.kt2-aviso > span:nth-child(2) { font-size: .98rem; line-height: 1.35; min-width: 0; }
 .kt2-aviso__ok { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: rgba(62,224,161,.16); color: #3ee0a1; }
-@keyframes kt2-entra { from { transform: translateY(-14px) scale(.97); opacity: 0; } }
+@keyframes kt2-entra { from { transform: translateY(-16px) scale(.97); opacity: 0; } }
 
 .kt2 .fs { background: var(--n0); }
 .kt2 .cinta { background: var(--n0); }
@@ -206,7 +208,7 @@
   .kt2-nomina > div { padding: 14px; } .kt2-nomina b { font-size: 1.3rem; }
   .kt2-ag { padding: 14px; } .kt2-ag p { font-size: .84rem; }
 }
-@media (max-width: 460px) { .kt2-grid { gap: 8px; } .kt2-ag { padding: 12px; } .kt2-ag__av { width: 34px; height: 34px; border-radius: 10px; } .kt2-ag__av svg { width: 17px; height: 17px; } .kt2-ag__st { font-size: .6rem; padding: 3px 7px; } .kt2-ag h3 { font-size: .92rem; } .kt2-ag h3 span { display: block; font-size: .8rem; } .kt2-ag p { font-size: .78rem; } .kt2-sel { gap: 6px; } .kt2-sel button { flex: 1 1 0; min-width: 0; padding: 10px 10px; border-radius: 14px; } .kt2-sel button b { font-size: .95rem; } .kt2-sel button span { font-size: .72rem; } .kt2-vivo { padding-bottom: 20px; } }
+@media (max-width: 460px) { .kt2-avisos { --h: 84px; --g: 10px; } .kt2-aviso__t { font-size: .9rem; } .kt2-grid { gap: 8px; } .kt2-ag { padding: 12px; } .kt2-ag__av { width: 34px; height: 34px; border-radius: 10px; } .kt2-ag__av svg { width: 17px; height: 17px; } .kt2-ag__st { font-size: .6rem; padding: 3px 7px; } .kt2-ag h3 { font-size: .92rem; } .kt2-ag h3 span { display: block; font-size: .8rem; } .kt2-ag p { font-size: .78rem; } .kt2-sel { gap: 6px; } .kt2-sel button { flex: 1 1 0; min-width: 0; padding: 10px 10px; border-radius: 14px; } .kt2-sel button b { font-size: .95rem; } .kt2-sel button span { font-size: .72rem; } .kt2-vivo { padding-bottom: 20px; } }
 @media (prefers-reduced-motion: reduce) {
   .kt2-brillo::after, .kt2-plan--rec::before, .kt2-aviso { animation: none; }
   .kt2-ag { opacity: 1; transform: none; transition: none; }
