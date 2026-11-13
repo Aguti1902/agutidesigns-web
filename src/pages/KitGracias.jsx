@@ -15,6 +15,7 @@ export default function KitGracias() {
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('session_id');
     if (!id) { setEstado({ fase: 'error', msg: 'No encontramos tu compra en este enlace.' }); return; }
+    if (id === 'demo') { setEstado({ fase: 'ok', url: '#', email: 'tucorreo@ejemplo.com', plan: 'Pro', agentes: 8 }); return; } // vista previa sin compra (sin descarga real)
     let primera = true;
     try { primera = !sessionStorage.getItem(`kit-${id}`); sessionStorage.setItem(`kit-${id}`, '1'); } catch { /* sin almacenamiento */ }
     fetch(`/api/kit-descarga?session_id=${encodeURIComponent(id)}${primera ? '&enviar=1' : ''}`)
