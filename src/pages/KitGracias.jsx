@@ -16,7 +16,7 @@ export default function KitGracias() {
     try { primera = !sessionStorage.getItem(`kit-${id}`); sessionStorage.setItem(`kit-${id}`, '1'); } catch { /* sin almacenamiento */ }
     fetch(`/api/kit-descarga?session_id=${encodeURIComponent(id)}${primera ? '&enviar=1' : ''}`)
       .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'No pudimos comprobar tu compra.'); return j; })
-      .then((j) => setEstado({ fase: 'ok', url: j.url, email: j.email }))
+      .then((j) => setEstado({ fase: 'ok', url: j.url, email: j.email, plan: j.plan }))
       .catch((e) => setEstado({ fase: 'error', msg: e.message }));
   }, []);
   return (
@@ -26,7 +26,7 @@ export default function KitGracias() {
         <div className="ag-wrap kt-gracias__in">
           {estado.fase === 'cargando' && <><Loader2 className="kt-spin" size={36} /><h1 className="kt-h1 kt-h1--s">Comprobando tu compra…</h1></>}
           {estado.fase === 'ok' && <>
-            <p className="kt-k">Compra completada</p>
+            <p className="kt-k">Compra completada{estado.plan ? ` · Plan ${estado.plan}` : ''}</p>
             <h1 className="kt-h1 kt-h1--s">¡Tu oficina de IA ya es tuya!</h1>
             <p className="kt-lead">Descarga el kit y abre primero <b>EMPIEZA-AQUI.md</b> y la guía en PDF. En unos 30-60 minutos lo tienes funcionando con Claude.</p>
             <a href={estado.url} className="ag-btn ag-btn--primary kt-comprar--grande"><Download size={18} /> Descargar el kit</a>
