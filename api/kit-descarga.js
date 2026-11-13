@@ -15,6 +15,7 @@ const ZIP = path.join(process.cwd(), 'privado', 'Kit-Oficina-IA.zip');
 const SITIO = 'https://agutidesigns.io';
 const FROM = 'Alejandro de Agutidesigns <info@agutidesigns.io>';
 const DIAS = 7;
+const ENLACE_PAGO = process.env.KIT_PAYMENT_LINK || 'plink_1UbMvAFjBSJ299OpNgxyVOYG'; // Payment Link del kit en Stripe
 
 const b64u = (s) => Buffer.from(s).toString('base64url');
 const firma = (datos, clave) => crypto.createHmac('sha256', clave).update(datos).digest('base64url');
@@ -37,7 +38,7 @@ async function sesionPagada(id, clave) {
   if (!r.ok) return null;
   const s = await r.json();
   const ok = s.payment_status === 'paid' && s.amount_total === PRECIO_CENTIMOS && s.currency === MONEDA
-    && (!process.env.KIT_PAYMENT_LINK || s.payment_link === process.env.KIT_PAYMENT_LINK);
+    && s.payment_link === ENLACE_PAGO;
   return ok ? s : null;
 }
 

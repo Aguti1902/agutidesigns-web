@@ -11,7 +11,7 @@ import '../components/oficina/Animado.css';
 import './KitOficina.css';
 
 // Enlace de pago de Stripe (Payment Link). Tras pagar, Stripe redirige a /kit-oficina-ia/gracias?session_id=…
-export const KIT_STRIPE = ''; // ← enlace de pago de Stripe (Payment Link). Vacío = el pago aún no está activado.
+export const KIT_STRIPE = 'https://buy.stripe.com/bJeeVd7Tv4AxgIY82M9EI0g'; // ← enlace de pago de Stripe (Payment Link). Vacío = el pago aún no está activado.
 const KIT_PAGO = KIT_STRIPE || '#precio';
 const PRECIO = '47 €';
 
