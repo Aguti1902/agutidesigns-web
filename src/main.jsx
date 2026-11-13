@@ -46,6 +46,9 @@ createRoot(document.getElementById('root')).render(
           <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />
           <Route path="/casos/vela-segala" element={<CasoVelaSegala />} />
           <Route path="/kit-oficina-ia" element={<KitOficina />} />
+          {/* Misma landing con otra ruta para medir el origen en las estadísticas: anuncio de TikTok y privados de OFICINA */}
+          <Route path="/kit-oficina-ia/tiktok" element={<KitOficina />} />
+          <Route path="/kit-oficina-ia/oficina" element={<KitOficina />} />
           <Route path="/kit-oficina-ia/gracias" element={<KitGracias />} />
           <Route path="/kit-oficina-ia/instalar" element={<KitInstalar />} />
           <Route path="/propuesta/clinica-lluchmajor" element={<PropuestaLluchmajor />} />
