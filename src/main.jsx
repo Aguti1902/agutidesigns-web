@@ -7,6 +7,8 @@ import ClinicasDentales from './pages/ClinicasDentales.jsx';
 import OficinaIA from './pages/OficinaIA.jsx';
 import { CasoSpaOrganic, CasoVelaSegala } from './pages/CasoIA';
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const KitOficina = lazy(() => import('./pages/KitOficina.jsx'));
+const KitGracias = lazy(() => import('./pages/KitGracias.jsx'));
 const PropuestaLluchmajor = lazy(() => import('./pages/propuestas/PropuestaLluchmajor.jsx'));
 import ScrollManager from './components/ScrollManager.jsx';
 const ClinicasConsulta = lazy(() => import('./pages/ClinicasConsulta.jsx'));
@@ -40,6 +42,8 @@ createRoot(document.getElementById('root')).render(
           <Route path="/casos" element={<Casos />} />
           <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />
           <Route path="/casos/vela-segala" element={<CasoVelaSegala />} />
+          <Route path="/kit-oficina-ia" element={<KitOficina />} />
+          <Route path="/kit-oficina-ia/gracias" element={<KitGracias />} />
           <Route path="/propuesta/clinica-lluchmajor" element={<PropuestaLluchmajor />} />
 
           {/* SEO por nicho + ciudad (src/data/landings/*.json) */}
