@@ -20,7 +20,7 @@ export const SECTOR_GROUPS = [
     points: ['Reservas y bonos online', 'Fotos y textos que venden la experiencia', 'Reseñas de Google visibles en la web'],
     proof: { label: 'Opinión real', text: '“Desde que estrenamos la nueva web, las reservas online han aumentado un 40 %.” Lucía Fernández, Spa Organic.' },
     clients: ['spaorganic', 'hellonails'],
-    nichos: ['peluqueria'],
+    nichos: ['peluqueria', 'spas'],
   },
   {
     id: 'despachos',
@@ -49,6 +49,7 @@ export const SECTOR_GROUPS = [
     lead: 'Clubs de vino, restaurantes y tiendas con producto propio. Webs con personalidad que venden online y llevan gente al local.',
     points: ['Tienda online y suscripciones', 'Eventos y reservas', 'Diseño con la identidad de la marca'],
     clients: ['lagraciosavins'],
+    nichos: ['restaurantes'],
   },
   {
     id: 'empresas',
