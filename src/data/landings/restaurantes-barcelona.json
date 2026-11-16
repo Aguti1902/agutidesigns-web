@@ -1,0 +1,69 @@
+{
+  "slug": "restaurantes-barcelona",
+  "nicho": "restaurantes",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-11-16",
+  "metaTitle": "Diseño web para restaurantes en Barcelona | Agutidesigns",
+  "metaDescription": "Web para restaurantes en Barcelona: carta como página, reservas sin llamar, SEO local y ficha de Google cuidada. Menos teléfono, más mesas llenas.",
+  "h1": "Diseño web para restaurantes en Barcelona",
+  "intro": "Creamos la web de tu restaurante, bar o taberna en Barcelona para que quien busca dónde cenar en el Born, Gràcia o el Poblenou vea tu carta, tu local y pueda reservar mesa en segundos, sin tener que llamar.",
+  "nota": "En hostelería la decisión se toma en el móvil y en pocos segundos: el restaurante que enseña bien la carta y deja reservar con un toque se lleva la mesa.",
+  "problemas": [
+    {
+      "t": "La carta es un PDF que nadie puede leer",
+      "d": "En el móvil obliga a hacer zoom, no se puede buscar y Google lo interpreta mal. El cliente que quería saber si tenéis opciones sin gluten se marcha a otro sitio."
+    },
+    {
+      "t": "Reservar significa llamar en pleno servicio",
+      "d": "El teléfono suena justo cuando la sala está llena y la cocina a tope. Las llamadas que no se cogen son mesas que se reservan en otro restaurante."
+    },
+    {
+      "t": "Horarios y cierres que no coinciden",
+      "d": "Si la web dice una cosa y la ficha de Google otra, alguien llega con ganas y se encuentra la persiana bajada. Es la reseña mala más evitable."
+    },
+    {
+      "t": "Los planes de grupo se pierden por el camino",
+      "d": "Comidas de empresa, cumpleaños, celebraciones o menús para celíacos y veganos: sin una página que los explique, cada consulta acaba en una conversación larga por teléfono."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Carta como página web, siempre al día",
+      "d": "Platos, descripciones cortas, alérgenos y menú del día en una página que se lee bien en el móvil y que Google entiende. Tú la actualizas sin depender de nadie."
+    },
+    {
+      "t": "Reserva de mesa en pocos toques",
+      "d": "Formulario de reserva sencillo o conexión con el sistema que uses, más botón de WhatsApp. La confirmación llega al momento y tu equipo no tiene que descolgar el teléfono."
+    },
+    {
+      "t": "Asistente IA para las dudas de siempre",
+      "d": "Responde en la web y por WhatsApp a preguntas de horarios, alérgenos, terraza o grupos, a cualquier hora, y te pasa a ti lo que necesita una persona."
+    },
+    {
+      "t": "SEO local y ficha de Google coordinados",
+      "d": "Mismos datos, mismo horario y mismos enlaces a carta y reserva en la web y en Google Business Profile, para aparecer cuando buscan restaurante en tu barrio."
+    },
+    {
+      "t": "Una página para cada tipo de plan",
+      "d": "Comidas de empresa, celebraciones, grupos o menús especiales, cada uno con su propia página y su petición de presupuesto para captar esas búsquedas concretas."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿Puedo seguir usando mi sistema de reservas actual?",
+      "a": "Sí. Si ya trabajas con uno, lo integramos en la web. Si no tienes ninguno, te proponemos una opción sencilla acorde a cómo funciona tu sala."
+    },
+    {
+      "q": "¿Podré cambiar la carta y el menú del día yo mismo?",
+      "a": "Sí. Lo dejamos preparado para que actualices platos, alérgenos y menú del día sin tocar código ni esperar a nadie."
+    },
+    {
+      "q": "¿Hacéis webs para bares y locales pequeños, o solo restaurantes grandes?",
+      "a": "Para todos: bares, tabernas, cafeterías y restaurantes. Ajustamos el proyecto al tamaño y a lo que necesita tu negocio."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, preparamos una propuesta con una demo de cómo quedaría tu web y te la enseñamos en una llamada corta, sin compromiso."
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "slug": "spas-barcelona",
+  "nicho": "spas",
+  "ciudad": "Barcelona",
+  "publishDate": "2026-11-16",
+  "metaTitle": "Diseño web para spas y centros de bienestar en Barcelona",
+  "metaDescription": "Web para spas, centros de masajes y bienestar en Barcelona: reservas y bonos online, tarjetas regalo, SEO local y asistente IA. Agenda llena sin llamadas.",
+  "h1": "Diseño web para spas y centros de bienestar en Barcelona",
+  "intro": "Diseñamos la web de tu spa, centro de masajes o espacio de bienestar en Barcelona para que quien busca un momento de calma sienta tu ambiente desde el móvil y pueda reservar tratamiento, bono o tarjeta regalo sin esperar.",
+  "nota": "Un spa se vende por sensaciones: la web tiene que transmitir calma y, a la vez, hacer que reservar sea lo más fácil del mundo.",
+  "problemas": [
+    {
+      "t": "La web no transmite la experiencia",
+      "d": "Fotos genéricas y textos fríos no hacen sentir el ambiente. Quien elige un spa compra tranquilidad, y una web que no la transmite no convence."
+    },
+    {
+      "t": "Tratamientos explicados en una línea",
+      "d": "Masaje descontracturante, circuito de aguas, ritual en pareja… si no se explica qué incluye cada uno y cuánto dura, el cliente no se atreve a reservar."
+    },
+    {
+      "t": "Regalos que se compran en otro sitio",
+      "d": "Cumpleaños, Navidad o San Valentín: mucha gente busca un regalo de última hora. Sin tarjetas regalo y bonos en la web, esa venta se la lleva otro centro."
+    },
+    {
+      "t": "Recepción atada al teléfono y al WhatsApp",
+      "d": "Mientras atiendes en cabina no puedes contestar. Las consultas sobre disponibilidad y tratamientos se quedan sin respuesta justo cuando el cliente decide."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Diseño que se siente como tu centro",
+      "d": "Imagen, colores y textos a medida para que quien entra en la web perciba el ambiente de tu spa antes de pisarlo, y rápida en el móvil."
+    },
+    {
+      "t": "Reservas y bonos online",
+      "d": "Cada tratamiento con su descripción, duración y botón de reserva. Bonos y tarjetas regalo que se compran en la propia web, listos para enviar."
+    },
+    {
+      "t": "Asistente IA en la web y en WhatsApp",
+      "d": "Responde dudas sobre tratamientos, horarios y cómo llegar a cualquier hora, y deriva a tu equipo lo que requiere trato personal."
+    },
+    {
+      "t": "SEO local y Google Maps",
+      "d": "Optimizamos la ficha de Google, las páginas de cada tratamiento y las búsquedas del tipo «spa en Barcelona» o «masaje cerca de mí» para que te encuentren."
+    },
+    {
+      "t": "Reseñas y recordatorios",
+      "d": "Recordatorios antes de cada cita para reducir huecos vacíos y petición de reseña al terminar, para que tus clientes contentes se noten en Google."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿Puedo vender tarjetas regalo y bonos desde la web?",
+      "a": "Sí. Lo planteamos desde el principio: el cliente elige tratamiento o importe, paga y recibe el regalo listo para entregar."
+    },
+    {
+      "q": "¿Se puede reservar con la cabina y el terapeuta que quiero?",
+      "a": "Sí. La reserva se adapta a cómo trabajas: por tratamiento, por profesional o por cabina, y se sincroniza con tu agenda."
+    },
+    {
+      "q": "¿Trabajáis con centros pequeños o solo con grandes spas?",
+      "a": "Con ambos. Un gabinete de masajes y un spa con circuito de aguas necesitan cosas distintas, y ajustamos el proyecto a cada uno."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, preparamos una propuesta con una demo de cómo quedaría tu web y te la enseñamos en una llamada corta, sin compromiso."
+    }
+  ]
+}
