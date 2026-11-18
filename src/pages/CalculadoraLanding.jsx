@@ -146,9 +146,31 @@ function LoadingScreen({ onDone }) {
   );
 }
 
+/* Dominios de correo mal escritos más habituales → sugerencia */
+const EMAIL_TYPOS = {
+  'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.co': 'gmail.com', 'gamil.com': 'gmail.com', 'gmaill.com': 'gmail.com', 'gmail.es': 'gmail.com',
+  'hotmal.com': 'hotmail.com', 'hotmial.com': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotnail.com': 'hotmail.com', 'homail.com': 'hotmail.com',
+  'outlok.com': 'outlook.com', 'outlook.con': 'outlook.com', 'outloock.com': 'outlook.com',
+  'yahooo.com': 'yahoo.com', 'yaho.com': 'yahoo.com', 'yahoo.con': 'yahoo.com', 'yahoo.ex': 'yahoo.es',
+  'icloud.con': 'icloud.com', 'iclod.com': 'icloud.com',
+};
+const suggestEmail = (email) => {
+  const [local, domain] = email.trim().toLowerCase().split('@');
+  return domain && EMAIL_TYPOS[domain] ? `${local}@${EMAIL_TYPOS[domain]}` : null;
+};
+
+/* Origen de la visita (utm_source) para saber qué canal trae los leads */
+const readOrigin = () => {
+  try {
+    const u = new URLSearchParams(window.location.search).get('utm_source');
+    if (u) { sessionStorage.setItem('aguti_utm_source', u.slice(0, 40)); return u.slice(0, 40); }
+    return sessionStorage.getItem('aguti_utm_source') || '';
+  } catch { return ''; }
+};
+
 /* ── Main ── */
 export default function CalculadoraLanding() {
-  useSeo({ title: 'Calcular precio web: cotizador de páginas web | Agutidesigns', description: 'Cotizador de páginas web: calcula el precio de tu web (landing, corporativa o tienda online) en 2 minutos y recibe un presupuesto orientativo sin compromiso.', path: '/calculadora' });
+  useSeo({ title: 'Calcular precio web: ¿cuánto vale tu página? | Agutidesigns', description: 'Calcula el precio de tu web en 1 minuto y descubre cuánto vale tu página web. Orientativo y sin compromiso. Planes desde 190 €/mes.', path: '/calculadora' });
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     webType: '',
@@ -159,8 +181,10 @@ export default function CalculadoraLanding() {
     timeline: 'normal',
     name: '',
     email: '',
+    phone: '',
     productCount: '',
   });
+  useEffect(() => { readOrigin(); }, []);
   const [isLoading, setIsLoading] = useState(false);
   const [quote, setQuote] = useState(null);
   const [error, setError] = useState('');
@@ -181,7 +205,10 @@ export default function CalculadoraLanding() {
     }
     if (step === 6) {
       if (!formData.name.trim()) { setError('Introduce tu nombre.'); return false; }
-      if (!formData.email.trim() || !formData.email.includes('@')) { setError('Introduce un email válido.'); return false; }
+      if (!formData.email.trim() || !/^\S+@\S+\.\S+$/.test(formData.email.trim())) { setError('Introduce un email válido.'); return false; }
+      const fix = suggestEmail(formData.email);
+      if (fix) { setError(`Revisa tu email: ¿querías escribir ${fix}?`); return false; }
+      if (formData.phone.trim() && formData.phone.replace(/\D/g, '').length < 9) { setError('El teléfono debe tener al menos 9 dígitos (o déjalo en blanco).'); return false; }
     }
     return true;
   };
@@ -276,7 +303,8 @@ export default function CalculadoraLanding() {
       body: JSON.stringify({
         nombre: formData.name,
         email: formData.email,
-        situacion: `Calculadora: ${formData.webType}, ${formData.pages} páginas, plazo ${formData.timeline}. Presupuesto ${quoteData.total} €${quoteData.monthly ? ` + ${quoteData.monthly} €/mes` : ''}`,
+        telefono: formData.phone.trim() || undefined,
+        situacion: `Calculadora: ${formData.webType}, ${formData.pages} páginas, plazo ${formData.timeline}. Presupuesto ${quoteData.total} €${quoteData.monthly ? ` + ${quoteData.monthly} €/mes` : ''}${readOrigin() ? `. Origen: ${readOrigin()}` : ''}`,
         fuente: 'calculadora',
       }),
     }).then((r) => { if (r.ok) trackLeadConversion('calculadora'); }).catch(() => {});
@@ -295,7 +323,7 @@ export default function CalculadoraLanding() {
   };
 
   const reset = () => {
-    setFormData({ webType: '', pages: '1-3', designStyle: 'moderno', functionalities: [], seoExtras: ['seo-basico'], timeline: 'normal', name: '', email: '', productCount: '' });
+    setFormData({ webType: '', pages: '1-3', designStyle: 'moderno', functionalities: [], seoExtras: ['seo-basico'], timeline: 'normal', name: '', email: '', phone: '', productCount: '' });
     setStep(1); setQuote(null); setError(''); setIsLoading(false);
   };
 
@@ -665,7 +693,7 @@ export default function CalculadoraLanding() {
                   {step === 6 && (
                     <>
                       <h2 className="calc-step__title">Último paso: introduce tu email</h2>
-                      <p className="calc-step__desc">Solo necesitamos tu nombre y email para mostrarte el precio final.</p>
+                      <p className="calc-step__desc">Solo necesitamos tu nombre y email para mostrarte el precio final. Revisa bien el correo: ahí te llega el presupuesto.</p>
 
                       <div className="calc-field">
                         <label className="calc-field__label">Tu nombre *</label>
@@ -678,6 +706,12 @@ export default function CalculadoraLanding() {
                           <Mail size={16} className="calc-input-wrap__icon" aria-hidden="true" />
                           <input type="email" className="calc-input calc-input--icon" placeholder="tu@email.com" value={formData.email} onChange={e => set('email', e.target.value)} autoComplete="email" />
                         </div>
+                      </div>
+
+                      <div className="calc-field">
+                        <label className="calc-field__label">Teléfono o WhatsApp (opcional)</label>
+                        <input type="tel" className="calc-input" placeholder="600 000 000" value={formData.phone} onChange={e => set('phone', e.target.value)} autoComplete="tel" />
+                        <p className="calc-step__desc" style={{ marginTop: 6, fontSize: '0.85rem' }}>Para enviarte el presupuesto por WhatsApp si el correo falla.</p>
                       </div>
 
                       <div className="calc-privacy"><Lock size={12} /><span>Sin spam. Solo te enviamos tu presupuesto detallado. Puedes darte de baja cuando quieras.</span></div>
