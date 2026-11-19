@@ -6,6 +6,5 @@ export const PORTFOLIO = [
   { id: 'rusinol', img: '/img/pf-rusinol.webp', label: 'Gestoría Rusiñol', url: 'gestoriarusinol.com', type: 'Gestoría Online', href: 'https://gestoriarusinol.com' },
   { id: 'lagraciosavins', img: '/img/pf-lagraciosavins.webp', label: 'La Graciosa Vins', url: 'lagraciosavins.com', type: 'Club de Vino', href: 'https://lagraciosavins.com' },
   { id: 'nexgent', img: '/img/pf-nexgent.webp', label: 'NexGent', url: 'nexgent.io', type: 'Startup IA', href: 'https://nexgent.io' },
-  { id: 'hellonails', img: '/img/pf-hellonails.webp', label: 'Hello Nails', url: 'hellonails.com', type: 'Belleza & Franquicia', href: 'https://hellonails.com' },
   { id: 'meinzerandmoray', img: '/img/pf-meinzerandmoray.webp', label: 'Meinzer & Moray', url: 'meinzerandmoray.com', type: 'Inversiones', href: 'https://www.meinzerandmoray.com' },
 ];

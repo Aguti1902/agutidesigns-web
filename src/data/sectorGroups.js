@@ -19,7 +19,7 @@ export const SECTOR_GROUPS = [
     lead: 'Spas, centros de estética, salones y franquicias de belleza. Webs que transmiten la experiencia y llenan la agenda con reservas online.',
     points: ['Reservas y bonos online', 'Fotos y textos que venden la experiencia', 'Reseñas de Google visibles en la web'],
     proof: { label: 'Opinión real', text: '“Desde que estrenamos la nueva web, las reservas online han aumentado un 40 %.” Lucía Fernández, Spa Organic.' },
-    clients: ['spaorganic', 'hellonails'],
+    clients: ['spaorganic'],
     nichos: ['peluqueria', 'spas'],
   },
   {
