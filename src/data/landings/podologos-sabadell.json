@@ -1,0 +1,73 @@
+{
+  "slug": "podologos-sabadell",
+  "nicho": "podologia",
+  "ciudad": "Sabadell",
+  "publishDate": "2026-11-23",
+  "metaTitle": "Diseño web para clínicas de podología en Sabadell | Agutidesigns",
+  "metaDescription": "Web para clínicas de podología en Sabadell y el Vallès Occidental: servicios por página, reserva de cita, ficha de Google y recordatorios automáticos.",
+  "h1": "Diseño web para clínicas de podología en Sabadell",
+  "intro": "Quien busca «podólogo en Sabadell» suele tener un problema concreto: una uña encarnada, un dolor al caminar, un pie que molesta al correr. Creamos una web donde cada tratamiento tiene su propia página y la cita se pide en un par de toques, y la conectamos con tu ficha de Google para que te encuentren tanto en Sabadell como en los municipios del Vallès Occidental.",
+  "nota": "En una ciudad industrial y deportiva como Sabadell, con vida de barrio y mucha gente que se mueve por el Vallès, la podología se elige por cercanía y por confianza: ambas se ven en la web antes de la primera visita.",
+  "problemas": [
+    {
+      "t": "Búsquedas por problema, no por especialidad",
+      "d": "El paciente escribe «uña encarnada», «dolor de talón» o «plantillas para correr», no «podología». Si tu web no tiene una página para cada una, Google no te muestra para esas búsquedas."
+    },
+    {
+      "t": "Tu clínica compite con Terrassa y con Barcelona",
+      "d": "En el Vallès Occidental la gente se mueve entre ciudades. Si tu web no deja claro dónde estás y a quién atiendes, el paciente puede acabar eligiendo una consulta de otra población."
+    },
+    {
+      "t": "Urgencias pequeñas que no esperan",
+      "d": "Una uña infectada o un dolor que no pasa no se deja para la semana que viene. Si pedir cita exige llamar en horario de consulta, esa persona reserva donde pueda hacerlo antes."
+    },
+    {
+      "t": "Pacientes que no vuelven a la revisión",
+      "d": "Muchos tratamientos necesitan seguimiento. Sin un aviso a tiempo, el paciente se olvida y deja de venir."
+    }
+  ],
+  "solucion": [
+    {
+      "t": "Una página por tratamiento",
+      "d": "Uña encarnada, estudio de la pisada, plantillas, podología deportiva, pie diabético… cada servicio explicado con palabras sencillas y con su botón de cita, para que Google y el paciente lo encuentren."
+    },
+    {
+      "t": "Cita online pensada para el móvil",
+      "d": "El paciente elige tipo de visita y hueco sin llamar. Útil sobre todo cuando hay prisa por un dolor o una molestia."
+    },
+    {
+      "t": "Ficha de Google y SEO local en el Vallès",
+      "d": "Optimizamos tu ficha de Google Business Profile y las páginas de la web con Sabadell y los municipios cercanos que atiendes. No prometemos posiciones concretas, pero sí una presencia local bien trabajada."
+    },
+    {
+      "t": "Recordatorios de cita y de revisión",
+      "d": "Mensajes antes de cada visita para reducir ausencias y avisos de seguimiento para que el paciente vuelva cuando toca."
+    },
+    {
+      "t": "Asistente IA para dudas habituales",
+      "d": "Resuelve a cualquier hora preguntas como qué incluye el estudio de la pisada o cómo pedir cita, y pasa a tu equipo lo que necesita una persona."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "¿Podéis hacer una página para cada tratamiento?",
+      "a": "Sí. Acordamos contigo los tratamientos que más te interesa trabajar y cada uno tiene su propia página, con texto pensado para quien lo busca."
+    },
+    {
+      "q": "¿Mi web puede mostrar que atiendo a pacientes de otros municipios del Vallès?",
+      "a": "Sí. Incluimos una sección clara de ubicación y zona de atención, y ajustamos la ficha de Google para reflejarlo."
+    },
+    {
+      "q": "¿Se puede conectar con la agenda que ya usamos?",
+      "a": "Normalmente sí. Conectamos la reserva online con la herramienta de agenda que uséis o te proponemos una sencilla si todavía no tenéis."
+    },
+    {
+      "q": "¿Trabajáis solo en Sabadell?",
+      "a": "Trabajamos con negocios de toda España, en remoto. Si estás en Sabadell o en el área metropolitana de Barcelona, también podemos vernos en persona."
+    },
+    {
+      "q": "¿Cómo empezamos?",
+      "a": "Nos dejas tus datos, preparamos una propuesta personalizada con una demo de cómo quedaría tu web y te la enseñamos en una llamada corta."
+    }
+  ]
+}
