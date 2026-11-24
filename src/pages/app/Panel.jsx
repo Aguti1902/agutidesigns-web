@@ -90,7 +90,7 @@ export default function Panel() {
   const [extra, setExtra] = useState({}); const [menu, setMenu] = useState(false); const [dias, setDias] = useState(30);
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 15000); return () => clearInterval(t); }, []);
-  const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar') setTimeout(() => document.getElementById('probar')?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
+  const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
   useSeo({ title: demo ? 'Demo · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
   const [estado, setEstado] = useOficina(demo);
   const deptoIds = useMemo(() => estado.deptos.map((d) => d.depto), [estado.deptos]);
@@ -149,7 +149,7 @@ export default function Panel() {
         </nav>
         <div className="lado__pie">
           <div className="equipo-mini">{estado.deptos.map((d) => <span key={d.depto} title={DEPTO[d.depto].nombre} style={{ background: DEPTO[d.depto].color }} />)}</div>
-          <small>{estado.deptos.length} departamento{estado.deptos.length === 1 ? '' : 's'}{negocio.importe_mes ? ` · ${negocio.importe_mes} €/mes` : ''}</small>
+          <small>{estado.deptos.length} departamento{estado.deptos.length === 1 ? '' : 's'}{negocio.importe_mes ? ` · ${negocio.importe_mes} €/mes${negocio.periodo === 'anio' ? ' (anual)' : ''}` : ''}</small>
           {!demo && <button className="enlace enlace--gris" onClick={() => supabase.auth.signOut()}><LogOut size={14} /> Salir</button>}
         </div>
       </aside>

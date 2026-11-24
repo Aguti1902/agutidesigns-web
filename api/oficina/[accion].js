@@ -3,7 +3,7 @@
 // Con sesión del cliente: conectar, desconectar, portal, plan, responder, conversacion, tarea.
 import crypto from 'node:crypto';
 import {
-  stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, DEPTO, origen, esUuid, actividad, estadoAgente,
+  stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
   negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
@@ -15,18 +15,22 @@ const cuerpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '
 async function checkout(req, res) {
   if (req.method !== 'POST') return json(res, 405, {});
   if (!configurado()) return json(res, 503, { error: 'El alta online se está activando. Escríbenos a info@agutidesigns.io y te la activamos hoy.' });
-  const { deptos, nombre, email } = cuerpo(req);
-  const ids = limpiaDeptos(deptos); const nom = String(nombre || '').trim().slice(0, 120); const mail = String(email || '').trim().toLowerCase();
+  const { deptos, nombre, email, periodo: per } = cuerpo(req);
+  const ids = limpiaDeptos(deptos); const anual = per === 'anio'; const nom = String(nombre || '').trim().slice(0, 120); const mail = String(email || '').trim().toLowerCase();
   if (!ids.length) return json(res, 400, { error: 'Elige al menos un departamento.' });
   if (!nom) return json(res, 400, { error: 'Falta el nombre de tu negocio.' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return json(res, 400, { error: 'Revisa tu correo.' });
   const base = origen(req);
   const datos = {
     mode: 'subscription', locale: 'es', customer_email: mail, billing_address_collection: 'required', 'tax_id_collection[enabled]': 'true',
-    'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur', 'line_items[0][price_data][unit_amount]': String(precioOficina(ids.length) * 100),
-    'line_items[0][price_data][recurring][interval]': 'month', 'line_items[0][price_data][product_data][name]': 'Oficina de IA',
-    'metadata[app]': 'oficina-saas', 'metadata[deptos]': ids.join(','), 'metadata[nombre]': nom,
-    'subscription_data[metadata][app]': 'oficina-saas', 'subscription_data[metadata][deptos]': ids.join(','), 'subscription_data[description]': ids.map((id) => DEPTO[id].nombre).join(' · '),
+    'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
+    'line_items[0][price_data][unit_amount]': String((anual ? precioAnual(ids.length) : precioOficina(ids.length)) * 100),
+    'line_items[0][price_data][recurring][interval]': anual ? 'year' : 'month',
+    'line_items[0][price_data][product_data][name]': anual ? `Oficina de IA · plan anual${webIncluida('anio', ids.length) ? ' con web incluida' : ''}` : 'Oficina de IA · plan mensual',
+    'metadata[app]': 'oficina-saas', 'metadata[deptos]': ids.join(','), 'metadata[nombre]': nom, 'metadata[periodo]': anual ? 'anio' : 'mes',
+    'subscription_data[metadata][app]': 'oficina-saas', 'subscription_data[metadata][deptos]': ids.join(','), 'subscription_data[metadata][periodo]': anual ? 'anio' : 'mes',
+    'subscription_data[description]': ids.map((id) => DEPTO[id].nombre).join(' · '), payment_method_collection: 'always',
+    ...(anual ? {} : { 'subscription_data[trial_period_days]': String(DIAS_PRUEBA), 'subscription_data[trial_settings][end_behavior][missing_payment_method]': 'cancel' }),
     success_url: `${base}/app/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/oficina-ia#precios`,
   };
   if (process.env.STRIPE_TAX_RATE_IVA) datos['line_items[0][tax_rates][0]'] = process.env.STRIPE_TAX_RATE_IVA;
@@ -57,6 +61,13 @@ async function webhook(req, res) {
     if (ev.type === 'checkout.session.completed') await altaDesdeSesion(o, `https://${req.headers.host}`);
     if (ev.type.startsWith('customer.subscription.') && o.metadata?.app === 'oficina-saas' && ESTADO[o.status]) {
       await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.id)}`, { metodo: 'PATCH', cuerpo: { estado: ESTADO[o.status] } });
+      const neg = o.status === 'active' && await uno(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.id)}&prueba_hasta=not.is.null&select=id`);
+      if (neg) { // la prueba ha terminado y ha pagado: cupo completo
+        const deps = await sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`);
+        for (const d of deps) await sb(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.${d.depto}`, { metodo: 'PATCH', cuerpo: cupoDe(d.depto, false) });
+        await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { prueba_hasta: null } });
+        if (deps[0]) await actividad(neg.id, deps[0].depto, 'Tu prueba ha terminado y tu oficina sigue en marcha con el cupo completo de cada departamento.', 'sistema');
+      }
     }
     if (ev.type === 'invoice.payment_failed' && o.subscription) await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.subscription)}`, { metodo: 'PATCH', cuerpo: { estado: 'impago' } });
     return json(res, 200, { ok: true });
@@ -88,18 +99,37 @@ async function plan(req, res, neg) {
   if (!neg.stripe_subscription) return json(res, 400, { error: 'Sin suscripción' });
   const sub = await stripe(`subscriptions/${neg.stripe_subscription}`);
   const item = sub.items?.data?.[0];
-  const euros = precioOficina(ids.length);
+  const anual = item.price?.recurring?.interval === 'year';
+  const euros = anual ? precioAnual(ids.length) : precioOficina(ids.length);
+  const prueba = neg.prueba_hasta && new Date(neg.prueba_hasta) > new Date();
   await stripe(`subscriptions/${sub.id}`, { metodo: 'POST', datos: {
     'items[0][id]': item.id, 'items[0][price_data][currency]': 'eur', 'items[0][price_data][product]': typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
-    'items[0][price_data][unit_amount]': String(euros * 100), 'items[0][price_data][recurring][interval]': 'month', proration_behavior: 'create_prorations',
+    'items[0][price_data][unit_amount]': String(euros * 100), 'items[0][price_data][recurring][interval]': anual ? 'year' : 'month', proration_behavior: 'create_prorations',
     'metadata[deptos]': ids.join(','), description: ids.map((id) => DEPTO[id].nombre).join(' · ') } });
   await sb(`of_departamentos?negocio_id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { activo: false } });
   await sb('of_departamentos?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=merge-duplicates',
-    cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, activo: true, cupo_n: DEPTO[d].cupo.n, tokens_mes: DEPTO[d].tokensMes })) });
+    cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, activo: true, ...cupoDe(d, prueba) })) });
   await sb('of_agentes?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=ignore-duplicates', cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, estado: 'disponible', tarea: 'Recién incorporado a tu oficina' })) });
-  await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { importe_mes: euros } });
-  await actividad(neg.id, ids[0], `Has cambiado tu oficina: ${ids.map((d) => DEPTO[d].nombre).join(', ')} (${euros} €/mes).`, 'sistema');
-  return json(res, 200, { ok: true, importe_mes: euros });
+  const web = neg.web_incluida || webIncluida(anual ? 'anio' : 'mes', ids.length);
+  await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { importe_mes: anual ? Math.round(euros / 12) : euros, web_incluida: web, ...(web && !neg.web_estado ? { web_estado: 'pendiente' } : {}) } });
+  await actividad(neg.id, ids[0], `Has cambiado tu oficina: ${ids.map((d) => DEPTO[d].nombre).join(', ')} (${anual ? `${euros} €/año` : `${euros} €/mes`}).`, 'sistema');
+  return json(res, 200, { ok: true, importe_mes: anual ? Math.round(euros / 12) : euros, web_incluida: web });
+}
+
+// Solicitud de la web incluida en el plan anual.
+async function web(req, res, neg) {
+  if (!neg.web_incluida) return json(res, 403, { error: 'Tu plan no incluye la web.' });
+  const { tiene, url, que } = cuerpo(req);
+  const detalle = { tiene: !!tiene, url: String(url || '').slice(0, 300), que: String(que || '').slice(0, 3000), fecha: new Date().toISOString() };
+  await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { web_estado: 'solicitada', web_detalle: detalle } });
+  await actividad(neg.id, 'contenido', `Has pedido ${detalle.tiene ? 'el rediseño' : 'el diseño'} de tu web. Te escribimos en menos de 48 h laborables para empezar.`, 'sistema');
+  if (process.env.RESEND_API_KEY) {
+    const { Resend } = await import('resend');
+    await new Resend(process.env.RESEND_API_KEY).emails.send({ from: 'Oficina de IA <info@agutidesigns.io>', to: 'info@agutidesigns.io', reply_to: neg.owner_email,
+      subject: `Web incluida (plan anual): ${neg.nombre} · ${detalle.tiene ? 'rediseño' : 'diseño desde cero'}`,
+      text: `${neg.nombre} (${neg.owner_email})\n${detalle.tiene ? `Web actual: ${detalle.url}` : 'No tiene web.'}\n\nLo que quiere:\n${detalle.que}` }).catch(() => {});
+  }
+  return json(res, 200, { ok: true });
 }
 
 // ---------------- conexiones ----------------
@@ -377,7 +407,7 @@ async function cron(req, res) {
 
 // ---------------- enrutador ----------------
 const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');

@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Bot, CalendarCheck, PenLine, MapPin, Headphones, Share2, LayoutDashboard, Gauge, ChevronDown } from 'lucide-react';
 import Configurador from '../components/oficina/Configurador';
-import { DEPARTAMENTOS, PRECIO_SUELTO, precioOficina } from '../data/oficinaSaas';
+import { DEPARTAMENTOS, PRECIO_SUELTO, precioOficina, DIAS_PRUEBA, WEB_DESDE } from '../data/oficinaSaas';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import CookieBanner from '../components/ui/LazyCookieBanner';
@@ -61,7 +61,9 @@ const PROCESS = [
 
 const FAQ = [
   { q: '¿Necesito saber de inteligencia artificial?', a: 'No. Eliges tus departamentos, rellenas los datos de tu negocio y el panel te guía para conectar tus cuentas. Si te atascas, te ayudamos.' },
-  { q: '¿Hay permanencia o puesta en marcha?', a: 'No. Pagas cada mes y puedes añadir, quitar departamentos o darte de baja desde tu panel cuando quieras.' },
+  { q: '¿Hay permanencia o puesta en marcha?', a: 'No. En el plan mensual pagas cada mes y puedes añadir, quitar departamentos o darte de baja desde tu panel cuando quieras.' },
+  { q: '¿Puedo probarlo gratis?', a: `Sí. El plan mensual tiene ${DIAS_PRUEBA} días gratis con los departamentos que elijas (con el 25 % de su cupo). Te pedimos la tarjeta, pero no te cobramos nada hasta el día ${DIAS_PRUEBA + 1}, y si cancelas antes no pagas nada.` },
+  { q: '¿Qué incluye el plan anual?', a: `Lo mismo que el mensual con un 20 % de descuento, en un solo pago al año. Y a partir de ${WEB_DESDE} departamentos incluye el diseño de tu web, o el rediseño de la que ya tienes.` },
   { q: '¿Qué pasa si se me acaba el cupo del mes?', a: 'Te avisamos al llegar al 80 %. Si se acaba, el departamento solo te pasa los avisos importantes hasta que lo amplíes o empiece el mes siguiente. Nunca te cobramos de más sin que lo sepas.' },
   { q: '¿Qué pasa si un agente se equivoca?', a: 'Cada agente tiene reglas firmes (por ejemplo, no dar precios ni plazos que no hayas fijado tú, o no publicar sin tu permiso si así lo quieres). Lo delicado queda pendiente de tu aprobación y todo queda registrado en el panel.' },
   { q: '¿Qué herramientas necesito?', a: 'Las que ya usas: tu WhatsApp Business, tu web, tus redes y tu ficha de Google. La IA va incluida en la cuota.' },
@@ -145,7 +147,7 @@ function HeroOficina() {
           <a href="/app?demo=1" className="ag-btn oh-btn-ghost">Ver el panel por dentro</a>
         </div>
         <ul className="oh-trust">
-          <li><Check size={16} /> Sin puesta en marcha</li>
+          <li><Check size={16} /> {DIAS_PRUEBA} días gratis</li>
           <li><Check size={16} /> Sin permanencia</li>
           <li><Check size={16} /> IA incluida</li>
         </ul>

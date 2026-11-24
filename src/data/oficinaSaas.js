@@ -6,6 +6,15 @@ export const PRECIO_POR_CANTIDAD = { 1: 49, 2: 89, 3: 129, 4: 169, 5: 199, 6: 22
 export const precioOficina = (n) => PRECIO_POR_CANTIDAD[Math.max(1, Math.min(6, n))] || 0;
 export const PRECIO_SUELTO = PRECIO_POR_CANTIDAD[1];
 
+// Plan anual: 20 % de descuento, pago por adelantado. Incluye diseño o rediseño de la web desde 3 departamentos.
+export const DESCUENTO_ANUAL = 0.2;
+export const precioAnual = (n) => Math.round(precioOficina(n) * 12 * (1 - DESCUENTO_ANUAL));
+export const WEB_DESDE = 3;
+export const webIncluida = (periodo, n) => periodo === 'anio' && n >= WEB_DESDE;
+// Plan mensual: 7 días de prueba (se pide tarjeta, no se cobra hasta el día 8) con el 25 % del cupo.
+export const DIAS_PRUEBA = 7;
+export const CUPO_PRUEBA = 0.25;
+
 // cupo: lo que ve el cliente. tokensMes: presupuesto interno de IA (entrada + salida) con el que se corta.
 // El tope diario es tokensMes / 15, para que nadie se gaste el mes en un día.
 export const DEPARTAMENTOS = [

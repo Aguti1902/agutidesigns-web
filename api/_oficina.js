@@ -3,9 +3,11 @@
 // SUPABASE_URL (o VITE_SUPABASE_URL), VITE_SUPABASE_ANON_KEY, OPENAI_API_KEY o ANTHROPIC_API_KEY.
 // Opcionales: OFICINA_CIFRADO_KEY, credenciales OAuth por proveedor, META_VERIFY_TOKEN, CRON_SECRET.
 import crypto from 'node:crypto';
-import { DEPARTAMENTOS, DEPTO, precioOficina } from '../src/data/oficinaSaas.js';
+import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, webIncluida, DIAS_PRUEBA, CUPO_PRUEBA } from '../src/data/oficinaSaas.js';
 
-export { DEPARTAMENTOS, DEPTO, precioOficina };
+export { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, webIncluida, DIAS_PRUEBA, CUPO_PRUEBA };
+// Cupo de un departamento (reducido mientras dura la prueba gratis).
+export const cupoDe = (d, prueba) => ({ cupo_n: Math.max(1, Math.round(DEPTO[d].cupo.n * (prueba ? CUPO_PRUEBA : 1))), tokens_mes: Math.round(DEPTO[d].tokensMes * (prueba ? CUPO_PRUEBA : 1)) });
 export const stripeKey = () => process.env.STRIPE_OFICINA_KEY || process.env.STRIPE_SECRET_KEY;
 // La oficina usa su propio proyecto de Supabase (OFICINA_*); si no está, cae al de la web.
 export const sbUrl = () => (process.env.OFICINA_SUPABASE_URL || process.env.VITE_OFICINA_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
@@ -96,25 +98,33 @@ export async function altaDesdeSesion(s, base) {
   if (s.metadata?.app !== 'oficina-saas' || s.mode !== 'subscription' || s.status !== 'complete') return null;
   const email = String(s.customer_details?.email || s.customer_email || '').toLowerCase();
   const ids = limpiaDeptos(s.metadata.deptos);
+  const periodo = s.metadata.periodo === 'anio' ? 'anio' : 'mes';
+  const sub = s.subscription ? await stripe(`subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}`).catch(() => null) : null;
+  const prueba = sub?.status === 'trialing' && sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+  const web = webIncluida(periodo, ids.length);
+  const importe = periodo === 'anio' ? precioAnual(ids.length) : precioOficina(ids.length);
   const creado = await sb('of_negocios?on_conflict=stripe_session', {
     metodo: 'POST', prefer: 'resolution=ignore-duplicates,return=representation',
-    cuerpo: { nombre: s.metadata.nombre || 'Mi negocio', owner_email: email, importe_mes: Math.round((s.amount_subtotal || 0) / 100), stripe_customer: s.customer, stripe_subscription: s.subscription, stripe_session: s.id },
+    cuerpo: { nombre: s.metadata.nombre || 'Mi negocio', owner_email: email, importe_mes: periodo === 'anio' ? Math.round(importe / 12) : importe, periodo, prueba_hasta: prueba,
+      web_incluida: web, web_estado: web ? 'pendiente' : null, stripe_customer: s.customer, stripe_subscription: sub?.id || s.subscription, stripe_session: s.id },
   });
   const nuevo = creado?.[0];
   const neg = nuevo || await uno(`of_negocios?stripe_session=eq.${encodeURIComponent(s.id)}&select=*`);
   if (nuevo) {
     await sb('of_departamentos?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=ignore-duplicates',
-      cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, cupo_n: DEPTO[d].cupo.n, tokens_mes: DEPTO[d].tokensMes })) });
+      cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, ...cupoDe(d, prueba) })) });
     await sb('of_agentes?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=ignore-duplicates',
       cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, estado: 'preparando', tarea: 'Esperando a que completes la puesta en marcha' })) });
     await actividad(neg.id, ids[0], 'Tu oficina de IA está creada. Cuéntale a tus agentes cómo es tu negocio y conecta tus herramientas para que empiecen a trabajar.', 'sistema');
+    if (prueba) await actividad(neg.id, ids[0], `Tienes ${DIAS_PRUEBA} días de prueba gratis, hasta el ${new Date(prueba).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}. Durante la prueba cada departamento tiene el 25 % de su cupo. No se te cobra nada hasta ese día y puedes cancelar cuando quieras.`, 'sistema');
+    if (web) await actividad(neg.id, ids[0], 'Tu plan anual incluye el diseño o rediseño de tu web. Cuéntanos qué necesitas desde Ajustes → Tu web y nos ponemos con ella.', 'sistema');
     await enviarAcceso(email, base, neg.nombre);
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import('resend');
       await new Resend(process.env.RESEND_API_KEY).emails.send({
         from: 'Oficina de IA <info@agutidesigns.io>', to: 'info@agutidesigns.io',
-        subject: `Nueva oficina de IA: ${neg.nombre} (${neg.importe_mes} €/mes)`,
-        text: `${neg.nombre} · ${email}\nDepartamentos: ${ids.map((d) => DEPTO[d].nombre).join(', ')}\nImporte: ${neg.importe_mes} €/mes`,
+        subject: `Nueva oficina de IA: ${neg.nombre} · ${periodo === 'anio' ? `anual ${importe} €` : `${importe} €/mes`}${prueba ? ' (en prueba)' : ''}${web ? ' · WEB INCLUIDA' : ''}`,
+        text: `${neg.nombre} · ${email}\nDepartamentos: ${ids.map((d) => DEPTO[d].nombre).join(', ')}\nPlan: ${periodo === 'anio' ? `anual, ${importe} €` : `mensual, ${importe} €/mes`}${prueba ? `\nPrueba gratis hasta: ${prueba}` : ''}${web ? '\nIncluye diseño o rediseño de la web.' : ''}`,
       }).catch((e) => console.error('[alta] aviso', e.message));
     }
   }
