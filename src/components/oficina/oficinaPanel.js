@@ -244,8 +244,9 @@ function initOffice(host){
   const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:.05},o));
   const box=(w,h,d,mat,x,y,z,parent=scene,shadow=true)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; parent.add(m); return m; };
   const cyl=(rt,rb,h,mat,x,y,z,parent=scene,seg=16)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; parent.add(m); return m; };
-  const mFloor=M(0xe9ecf3,{roughness:.55}), mSlab=M(0x0b1433), mWall=M(0x0b1433,{roughness:.9}), mWall2=M(0x101c48,{roughness:.9}), mBlue=M(0x0047ff,{roughness:.45}), mWhite=M(0xf6f8fc,{roughness:.4}),
-    mDark=M(0x1a2244,{roughness:.6,metalness:.3}), mBlack=M(0x0a0d18,{roughness:.4,metalness:.2}), mWood=M(0xc9a27a,{roughness:.6}), mLime=M(0xe5fc63,{roughness:.6}), mGreen=M(0x2bbf86,{roughness:.8}), mGreen2=M(0x16804f,{roughness:.8}),
+  const C=MARCA.colores||{}, hx=(v,d)=>(v?parseInt(String(v).replace('#',''),16):d);
+  const mFloor=M(hx(C.suelo,0xe9ecf3),{roughness:.55}), mSlab=M(hx(C.pared,0x0b1433)), mWall=M(hx(C.pared,0x0b1433),{roughness:.9}), mWall2=M(hx(C.pared2,0x101c48),{roughness:.9}), mBlue=M(hx(C.acento,0x0047ff),{roughness:.45}), mWhite=M(0xf6f8fc,{roughness:.4}),
+    mDark=M(0x1a2244,{roughness:.6,metalness:.3}), mBlack=M(0x0a0d18,{roughness:.4,metalness:.2}), mWood=M(0xc9a27a,{roughness:.6}), mLime=M(hx(C.detalle,0xe5fc63),{roughness:.6}), mGreen=M(0x2bbf86,{roughness:.8}), mGreen2=M(0x16804f,{roughness:.8}),
     mGlass=new THREE.MeshStandardMaterial({color:0xb9d0ff,roughness:.05,metalness:.1,transparent:true,opacity:.22,depthWrite:false}), mFrame=M(0x1a2244,{metalness:.5,roughness:.3});
   OF.mats={mDark,mWhite};
   const H={scene,M,box,cyl,mats:{mFloor,mSlab,mWall,mWall2,mBlue,mWhite,mDark,mBlack,mWood,mLime,mGreen,mGreen2,mGlass,mFrame}};
@@ -327,23 +328,28 @@ function initOffice(host){
   OF.wall=makeCanvasTex(1024,560); box(6.3,3.5,0.12,mBlack,12.2,2.6,-10.98);
   const scr=new THREE.Mesh(new THREE.PlaneGeometry(6.05,3.3),new THREE.MeshBasicMaterial({map:OF.wall.t})); scr.position.set(12.2,2.6,-10.91); scene.add(scr);
   const glow=new THREE.PointLight(0x2f6bff,Math.PI,12,1); glow.position.set(12.2,3,-9); scene.add(glow);
+  const MU={plantas:true,sofa:true,pingpong:true,cocina:true,agua:true,cuadros:false,estanteria:false,...(MARCA.muebles||{})};
   // Cocina
-  box(0.75,0.9,4.2,mWhite,15.4,0.45,-0.6); box(0.8,0.06,4.2,mDark,15.4,0.92,-0.6); box(0.45,0.62,0.5,mBlack,15.45,1.26,-1.8); cyl(0.05,0.05,0.1,mLime,15.2,1.0,-1.8,scene,8); box(0.45,0.5,0.5,mBlue,15.45,1.2,0.4); gBlock(15.0,-2.7,15.9,1.5);
-  const water=[9.0,1.9]; box(0.5,1.0,0.5,mWhite,water[0],0.5,water[1]); cyl(0.2,0.2,0.5,M(0x9cc4ff,{transparent:true,opacity:.5}),water[0],1.25,water[1]); gBlock(8.7,1.6,9.3,2.2);
+  if(MU.cocina){ box(0.75,0.9,4.2,mWhite,15.4,0.45,-0.6); box(0.8,0.06,4.2,mDark,15.4,0.92,-0.6); box(0.45,0.62,0.5,mBlack,15.45,1.26,-1.8); cyl(0.05,0.05,0.1,mLime,15.2,1.0,-1.8,scene,8); box(0.45,0.5,0.5,mBlue,15.45,1.2,0.4); gBlock(15.0,-2.7,15.9,1.5); }
+  const water=[9.0,1.9]; if(MU.agua){ box(0.5,1.0,0.5,mWhite,water[0],0.5,water[1]); cyl(0.2,0.2,0.5,M(0x9cc4ff,{transparent:true,opacity:.5}),water[0],1.25,water[1]); gBlock(8.7,1.6,9.3,2.2); }
   // Zona de descanso: sofá, sillones, ping-pong
-  const rug=new THREE.Mesh(new THREE.CircleGeometry(2.8,40),new THREE.MeshStandardMaterial({color:0x0047ff,roughness:.95})); rug.rotation.x=-Math.PI/2; rug.position.set(12.2,0.035,8.0); rug.receiveShadow=true; scene.add(rug);
+  if(MU.sofa){ const rug=new THREE.Mesh(new THREE.CircleGeometry(2.8,40),new THREE.MeshStandardMaterial({color:0x0047ff,roughness:.95})); rug.rotation.x=-Math.PI/2; rug.position.set(12.2,0.035,8.0); rug.receiveShadow=true; scene.add(rug);
   const sofa=new THREE.Group(); sofa.position.set(12.2,0,10.0); sofa.rotation.y=Math.PI; scene.add(sofa);
   box(3.4,0.42,0.95,mWall,0,0.3,0,sofa); box(3.4,0.6,0.25,mWall,0,0.7,-0.42,sofa); box(0.25,0.55,0.95,mWall,-1.6,0.5,0,sofa); box(0.25,0.55,0.95,mWall,1.6,0.5,0,sofa);
   [-0.95,0,0.95].forEach(dx=>box(0.9,0.12,0.75,mBlue,dx,0.56,0.06,sofa)); gBlock(10.4,9.4,14.0,10.6);
   cyl(0.55,0.55,0.08,mWhite,12.2,0.42,8.0); cyl(0.06,0.06,0.38,mDark,12.2,0.2,8.0,scene,8); cyl(0.12,0.1,0.1,mLime,12.0,0.51,7.9,scene,10); gBlock(11.6,7.4,12.8,8.6);
   const arm=(x,z,ry)=>{ const a=new THREE.Group(); a.position.set(x,0,z); a.rotation.y=ry; scene.add(a); box(0.85,0.4,0.85,mLime,0,0.3,0,a); box(0.85,0.5,0.18,mLime,0,0.65,-0.34,a); gBlock(x-0.45,z-0.45,x+0.45,z+0.45,0.02); };
-  arm(9.6,8.0,Math.PI/2); arm(14.8,8.0,-Math.PI/2);
+  arm(9.6,8.0,Math.PI/2); arm(14.8,8.0,-Math.PI/2); }
+  if(MU.pingpong){
   const pp=new THREE.Group(); pp.position.set(12.2,0,4.4); scene.add(pp);
   box(2.74,0.06,1.52,M(0x0b3d91,{roughness:.5}),0,0.76,0,pp); box(0.02,0.16,1.6,mWhite,0,0.86,0,pp); box(2.74,0.005,0.03,mWhite,0,0.795,0,pp,false); [[-1.2,-.6],[1.2,-.6],[-1.2,.6],[1.2,.6]].forEach(([a,b])=>box(0.06,0.74,0.06,mDark,a,0.37,b,pp)); gBlock(10.8,3.6,13.6,5.2);
+  }
   OF.ball=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6),M(0xffffff)); OF.ball.visible=false; scene.add(OF.ball);
   // Plantas
   const plant=(x,z,s=1)=>{ cyl(0.24*s,0.18*s,0.5*s,mWhite,x,0.25*s,z,scene,12); const f=new THREE.Mesh(new THREE.IcosahedronGeometry(0.5*s,0),mGreen); f.position.set(x,0.85*s,z); f.castShadow=true; scene.add(f); const f2=new THREE.Mesh(new THREE.IcosahedronGeometry(0.36*s,0),mGreen2); f2.position.set(x+0.15*s,1.25*s,z-0.05); f2.castShadow=true; scene.add(f2); gBlock(x-0.3*s,z-0.3*s,x+0.3*s,z+0.3*s,0.02); };
-  plant(-6.8,-10.4); plant(-15.4,10.4,1.1); plant(15.5,10.6,1.2); plant(7.4,10.4,.9); plant(5.4,-10.4,.9); plant(15.5,-3.8,.8); plant(-6.6,-3.6,.8); plant(7.4,-4.0,.9);
+  if(MU.plantas){ plant(-6.8,-10.4); plant(-15.4,10.4,1.1); plant(15.5,10.6,1.2); plant(7.4,10.4,.9); plant(5.4,-10.4,.9); plant(15.5,-3.8,.8); plant(-6.6,-3.6,.8); plant(7.4,-4.0,.9); }
+  if(MU.cuadros){ [[-12,0x0047ff],[-8.2,0xff6b5a],[-4.4,0xe5fc63]].forEach(([x,c])=>{ box(2.2,1.5,0.06,mBlack,x,2.9,-11.02,scene,false); box(1.95,1.25,0.02,M(c,{roughness:.8}),x,2.9,-10.98,scene,false); }); }
+  if(MU.estanteria){ box(0.4,2.4,3.2,mWood,-15.7,1.2,-1.0+9.6,scene); [0.6,1.2,1.8].forEach(y=>box(0.42,0.04,3.2,mDark,-15.7,y,8.6,scene,false)); gBlock(-16,7,-15.4,10.2); }
   // Puntos de interés
   OF.pois=[
     {k:'coffee',x:14.7,z:-1.8,ry:Math.PI/2},{k:'coffee',x:14.7,z:-0.6,ry:Math.PI/2},{k:'coffee',x:14.7,z:0.6,ry:Math.PI/2},{k:'water',x:9.0,z:2.6,ry:Math.PI},
@@ -351,6 +357,7 @@ function initOffice(host){
     {k:'pingpong',x:10.4,z:4.4,ry:Math.PI/2,pair:'pp'},{k:'pingpong',x:14.0,z:4.4,ry:-Math.PI/2,pair:'pp'},
     {k:'window',x:-15.2,z:2.0,ry:-Math.PI/2},{k:'window',x:-15.2,z:6.2,ry:-Math.PI/2},{k:'window',x:-15.2,z:-2.2,ry:-Math.PI/2},
     {k:'plant',x:7.4,z:9.6,ry:Math.PI},{k:'plant',x:-6.6,z:-2.9,ry:Math.PI}];
+    OF.pois=OF.pois.filter(p=>({coffee:MU.cocina,water:MU.agua,sofa:MU.sofa,arm:MU.sofa,pingpong:MU.pingpong,plant:MU.plantas})[p.k]!==false);
   }
   OF.pois.forEach(p=>p.busy=null); OF.comite.forEach(p=>p.busy=null);
   // Personas

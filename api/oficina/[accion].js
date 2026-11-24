@@ -7,7 +7,7 @@ import {
   negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
-import { cobroCentimos, IVA, IRPF } from '../../src/data/oficinaSaas.js';
+import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
 import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
@@ -506,18 +506,51 @@ async function tarea(req, res, neg) {
 }
 
 
+
+// Ampliación del cupo de un departamento para este mes (pago único con la tarjeta de la suscripción).
+async function bolsa(req, res, neg) {
+  const { depto } = cuerpo(req);
+  const dep = DEPTO[depto] && await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.${depto}&activo=eq.true&select=*`);
+  if (!dep) return json(res, 400, { error: 'No tienes este departamento.' });
+  if (neg.estado !== 'activo') return json(res, 409, { error: 'Tu oficina no está activa ahora mismo.' });
+  if (neg.prueba_hasta && new Date(neg.prueba_hasta) > new Date()) return json(res, 409, { error: 'Durante la prueba gratis no se puede ampliar. Si quieres el cupo completo ya, pásate al plan desde Plan.' });
+  if (!neg.stripe_customer || !neg.stripe_subscription) return json(res, 409, { error: 'No encontramos tu forma de pago. Escríbenos y lo ampliamos nosotros.' });
+  const mes = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Madrid' }).slice(0, 7);
+  const unidades = unidadesBolsa(depto); const tokens = Math.round(DEPTO[depto].tokensMes * BOLSA_EXTRA.porcentaje / 100);
+  const sub = await stripe(`subscriptions/${neg.stripe_subscription}`);
+  const desc = `Ampliación ${DEPTO[depto].nombre}: +${unidades} ${DEPTO[depto].cupo.unidad} (${mes}). ${BOLSA_EXTRA.precio} € + ${IVA} % IVA − ${IRPF} % IRPF`;
+  await stripe('invoiceitems', { metodo: 'POST', datos: { customer: neg.stripe_customer, amount: String(cobroCentimos(BOLSA_EXTRA.precio)), currency: 'eur', description: desc } });
+  let inv = await stripe('invoices', { metodo: 'POST', datos: { customer: neg.stripe_customer, collection_method: 'charge_automatically', auto_advance: 'false', pending_invoice_items_behavior: 'include', description: desc, 'metadata[app]': 'oficina-saas', 'metadata[bolsa]': depto } });
+  inv = await stripe(`invoices/${inv.id}/finalize`, { metodo: 'POST', datos: { auto_advance: 'false' } });
+  try {
+    const pm = typeof sub.default_payment_method === 'string' ? sub.default_payment_method : sub.default_payment_method?.id;
+    inv = await stripe(`invoices/${inv.id}/pay`, { metodo: 'POST', datos: pm ? { payment_method: pm } : {} });
+  } catch (e) {
+    await stripe(`invoices/${inv.id}/void`, { metodo: 'POST', datos: {} }).catch(() => {});
+    return json(res, 402, { error: `Tu banco no ha aceptado el cobro (${e.message}). Revisa tu tarjeta en Plan → Tarjeta y datos de facturación.` });
+  }
+  if (inv.status !== 'paid') return json(res, 402, { error: 'El cobro no se ha completado. Inténtalo de nuevo en un momento.' });
+  const ya = dep.extra_mes === mes ? dep : { extra_n: 0, extra_tokens: 0 };
+  await sb(`of_departamentos?id=eq.${dep.id}`, { metodo: 'PATCH', cuerpo: { extra_n: ya.extra_n + unidades, extra_tokens: Number(ya.extra_tokens) + tokens, extra_mes: mes } });
+  await sb('of_bolsas', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, depto, mes, unidades, tokens, importe: BOLSA_EXTRA.precio, stripe_invoice: inv.id }] });
+  await actividad(neg.id, depto, `Has ampliado ${DEPTO[depto].nombre}: +${unidades} ${DEPTO[depto].cupo.unidad} para este mes. Tu agente sigue trabajando.`, 'sistema');
+  return json(res, 200, { ok: true, unidades });
+}
+
 // ---------------- chat con el equipo, vídeos, competencia, informes ----------------
 async function equipo(req, res, neg) {
-  const t = String(cuerpo(req).texto || '').trim().slice(0, 1500);
+  const { texto: tx, voz: conVoz } = cuerpo(req); const t = String(tx || '').trim().slice(0, 1500);
   if (!t) return json(res, 400, { error: 'Escribe algo.' });
   let r;
-  try { r = await hablarConEquipo(neg, t); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
+  try { r = await hablarConEquipo(neg, t, { hablado: Boolean(conVoz) }); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
   if (r.accion) {
     const { tipo, tema } = r.accion;
     if (tipo === 'video') guionVideo(neg, tema, ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes)).catch((e) => console.error('[equipo/video]', e.message));
     else await encargoInterno(neg, tipo === 'post' ? 'redes' : 'contenido', tema).catch((e) => console.error('[equipo/encargo]', e.message));
   }
-  return json(res, 200, { ok: true, respuesta: r.respuesta, accion: r.accion });
+  let audio = null;
+  if (conVoz && r.respuesta) { try { audio = (await voz(r.respuesta, hayEleven() ? undefined : 'ash')).toString('base64'); } catch (e) { console.error('[equipo/voz]', e.message); } }
+  return json(res, 200, { ok: true, respuesta: r.respuesta, accion: r.accion, audio });
 }
 
 async function video(req, res, neg) {
@@ -695,7 +728,7 @@ async function cron(req, res) {
 
 // ---------------- enrutador ----------------
 const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');

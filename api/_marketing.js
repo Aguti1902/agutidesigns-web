@@ -76,7 +76,7 @@ export async function actualizarMetricas(neg) {
 }
 
 // ---------- chat con el equipo ----------
-export async function asistente(neg, texto) {
+export async function asistente(neg, texto, { hablado = false } = {}) {
   const desde = new Date(Date.now() - 7 * 864e5).toISOString();
   const [deps, ev, citas, leads, pend, hist] = await Promise.all([
     sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`),
@@ -103,9 +103,9 @@ ${await fichaNegocio(neg)}
 DATOS REALES DE LA OFICINA (no inventes nada que no esté aquí; si no lo sabes, dilo):
 ${contexto}
 
-Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
+${hablado ? 'ESTÁS EN UNA LLAMADA DE VOZ: contesta como al teléfono, natural y muy breve (1 a 3 frases cortas), sin listas, sin emojis, sin símbolos ni enlaces. Di las horas y cifras como se dicen en voz alta.\n' : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
 Devuelve SOLO JSON: {"respuesta":"...", "accion": null | {"tipo":"post|articulo|video", "tema":"..."}}`;
-  const ia = await llamarIA({ sistema, mensajes, maxTokens: 500, json: true });
+  const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 220 : 500, json: true });
   const o = leerJson(ia.texto) || { respuesta: ia.texto };
   const permitida = { post: 'redes', video: 'redes', articulo: 'contenido' }[o.accion?.tipo];
   const accion = permitida && mis.includes(permitida) && o.accion?.tema ? o.accion : null;
@@ -129,13 +129,13 @@ JSON: {"titulo":"...","gancho":"...","escenas":[{"voz":"...","texto":"...","imag
 // Voz en off: ElevenLabs si está configurado (ELEVENLABS_API_KEY) y la voz es suya; si no, OpenAI (gpt-4o-mini-tts). Devuelve el MP3.
 const esVozEleven = (v) => /^[A-Za-z0-9]{18,24}$/.test(String(v || ''));
 export const hayEleven = () => Boolean(process.env.ELEVENLABS_API_KEY);
-export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || 'htFfPSZGJwjBv1CL0aMD' : 'nova');
+export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || 'erKgR0s8Y67t4iiHuA9R' : 'nova');
 export async function voz(texto, vozId = VOZ_DEFECTO(), instrucciones = '') {
   if (hayEleven() && (esVozEleven(vozId) || !VOCES.includes(vozId))) {
     const id = esVozEleven(vozId) ? vozId : VOZ_DEFECTO();
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${id}?output_format=mp3_44100_128`, { method: 'POST',
       headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: String(texto).slice(0, 4500), model_id: process.env.ELEVENLABS_MODEL || 'eleven_v4', voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0, use_speaker_boost: true } }) });
+      body: JSON.stringify({ text: String(texto).slice(0, 4500), model_id: process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2', voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0, use_speaker_boost: true } }) });
     if (!r.ok) throw new Error(`elevenlabs ${r.status}`);
     return Buffer.from(await r.arrayBuffer());
   }

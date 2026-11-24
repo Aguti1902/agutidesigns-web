@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, PlayCircle, SlidersHorizontal, X } from 'lucide-react';
 import { DEPTO, AVISO_CUPO } from '../../data/oficinaSaas';
 import { AJUSTES, COMUNES, ajustesDe } from '../../data/oficinaAjustes';
-import { MINUTOS_TAREA, pendiente, guardarAjustes } from './datos';
+import { MINUTOS_TAREA, pendiente, guardarAjustes, cupoDe } from './datos';
+import { Ampliar } from './ampliar';
 import { Medidor } from './graficos';
 import { Avatar, Puntos } from './ui';
 import { estadoDe, fmt, duracion } from './formato';
@@ -95,7 +96,7 @@ export function CabeceraDepto({ o, depto }) {
   const dep = o.deptos.find((d) => d.depto === depto); const info = DEPTO[depto];
   if (!dep) return null;
   const st = estadoDe({ depto, agente: o.agentes[depto], ajustes: dep.ajustes, conexiones: o.conexiones, eventos: o.eventos, ahora: o.ahora });
-  const u = o.uso[depto] || {}; const usadas = u.unidades_mes || 0; const pct = Math.min(1, usadas / (dep.cupo_n || 1));
+  const cu = cupoDe(o, depto); const usadas = cu.usado; const pct = Math.min(1, cu.pct);
   const r = resultados(o, depto);
   return (
     <section className="dcab a-card" style={{ '--c': info.color }}>
@@ -104,13 +105,14 @@ export function CabeceraDepto({ o, depto }) {
         <div><b>{info.nombre}</b><span className={`ag-st is-${st.clave}`}><i />{st.txt}{st.clave === 'trabajando' && <Puntos />}</span><small>{st.tarea}</small></div>
       </div>
       <dl className="dcab__k">
-        <div><dt>Este mes</dt><dd>{fmt(usadas)} <small>de {fmt(dep.cupo_n)} {info.cupo.unidad}</small></dd><Medidor valor={pct} color={pct >= AVISO_CUPO ? 'var(--aviso)' : info.color} /></div>
+        <div><dt>Este mes</dt><dd>{fmt(usadas)} <small>de {fmt(cu.total)} {info.cupo.unidad}</small></dd><Medidor valor={pct} color={pct >= AVISO_CUPO ? 'var(--aviso)' : info.color} /></div>
         <div><dt>Te ha ahorrado</dt><dd>{duracion(r.minutos)}</dd><small className="muted">últimos 30 días</small></div>
         <div><dt>{r.extra[0]}</dt><dd>{r.extra[1]}</dd></div>
       </dl>
       <div className="dcab__b">
         <button className="btn btn--sec btn--sm" onClick={() => setPanel(true)}><SlidersHorizontal size={15} /> Cómo trabaja</button>
         <button className="btn btn--fan btn--sm" onClick={() => setVideo(depto)}><PlayCircle size={15} /> Vídeo</button>
+        {pct >= 0.6 && <Ampliar o={o} depto={depto} sm texto="Ampliar cupo" />}
       </div>
       {panel && (
         <div className="panel-l" role="dialog" aria-modal="true" aria-label={`Cómo trabaja ${info.nombre}`} onClick={(e) => { if (e.target === e.currentTarget) setPanel(false); }}>

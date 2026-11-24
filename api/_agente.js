@@ -52,10 +52,15 @@ export async function puedeTrabajar(negocio, depto) {
   if (!dep) return { puede: false, motivo: 'sin_departamento' };
   if (dep.ajustes?.pausado) return { puede: false, motivo: 'pausado', ajustes: dep.ajustes };
   const [s] = (await rpc('of_saldo', { p_negocio: negocio.id, p_depto: depto })) || [];
-  if (!s?.puede) return { puede: false, motivo: 'cupo', ajustes: dep.ajustes };
+  if (!s?.puede) {
+    const mes1 = new Date(new Date().setDate(1)).toISOString().slice(0, 10);
+    const ya = await uno(`of_actividad?negocio_id=eq.${negocio.id}&depto=eq.${depto}&detalle->>aviso=eq.cupo100&creado=gte.${mes1}&select=id`);
+    if (!ya && Number(s?.tokens_hoy_restantes) > 0) await actividad(negocio.id, depto, `${DEPTO[depto].nombre} ha agotado su cupo de este mes: ahora solo te pasa los avisos importantes. Puedes ampliarlo +50 % por 25 € + IVA desde tu panel.`, 'aviso', { aviso: 'cupo100' });
+    return { puede: false, motivo: 'cupo', ajustes: dep.ajustes };
+  }
   if (s.pct >= 0.8) {
     const ya = await uno(`of_actividad?negocio_id=eq.${negocio.id}&depto=eq.${depto}&detalle->>aviso=eq.cupo80&creado=gte.${new Date(new Date().setDate(1)).toISOString().slice(0, 10)}&select=id`);
-    if (!ya) await actividad(negocio.id, depto, `${DEPTO[depto].nombre} lleva el ${Math.round(s.pct * 100)} % de su cupo de este mes.`, 'aviso', { aviso: 'cupo80' });
+    if (!ya) await actividad(negocio.id, depto, `${DEPTO[depto].nombre} lleva el ${Math.round(s.pct * 100)} % de su cupo de este mes. Si lo vas a necesitar, amplíalo +50 % por 25 € + IVA desde tu panel.`, 'aviso', { aviso: 'cupo80' });
   }
   return { puede: true, ajustes: dep.ajustes || {} };
 }

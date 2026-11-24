@@ -115,7 +115,8 @@ export function estadoDemo() {
   const eventos = generarDemo(); const ahora = Date.now();
   const mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
   const uso = {};
-  for (const d of DEMO_DEPTOS) { const u = eventos.filter((e) => e.depto === d && new Date(e.creado) >= mes).length; uso[d] = { unidades_mes: u, pct: Math.min(0.95, (u / DEPTO[d].cupo.n) * 0.9) }; }
+  for (const d of DEMO_DEPTOS) { const u = eventos.filter((e) => e.depto === d && new Date(e.creado) >= mes).length; uso[d] = { unidades_mes: u, cupo: DEPTO[d].cupo.n, pct: Math.min(0.95, (u / DEPTO[d].cupo.n) * 0.9) }; }
+  uso.redes = { unidades_mes: 27, cupo: DEPTO.redes.cupo.n, pct: 0.9 }; // en la demo, Redes está cerca de su límite para enseñar la ampliación
   const conversaciones = CHARLAS.map(([nombre, canal, msgs, necesita], i) => ({
     id: `c${i}`, canal, nombre, contacto: canal === 'whatsapp' ? `34600${100000 + i}` : `web${i}`, estado: 'agente', necesita, leido: i > 1, tema: necesita || 'otros',
     ultimo: new Date(ahora - (i * 23 + 4) * 60000).toISOString(),
@@ -127,6 +128,8 @@ export function estadoDemo() {
     { id: 'ci2', nombre: 'Jordi', canal: 'web', servicio: 'Corte hombre', cuando_texto: 'jueves a las 17:00', fecha: d(2, 17), estado: 'confirmada', creado: d(-1) },
     { id: 'ci3', nombre: 'Carla', canal: 'whatsapp', servicio: 'Tinte', cuando_texto: 'viernes tarde', fecha: d(3, 18), estado: 'confirmada', creado: d(-1) },
     { id: 'ci4', nombre: 'Àlex', canal: 'whatsapp', servicio: 'Peinado', cuando_texto: 'mañana a las 12', fecha: d(1, 12), estado: 'pendiente', creado: d(0, 8) },
+    ...[['Marta', 'Corte mujer', 0, 10], ['Iván', 'Corte hombre', 0, 12.5], ['Paula', 'Mechas', 1, 9.5], ['Sergi', 'Corte hombre', 1, 17], ['Ana', 'Tinte', 2, 11], ['Pol', 'Corte hombre', 3, 10], ['Núria', 'Peinado', 3, 16.5], ['Carla', 'Corte mujer', 5, 9]]
+      .map(([nombre, servicio, dd, h], i) => ({ id: `cx${i}`, nombre, canal: i % 2 ? 'web' : 'whatsapp', servicio, fecha: (() => { const x = new Date(ahora + dd * 864e5); x.setHours(Math.floor(h), (h % 1) * 60, 0, 0); return x.toISOString(); })(), estado: 'confirmada', creado: d(-2) })),
     { id: 'ci5', nombre: 'Lucía', canal: 'web', servicio: 'Corte mujer', cuando_texto: 'el martes', fecha: d(-2, 11), estado: 'hecha', creado: d(-4) },
   ];
   const leads = [
@@ -149,8 +152,8 @@ export function estadoDemo() {
     { id: 'p-seg', depto: 'ventas', tipo: 'pendiente', creado: new Date(ahora - 7 * 36e5).toISOString(), resuelto: false, texto: 'Paula pidió presupuesto hace más de 2 días y no ha vuelto a escribir. Te he dejado el mensaje de seguimiento listo',
       detalle: { accion: 'seguimiento', conversacion: 'c2', texto: '¡Hola Paula! ¿Pudiste mirar el presupuesto del pack novia? Si quieres, te reservamos la prueba un sábado por la mañana 😊' } },
   );
-  return { cargando: false, sesion: null, negocio: DEMO_NEG, eventos, uso, conversaciones, citas, leads, facturas, ...extras,
-    deptos: DEMO_DEPTOS.map((d) => ({ depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: { revisar: d === 'redes' } })),
+  return { cargando: false, sesion: null, negocio: DEMO_NEG, eventos, uso, conversaciones, citas, leads, facturas, bolsas: [], ...extras,
+    deptos: DEMO_DEPTOS.map((d) => ({ depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: d === 'citas' ? { servicios: 'Corte mujer · 45 min\nCorte hombre · 30 min\nTinte · 1 h 30 min\nMechas · 2 h\nPeinado · 45 min' } : { revisar: d === 'redes' } })),
     agentes: Object.fromEntries(DEMO_DEPTOS.map((d) => [d, { estado: 'disponible', tarea: 'Esperando la siguiente tarea', actualizado: new Date().toISOString() }])),
     conocimiento: [{ id: 'k1', tipo: 'nota', respuesta: 'El 8 de diciembre cerramos todo el día.', hasta: '2026-12-08' }, { id: 'k2', tipo: 'faq', pregunta: '¿Se puede pagar con Bizum?', respuesta: 'Sí, aceptamos Bizum, tarjeta y efectivo.' }],
     conexiones: [{ herramienta: 'whatsapp', estado: 'conectada', cuenta: '+34 600 000 000' }, { herramienta: 'google_business', estado: 'conectada', cuenta: 'Peluquería Marta · Cornellà' },
@@ -159,7 +162,7 @@ export function estadoDemo() {
 }
 
 // ---------- carga real con tiempo real ----------
-const VACIO = { cargando: true, sesion: null, negocio: null, deptos: [], uso: {}, eventos: [], conexiones: [], agentes: {}, conversaciones: [], conocimiento: [], citas: [], leads: [], facturas: [], metricas: [], videos: [], material: [], competidores: [], chat: [] };
+const VACIO = { cargando: true, sesion: null, negocio: null, deptos: [], uso: {}, eventos: [], conexiones: [], agentes: {}, conversaciones: [], conocimiento: [], citas: [], leads: [], facturas: [], metricas: [], videos: [], material: [], competidores: [], chat: [], bolsas: [] };
 export function useOficina(demo) {
   const [estado, setEstado] = useState(() => (demo ? estadoDemo() : VACIO));
   useEffect(() => {
@@ -171,7 +174,7 @@ export function useOficina(demo) {
       const negocio = negs?.[0] || null;
       if (!negocio) { setEstado({ ...VACIO, cargando: false, sesion }); return; }
       const id = negocio.id; const desde = new Date(Date.now() - 60 * DIA).toISOString();
-      const [dep, uso, ev, con, ag, conv, con2, ci, le, fa, me, vi, ma, co, ch] = await Promise.all([
+      const [dep, uso, ev, con, ag, conv, con2, ci, le, fa, me, vi, ma, co, ch, bo] = await Promise.all([
         supabase.from('of_departamentos').select('*').eq('negocio_id', id).eq('activo', true),
         supabase.from('of_uso_mes').select('*').eq('negocio_id', id),
         supabase.from('of_actividad').select('*').eq('negocio_id', id).gte('creado', desde).order('creado', { ascending: false }).limit(5000),
@@ -187,6 +190,7 @@ export function useOficina(demo) {
         supabase.from('of_material').select('*').eq('negocio_id', id).order('creado', { ascending: false }).limit(500),
         supabase.from('of_competidores').select('*').eq('negocio_id', id).order('resenas', { ascending: false }),
         supabase.from('of_chat').select('*').eq('negocio_id', id).order('creado', { ascending: false }).limit(60),
+        supabase.from('of_bolsas').select('*').eq('negocio_id', id).order('creado', { ascending: false }).limit(50),
       ]);
       if (!vivo) return;
       const orden = DEPARTAMENTOS.map((d) => d.id);
@@ -194,7 +198,7 @@ export function useOficina(demo) {
         citas: ci.data || [], leads: le.data || [], facturas: fa.data || [], metricas: me.data || [], videos: vi.data || [], material: ma.data || [], competidores: co.data || [], chat: (ch.data || []).reverse(),
         agentes: Object.fromEntries((ag.data || []).map((a) => [a.depto, a])),
         deptos: (dep.data || []).sort((a, b) => orden.indexOf(a.depto) - orden.indexOf(b.depto)),
-        uso: Object.fromEntries((uso.data || []).map((u) => [u.depto, { unidades_mes: u.unidades_mes, pct: u.tokens_mes ? u.tokens_usados / u.tokens_mes : 0 }])) });
+        uso: Object.fromEntries((uso.data || []).map((u) => [u.depto, { unidades_mes: u.unidades_mes, cupo: u.cupo_n, pct: u.tokens_mes ? u.tokens_usados / u.tokens_mes : 0 }])), bolsas: bo.data || [] });
       const f = `negocio_id=eq.${id}`;
       canal = supabase.channel(`oficina-${id}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'of_actividad', filter: f }, (p) => setEstado((e) => ({ ...e,
@@ -258,3 +262,6 @@ export const variacion = (a, b) => (b ? Math.round(((a - b) / b) * 100) : null);
 // Última fila de una fuente de métricas (o null) y la serie de un campo a lo largo de los días.
 export const metrica = (o, fuente) => (o.metricas || []).find((m) => m.fuente === fuente)?.datos || null;
 export const historico = (o, fuente, campo) => (o.metricas || []).filter((m) => m.fuente === fuente && m.datos?.[campo] != null).sort((a, b) => (a.fecha < b.fecha ? -1 : 1)).map((m) => ({ fecha: m.fecha, valor: m.datos[campo] }));
+
+// Cupo efectivo del mes (con ampliaciones) y lo usado.
+export const cupoDe = (o, depto) => { const dep = o.deptos.find((d) => d.depto === depto); const u = o.uso[depto] || {}; const total = u.cupo || dep?.cupo_n || 1; return { usado: u.unidades_mes || 0, total, pct: Math.min(1.2, (u.unidades_mes || 0) / total) }; };
