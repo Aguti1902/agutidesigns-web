@@ -75,7 +75,24 @@ export function estadoDemo() {
     ultimo: new Date(ahora - (i * 23 + 4) * 60000).toISOString(),
     mensajes: msgs.map(([de, texto], k) => ({ id: `m${i}-${k}`, de, texto, creado: new Date(ahora - (i * 23 + 4 + (msgs.length - k) * 2) * 60000).toISOString() })),
   }));
-  return { cargando: false, sesion: null, negocio: DEMO_NEG, eventos, uso, conversaciones,
+  const d = (dias, h = 10) => { const x = new Date(ahora + dias * 864e5); x.setHours(h, 0, 0, 0); return x.toISOString(); };
+  const citas = [
+    { id: 'ci1', nombre: 'Laura', canal: 'whatsapp', contacto: '34600100000', servicio: 'Mechas', cuando_texto: 'el sábado por la mañana', fecha: d(4, 10), estado: 'pendiente', conversacion_id: 'c0', creado: d(0, 9) },
+    { id: 'ci2', nombre: 'Jordi', canal: 'web', servicio: 'Corte hombre', cuando_texto: 'jueves a las 17:00', fecha: d(2, 17), estado: 'confirmada', creado: d(-1) },
+    { id: 'ci3', nombre: 'Carla', canal: 'whatsapp', servicio: 'Tinte', cuando_texto: 'viernes tarde', fecha: d(3, 18), estado: 'confirmada', creado: d(-1) },
+    { id: 'ci4', nombre: 'Àlex', canal: 'whatsapp', servicio: 'Peinado', cuando_texto: 'mañana a las 12', fecha: d(1, 12), estado: 'pendiente', creado: d(0, 8) },
+    { id: 'ci5', nombre: 'Lucía', canal: 'web', servicio: 'Corte mujer', cuando_texto: 'el martes', fecha: d(-2, 11), estado: 'hecha', creado: d(-4) },
+  ];
+  const leads = [
+    { id: 'l1', nombre: 'Núria', canal: 'whatsapp', interes: 'Peinado y maquillaje de boda', importe: 180, etapa: 'nuevo', conversacion_id: 'c2', creado: d(0) },
+    { id: 'l2', nombre: 'Paula', canal: 'web', interes: 'Pack novia con prueba', importe: 250, etapa: 'presupuesto', creado: d(-2) },
+    { id: 'l3', nombre: 'Marta G.', canal: 'whatsapp', interes: 'Alisado de keratina', importe: 120, etapa: 'contactado', creado: d(-1) },
+    { id: 'l4', nombre: 'Sergi', canal: 'web', interes: 'Bono 5 cortes', importe: 60, etapa: 'ganado', creado: d(-6) },
+    { id: 'l5', nombre: 'Ana', canal: 'whatsapp', interes: 'Mechas balayage', importe: 95, etapa: 'ganado', creado: d(-8) },
+    { id: 'l6', nombre: 'David', canal: 'web', interes: 'Tratamiento capilar', importe: 70, etapa: 'perdido', creado: d(-10) },
+  ];
+  const facturas = [0, 1, 2].map((i) => { const f = new Date(); f.setMonth(f.getMonth() - i, 3); return { id: `f${i}`, numero: `${2690 - i * 9}`, fecha: f.toISOString().slice(0, 10), concepto: 'Oficina de IA · plan mensual', base: 199, iva: 41.79, total: 240.79, estado: 'pagada' }; });
+  return { cargando: false, sesion: null, negocio: DEMO_NEG, eventos, uso, conversaciones, citas, leads, facturas,
     deptos: DEMO_DEPTOS.map((d) => ({ depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: { revisar: d === 'redes' } })),
     agentes: Object.fromEntries(DEMO_DEPTOS.map((d) => [d, { estado: 'disponible', tarea: 'Esperando la siguiente tarea', actualizado: new Date().toISOString() }])),
     conocimiento: [{ id: 'k1', tipo: 'nota', respuesta: 'El 8 de diciembre cerramos todo el día.', hasta: '2026-12-08' }, { id: 'k2', tipo: 'faq', pregunta: '¿Se puede pagar con Bizum?', respuesta: 'Sí, aceptamos Bizum, tarjeta y efectivo.' }],
@@ -84,7 +101,7 @@ export function estadoDemo() {
 }
 
 // ---------- carga real con tiempo real ----------
-const VACIO = { cargando: true, sesion: null, negocio: null, deptos: [], uso: {}, eventos: [], conexiones: [], agentes: {}, conversaciones: [], conocimiento: [] };
+const VACIO = { cargando: true, sesion: null, negocio: null, deptos: [], uso: {}, eventos: [], conexiones: [], agentes: {}, conversaciones: [], conocimiento: [], citas: [], leads: [], facturas: [] };
 export function useOficina(demo) {
   const [estado, setEstado] = useState(() => (demo ? estadoDemo() : VACIO));
   useEffect(() => {
@@ -96,7 +113,7 @@ export function useOficina(demo) {
       const negocio = negs?.[0] || null;
       if (!negocio) { setEstado({ ...VACIO, cargando: false, sesion }); return; }
       const id = negocio.id; const desde = new Date(Date.now() - 60 * DIA).toISOString();
-      const [dep, uso, ev, con, ag, conv, con2] = await Promise.all([
+      const [dep, uso, ev, con, ag, conv, con2, ci, le, fa] = await Promise.all([
         supabase.from('of_departamentos').select('*').eq('negocio_id', id).eq('activo', true),
         supabase.from('of_uso_mes').select('*').eq('negocio_id', id),
         supabase.from('of_actividad').select('*').eq('negocio_id', id).gte('creado', desde).order('creado', { ascending: false }).limit(5000),
@@ -104,10 +121,14 @@ export function useOficina(demo) {
         supabase.from('of_agentes').select('*').eq('negocio_id', id),
         supabase.from('of_conversaciones').select('*').eq('negocio_id', id).order('ultimo', { ascending: false }).limit(150),
         supabase.from('of_conocimiento').select('*').eq('negocio_id', id).order('created_at', { ascending: false }),
+        supabase.from('of_citas').select('*').eq('negocio_id', id).order('creado', { ascending: false }).limit(300),
+        supabase.from('of_leads').select('*').eq('negocio_id', id).order('actualizado', { ascending: false }).limit(300),
+        supabase.from('of_facturas').select('*').eq('negocio_id', id).order('fecha', { ascending: false }).limit(100),
       ]);
       if (!vivo) return;
       const orden = DEPARTAMENTOS.map((d) => d.id);
       setEstado({ cargando: false, sesion, negocio, eventos: ev.data || [], conexiones: con.data || [], conversaciones: conv.data || [], conocimiento: con2.data || [],
+        citas: ci.data || [], leads: le.data || [], facturas: fa.data || [],
         agentes: Object.fromEntries((ag.data || []).map((a) => [a.depto, a])),
         deptos: (dep.data || []).sort((a, b) => orden.indexOf(a.depto) - orden.indexOf(b.depto)),
         uso: Object.fromEntries((uso.data || []).map((u) => [u.depto, { unidades_mes: u.unidades_mes, pct: u.tokens_mes ? u.tokens_usados / u.tokens_mes : 0 }])) });
@@ -118,6 +139,10 @@ export function useOficina(demo) {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'of_agentes', filter: f }, (p) => setEstado((e) => ({ ...e, agentes: { ...e.agentes, [p.new.depto]: p.new } })))
         .on('postgres_changes', { event: '*', schema: 'public', table: 'of_conversaciones', filter: f }, (p) => setEstado((e) => ({ ...e,
           conversaciones: [p.new, ...e.conversaciones.filter((c) => c.id !== p.new.id)].sort((a, b) => (a.ultimo < b.ultimo ? 1 : -1)) })))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'of_citas', filter: f }, (p) => setEstado((e) => ({ ...e, citas: [p.new, ...e.citas.filter((c) => c.id !== p.new.id)] })))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'of_leads', filter: f }, (p) => setEstado((e) => ({ ...e, leads: [p.new, ...e.leads.filter((c) => c.id !== p.new.id)] })))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'of_facturas', filter: f }, (p) => setEstado((e) => ({ ...e, facturas: [p.new, ...e.facturas.filter((c) => c.id !== p.new.id)] })))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'of_negocios', filter: `id=eq.${id}` }, (p) => setEstado((e) => ({ ...e, negocio: { ...e.negocio, ...p.new } })))
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'of_mensajes', filter: f }, (p) => setEstado((e) => ({ ...e, ultimoMensaje: p.new })))
         .subscribe();
     }

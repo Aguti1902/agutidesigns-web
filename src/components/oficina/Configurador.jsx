@@ -10,9 +10,6 @@ const fmt = (n) => n.toLocaleString('es-ES');
 export default function Configurador() {
   const [sel, setSel] = useState(['atencion', 'google']);
   const [periodo, setPeriodo] = useState('mes');
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [estado, setEstado] = useState({ cargando: false, error: '' });
   const n = sel.length;
   const anual = periodo === 'anio';
   const total = anual ? precioAnual(n) : precioOficina(n);
@@ -21,16 +18,10 @@ export default function Configurador() {
   const elegidos = useMemo(() => DEPARTAMENTOS.filter((d) => sel.includes(d.id)), [sel]);
   const toggle = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  async function pagar(e) {
+  const destino = `/oficina-ia/contratar?deptos=${sel.join(',')}&plan=${periodo}`;
+  function seguir(e) {
     e.preventDefault();
-    if (!n) return setEstado({ cargando: false, error: 'Elige al menos un departamento.' });
-    setEstado({ cargando: true, error: '' });
-    try {
-      const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email, periodo }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.url) throw new Error(j.error || 'No hemos podido abrir el pago.');
-      window.location.href = j.url;
-    } catch (err) { setEstado({ cargando: false, error: err.message }); }
+    if (n) window.location.assign(destino);
   }
 
   return (
@@ -59,12 +50,12 @@ export default function Configurador() {
               );
             })}
           </ul>
-          <form className="cf-caja" onSubmit={pagar}>
+          <form className="cf-caja" onSubmit={seguir}>
             <div className="cf-periodo" role="group" aria-label="Forma de pago">
               <button type="button" aria-pressed={!anual} onClick={() => setPeriodo('mes')}>Mensual</button>
               <button type="button" aria-pressed={anual} onClick={() => setPeriodo('anio')}>Anual <em>−20 %</em></button>
             </div>
-            <p className="cf-precio"><b>{n ? `${anual ? Math.round(total / 12) : total} €` : '—'}</b><span>/mes</span></p>
+            <p className="cf-precio"><b>{n ? `${anual ? Math.round(total / 12) : total} €` : '—'}</b><span>/mes + IVA</span></p>
             <p className="cf-sub">{!n ? 'Elige al menos un departamento' : anual ? `${total} € al año · ahorras ${ahorro} €` : `${n} departamento${n > 1 ? 's' : ''}${ahorro > 0 ? ` · ahorras ${ahorro} € al mes` : ''}`}</p>
             {!anual && n > 0 && <p className="cf-extra"><Gift size={16} /><span><b>{DIAS_PRUEBA} días gratis.</b> No te cobramos nada hasta el día {DIAS_PRUEBA + 1} y cancelas cuando quieras.</span></p>}
             {anual && n > 0 && (web
@@ -76,11 +67,8 @@ export default function Configurador() {
             <div className="cf-escala" aria-label="Precio según el número de departamentos">
               {[1, 2, 3, 4, 5, 6].map((k) => <span key={k} className={k === n ? 'on' : ''}><b>{k}</b>{anual ? Math.round(precioAnual(k) / 12) : precioOficina(k)} €</span>)}
             </div>
-            <label className="cf-campo"><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /></label>
-            <label className="cf-campo"><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /></label>
-            <button className="ag-btn ag-btn--primary cf-pagar" disabled={estado.cargando || !n}>{estado.cargando ? 'Abriendo el pago…' : <>{anual ? 'Contratar plan anual' : `Probar ${DIAS_PRUEBA} días gratis`} <ArrowRight size={18} /></>}</button>
-            {estado.error && <p className="cf-error" role="alert">{estado.error}</p>}
-            <p className="cf-nota"><Lock size={13} /> {anual ? 'Pago seguro con Stripe. Un solo pago al año. Precios sin IVA.' : 'Pago seguro con Stripe. Sin permanencia. Precios sin IVA.'}</p>
+            <button className="ag-btn ag-btn--primary cf-pagar" disabled={!n}>{anual ? 'Continuar con el plan anual' : `Empezar ${DIAS_PRUEBA} días gratis`} <ArrowRight size={18} /></button>
+            <p className="cf-nota"><Lock size={13} /> {anual ? 'Pago seguro con Stripe. Un solo pago al año. Precios + IVA.' : 'Hoy no pagas nada. Sin permanencia. Precios + IVA.'}</p>
             <a className="cf-demo" href="/app?demo=1">Ver cómo es el panel por dentro <ArrowRight size={14} /></a>
           </form>
         </div>

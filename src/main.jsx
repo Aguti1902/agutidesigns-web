@@ -27,6 +27,7 @@ const NichoLanding = lazy(() => import('./pages/NichoLanding.jsx'));
 const DisenoWebIndex = lazy(() => import('./pages/DisenoWebIndex.jsx'));
 const Casos = lazy(() => import('./pages/Casos.jsx'));
 const PanelOficina = lazy(() => import('./pages/app/Panel.jsx'));
+const ContratarOficina = lazy(() => import('./pages/Contratar.jsx'));
 const BienvenidaOficina = lazy(() => import('./pages/app/Bienvenida.jsx'));
 import './index.css';
 import './styles/site.css';
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/calculadora" element={<CalculadoraLanding />} />
           <Route path="/clinicas-dentales" element={<ClinicasDentales />} />
           <Route path="/oficina-ia" element={<OficinaIA />} />
+          <Route path="/oficina-ia/contratar" element={<ContratarOficina />} />
           <Route path="/app" element={<PanelOficina />} />
           <Route path="/app/bienvenida" element={<BienvenidaOficina />} />
           <Route path="/app/:vista" element={<PanelOficina />} />

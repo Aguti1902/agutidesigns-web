@@ -192,10 +192,12 @@ export function Inicio({ o }) {
         <h1>{saludo()}, {o.negocio.nombre}</h1>
         <p>{h.total ? <>Hoy tus agentes han hecho <b>{fmt(h.total)} tareas</b> y te han ahorrado unos <b>{duracion(h.minutos)}</b>.</> : 'Hoy todavía no ha habido trabajo. En cuanto entre algo, lo verás aquí al momento.'}{pend > 0 && <> Tienes <b>{pend} {pend === 1 ? 'cosa' : 'cosas'}</b> esperándote.</>}</p>
       </header>
+      {o.banners}
       <Prueba o={o} />
       <PuestaEnMarcha o={o} />
       {o.negocio.web_incluida && o.negocio.web_estado === 'pendiente' && <WebIncluida o={o} compacta />}
       {pend > 0 && <Tarjeta titulo="Te necesitan" extra={<span className="chip chip--aviso">{pend}</span>}><Bandeja o={o} max={4} />{pend > 4 && <button className="enlace" onClick={() => o.ir('actividad', null, 'tuyo')}>Ver las {pend} <ArrowRight size={14} /></button>}</Tarjeta>}
+      {o.sugerencia}
       <section>
         <div className="sec-h"><h2>Tu equipo, ahora mismo</h2><span className="vivo"><i />En directo</span></div>
         <div className="equipo">{o.deptos.map((d) => <Agente key={d.depto} depto={d.depto} o={o} onClick={() => setFicha(d.depto)} />)}</div>
@@ -430,13 +432,14 @@ export function Conexiones({ o, aviso }) {
   async function conectar(h, extra) {
     if (h.proveedor === 'snippet' && !extra) { setModal({ h }); return; }
     if (h.proveedor === 'clave' && !extra) { setModal({ h, form: { url: '', usuario: '', clave: '' } }); return; }
+    if (!extra) { setModal({ h, guia: true }); return; }
     setOcupado(h.id); setMsg('');
     if (o.demo) { setTimeout(() => { marcar(h.id, extra?.url || 'Cuenta de ejemplo'); setOcupado(''); setModal(null); setMsg(`${h.nombre} conectado (demo).`); }, 900); return; }
     try {
       const j = await api('conectar', { herramienta: h.id, ...extra });
       if (j.url) { window.location.assign(j.url); return; }
       if (j.conectada) { marcar(h.id, j.cuenta); setModal(null); setMsg(`${h.nombre} conectado.`); }
-    } catch (err) { setMsg(err.message); if (err.datos?.ayuda) setModal({ h, ayuda: true }); }
+    } catch (err) { if (err.datos?.ayuda) { setModal({ h, ayuda: true }); setMsg(''); } else setMsg(err.message); }
     setOcupado('');
   }
   async function ayuda(h) { if (!o.demo) await api('ayuda', { herramienta: h.nombre }).catch(() => {}); setModal(null); setMsg(`Hecho. Te escribimos en menos de 24 h laborables para conectar ${h.nombre} contigo.`); }
@@ -462,8 +465,19 @@ export function Conexiones({ o, aviso }) {
       {modal && (
         <div className="modal" role="dialog" aria-modal="true" onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
           <div className="modal__c">
-            <header><b>{modal.ayuda ? 'Te ayudamos a conectarlo' : modal.h.nombre}</b><button className="ico" onClick={() => setModal(null)} aria-label="Cerrar"><X size={18} /></button></header>
-            {modal.ayuda ? (<><p>Te escribimos en menos de 24 h laborables y conectamos {modal.h.nombre} contigo en una videollamada de 10 minutos.</p><button className="btn btn--pri" onClick={() => ayuda(modal.h)}>Pedir ayuda</button></>)
+            <header><b>{modal.ayuda ? 'Te ayudamos a conectarlo' : modal.guia ? `Conectar ${modal.h.nombre}` : modal.h.nombre}</b><button className="ico" onClick={() => setModal(null)} aria-label="Cerrar"><X size={18} /></button></header>
+            {modal.guia ? (<>
+              <div className="guia">
+                <div className="guia__logo"><span className="tool__logo" style={{ background: modal.h.color }}>{modal.h.letra}</span><ArrowRight size={18} className="muted" /><span className="tool__logo" style={{ background: 'var(--acento)' }}>IA</span></div>
+                <ol className="guia__pasos">
+                  <li><b>Lo que necesitas</b><span>{modal.h.requisito}</span></li>
+                  <li><b>Qué podrán hacer tus agentes</b><span>{modal.h.permisos}. Nada más, y lo puedes desconectar cuando quieras.</span></li>
+                  <li><b>Cómo es</b><span>Se abre {modal.h.nombre}, entras con tu cuenta y aceptas. Tiempo: {modal.h.tiempo}.</span></li>
+                </ol>
+              </div>
+              <button className="btn btn--pri btn--ancho" disabled={ocupado === modal.h.id} onClick={() => conectar(modal.h, { seguir: true })}>{ocupado === modal.h.id ? 'Abriendo…' : `Conectar con ${modal.h.nombre}`}</button>
+              <button className="enlace centro" onClick={() => setModal({ h: modal.h, ayuda: true })}>Prefiero que lo conectéis vosotros</button>
+            </>) : modal.ayuda ? (<><p>Te escribimos en menos de 24 h laborables y conectamos {modal.h.nombre} contigo en una videollamada de 10 minutos.</p><button className="btn btn--pri" onClick={() => ayuda(modal.h)}>Pedir ayuda</button></>)
               : modal.h.proveedor === 'snippet' ? (<>
                 <p>Pega este código en tu web, justo antes de <code>&lt;/body&gt;</code>. Si tu web la hicimos nosotros, dínoslo y lo ponemos por ti.</p>
                 <pre className="code">{codigo}</pre>

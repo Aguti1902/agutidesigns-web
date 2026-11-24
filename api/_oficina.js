@@ -30,6 +30,16 @@ export async function stripe(ruta, { metodo = 'GET', datos } = {}) {
   return j;
 }
 
+// Tipo de IVA (21 %, no incluido en el precio) en Stripe: se busca o se crea una vez.
+let ivaCache = process.env.STRIPE_TAX_RATE_IVA || null;
+export async function ivaStripe() {
+  if (ivaCache) return ivaCache;
+  const lista = await stripe('tax_rates?active=true&inclusive=false&limit=100');
+  const t = (lista.data || []).find((x) => x.percentage === 21 && x.country === 'ES' && x.metadata?.app === 'oficina-saas');
+  ivaCache = t?.id || (await stripe('tax_rates', { metodo: 'POST', datos: { display_name: 'IVA', percentage: '21', inclusive: 'false', country: 'ES', jurisdiction: 'ES', tax_type: 'vat', description: 'IVA 21 % · Oficina de IA', 'metadata[app]': 'oficina-saas' } })).id;
+  return ivaCache;
+}
+
 export async function sb(ruta, { metodo = 'GET', cuerpo, prefer } = {}) {
   const r = await fetch(`${sbUrl()}/rest/v1/${ruta}`, {
     method: metodo,
@@ -44,8 +54,28 @@ export const rpc = (fn, args) => sb(`rpc/${fn}`, { metodo: 'POST', cuerpo: args 
 export const uno = async (ruta) => (await sb(ruta))?.[0] || null;
 
 // ---------- registro de lo que hacen los agentes ----------
-export const actividad = (negocio_id, depto, texto, tipo = 'hecho', detalle = null) =>
-  sb('of_actividad', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id, depto, tipo, texto: String(texto).slice(0, 600), detalle }] }).then((r) => r?.[0]).catch((e) => console.error('[actividad]', e.message));
+export async function actividad(negocio_id, depto, texto, tipo = 'hecho', detalle = null) {
+  const fila = await sb('of_actividad', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id, depto, tipo, texto: String(texto).slice(0, 600), detalle }] }).then((r) => r?.[0]).catch((e) => console.error('[actividad]', e.message));
+  if ((tipo === 'aviso' || tipo === 'pendiente') && process.env.RESEND_API_KEY) avisarPorCorreo(negocio_id, depto, texto).catch(() => {});
+  return fila;
+}
+// «Te necesitan» por correo (si el cliente lo tiene activado). Máximo un correo cada 10 minutos por negocio.
+async function avisarPorCorreo(negocio_id, depto, texto) {
+  const neg = await uno(`of_negocios?id=eq.${negocio_id}&select=nombre,owner_email,preferencias,onboarding`);
+  if (!neg || neg.preferencias?.avisos_email === false) return;
+  const ultimo = neg.onboarding?.ultimo_aviso ? new Date(neg.onboarding.ultimo_aviso).getTime() : 0;
+  if (Date.now() - ultimo < 10 * 60e3) return;
+  await sb(`of_negocios?id=eq.${negocio_id}`, { metodo: 'PATCH', cuerpo: { onboarding: { ...(neg.onboarding || {}), ultimo_aviso: new Date().toISOString() } } });
+  const { Resend } = await import('resend');
+  await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: neg.preferencias?.email_avisos || neg.owner_email,
+    subject: `Tu oficina te necesita: ${String(texto).slice(0, 70)}`,
+    html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px 22px;color:#0d1020"><p style="color:#6c7086;font-size:13px;margin:0 0 6px">${DEPTO[depto]?.nombre || 'Tu oficina'} · ${neg.nombre}</p>
+      <p style="font-size:17px;line-height:1.5;margin:0 0 22px;font-weight:600">${String(texto).replace(/</g, '&lt;')}</p>
+      <a href="https://agutidesigns.io/app" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a>
+      <p style="color:#6c7086;font-size:12px;margin:24px 0 0">Puedes desactivar estos avisos en tu panel, en Ajustes → Avisos.</p></div>`,
+  });
+}
 export const estadoAgente = (negocio_id, depto, estado, tarea) =>
   sb('of_agentes?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=merge-duplicates', cuerpo: { negocio_id, depto, estado, tarea: String(tarea || '').slice(0, 160), actualizado: new Date().toISOString() } }).catch(() => {});
 export const consumo = (negocio_id, depto, uso) =>
