@@ -15,6 +15,7 @@ import { ChatEquipo, Analitica, Seo, Videos, Material, Informes } from './market
 import { Agenda, Clientes, Publicaciones, Articulos, Resenas, Mejora, Plan, Facturas, Avisos, SugerenciaMejora } from './vistas2';
 import { CabeceraDepto } from './departamentos';
 import { Tutorial, Ayuda } from './ayuda';
+import { AvisosCupo } from './ampliar';
 import { CAMPOS } from './formato';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
@@ -258,10 +259,10 @@ export default function Panel() {
           </div>
         </header>
         <main className="cont">
-          {vistaReal !== 'inicio' && vistaReal !== 'plan' && <div className="banners-top">{banners}</div>}
+          {vistaReal !== 'inicio' && vistaReal !== 'plan' && <div className="banners-top">{banners}<AvisosCupo o={o} /></div>}
           {VIEJAS.includes(vistaReal) && <div className="pc-cab pc-cab--simple"><div><p className="pc-cab__k">{GRUPOS.find((g) => g.items.some((x) => x.id === vista))?.t || 'Oficina de IA'}</p><h1>{titulo}</h1>{SUB[vistaReal] && <p className="pc-cab__s">{SUB[vistaReal]}</p>}</div></div>}
           {typeof deptoVista === 'string' && VIEJAS.includes(vistaReal) && <CabeceraDepto key={deptoVista} o={o} depto={deptoVista} />}
-          {vistaReal === 'inicio' && <Inicio o={o} extras={<>{banners}<SugerenciaMejora o={o} /></>} />}
+          {vistaReal === 'inicio' && <Inicio o={o} extras={<>{banners}<AvisosCupo o={o} /><SugerenciaMejora o={o} /></>} />}
           {vistaReal === 'bandeja' && <TeNecesitan o={o} />}
           {vistaReal === 'chat' && <ChatEquipo o={o} />}
           {vistaReal === 'conversaciones' && <Conversaciones o={o} abrir={extra.abrir} />}

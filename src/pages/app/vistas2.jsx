@@ -4,8 +4,10 @@ import { useMemo, useState } from 'react';
 import { ajustesDe } from '../../data/oficinaAjustes';
 import { ArrowLeft, ArrowRight, CalendarCheck, CalendarPlus, UserPlus, Link2, Check, Copy, Download, ExternalLink, Lock, MessageCircle, PauseCircle, Plus, Sparkles, Star, X } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
-import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina, precioAnual, webIncluida, WEB_DESDE } from '../../data/oficinaSaas';
-import { api, pendiente } from './datos';
+import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina, precioAnual, webIncluida, WEB_DESDE, BOLSA_EXTRA, unidadesBolsa } from '../../data/oficinaSaas';
+import { api, pendiente, cupoDe } from './datos';
+import { Ampliar } from './ampliar';
+import { Calendario, PanelCita } from './calendario';
 import { Medidor } from './graficos';
 import { Avatar, Tarjeta } from './ui';
 import { fmt, hace } from './formato';
@@ -75,25 +77,31 @@ export function NuevaCita({ o, cerrar }) {
   );
 }
 export function Agenda({ o }) {
-  const [tab, setTab] = useState('pendiente'); const [nueva, setNueva] = useState(false);
+  const [vista, setVista] = useState('calendario'); const [tab, setTab] = useState('pendiente'); const [nueva, setNueva] = useState(false); const [sel, setSel] = useState(null);
   const ahora = o.ahora;
   const grupos = {
     pendiente: o.citas.filter((c) => c.estado === 'pendiente'),
     proximas: o.citas.filter((c) => c.estado === 'confirmada' && (!c.fecha || new Date(c.fecha) >= ahora - 36e5)).sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '')),
     pasadas: o.citas.filter((c) => ['hecha', 'cancelada'].includes(c.estado) || (c.estado === 'confirmada' && c.fecha && new Date(c.fecha) < ahora - 36e5)),
   };
-  const dias = Array.from({ length: 7 }, (_, i) => { const d = new Date(ahora); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); return d; });
-  const enDia = (d) => o.citas.filter((c) => c.estado === 'confirmada' && c.fecha && new Date(c.fecha).toDateString() === d.toDateString()).length;
   const calendario = o.conexiones.some((c) => c.herramienta === 'google_calendar' && c.estado === 'conectada');
+  const citaSel = sel && o.citas.find((c) => c.id === sel);
   return (
     <div className="vista">
-      <div className="semana">{dias.map((d) => { const n = enDia(d); return <div key={d} className={n ? 'con' : ''}><span>{d.toLocaleDateString('es-ES', { weekday: 'short' })}</span><b>{d.getDate()}</b><small>{n ? `${n} cita${n > 1 ? 's' : ''}` : '—'}</small></div>; })}</div>
       {!calendario && <p className="banda-prueba"><CalendarCheck size={17} /><span>Conecta tu <b>Google Calendar</b> y cada cita que confirmes se apuntará sola en tu agenda.</span><button className="enlace" onClick={() => o.ir('conexiones')}>Conectar</button></p>}
-      <div className="filtros"><div className="seg">{[['pendiente', `Por confirmar (${grupos.pendiente.length})`], ['proximas', `Próximas (${grupos.proximas.length})`], ['pasadas', 'Pasadas']].map(([k, t]) => <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t}</button>)}</div>
-        <button className="btn btn--pri btn--sm" onClick={() => setNueva(true)}><CalendarPlus size={15} /> Apuntar una cita</button></div>
+      {grupos.pendiente.length > 0 && vista === 'calendario' && (
+        <section className="cal-pend"><b>{grupos.pendiente.length} {grupos.pendiente.length === 1 ? 'cita espera' : 'citas esperan'} que las confirmes</b>
+          {grupos.pendiente.map((c) => <button key={c.id} onClick={() => setSel(c.id)}><span className="conv-av">{(c.nombre || '?').slice(0, 1)}</span><span><b>{c.nombre || 'Cliente'}</b><small>{c.servicio || 'Cita'} · {c.fecha ? fechaCorta(c.fecha) : c.cuando_texto}</small></span></button>)}</section>
+      )}
+      <div className="filtros"><div className="seg">{[['calendario', 'Calendario'], ['lista', 'Lista']].map(([k, t]) => <button key={k} aria-pressed={vista === k} onClick={() => setVista(k)}>{t}</button>)}</div>
+        {vista === 'lista' && <button className="btn btn--pri btn--sm" onClick={() => setNueva(true)}><CalendarPlus size={15} /> Apuntar una cita</button>}</div>
+      {vista === 'calendario' ? <Calendario o={o} abrirCita={(c) => setSel(c.id)} nueva={() => setNueva(true)} /> : (<>
+        <div className="seg">{[['pendiente', `Por confirmar (${grupos.pendiente.length})`], ['proximas', `Próximas (${grupos.proximas.length})`], ['pasadas', 'Pasadas']].map(([k, t]) => <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t}</button>)}</div>
+        {grupos[tab].length ? <ul className="citas">{grupos[tab].map((c) => <Cita key={c.id} c={c} o={o} />)}</ul>
+          : <Vacio icono={CalendarCheck} titulo={tab === 'pendiente' ? 'Ninguna cita por confirmar' : 'Nada por aquí'} texto="Cuando un cliente pida cita por WhatsApp o por el chat, tu agente le pedirá el día y la hora y te la dejará aquí para que la confirmes con un clic." />}
+      </>)}
       {nueva && <NuevaCita o={o} cerrar={() => setNueva(false)} />}
-      {grupos[tab].length ? <ul className="citas">{grupos[tab].map((c) => <Cita key={c.id} c={c} o={o} />)}</ul>
-        : <Vacio icono={CalendarCheck} titulo={tab === 'pendiente' ? 'Ninguna cita por confirmar' : 'Nada por aquí'} texto="Cuando un cliente pida cita por WhatsApp o por el chat, tu agente le pedirá el día y la hora y te la dejará aquí para que la confirmes con un clic." />}
+      {citaSel && <PanelCita c={citaSel} cerrar={() => setSel(null)}><ul className="citas"><Cita c={citaSel} o={o} /></ul></PanelCita>}
     </div>
   );
 }
@@ -437,8 +445,9 @@ export function Plan({ o }) {
         {st && <p className="muted">{st}</p>}
       </Tarjeta>
       <Tarjeta titulo="Consumo de este mes">
-        <div className="cupos">{o.deptos.map((d) => { const u = o.uso[d.depto] || {}; const p = Math.min(1, Math.max(u.pct || 0, (u.unidades_mes || 0) / (d.cupo_n || 1))); return <div key={d.depto}><span>{DEPTO[d.depto].corto}<b>{fmt(u.unidades_mes)} / {fmt(d.cupo_n)}</b></span><Medidor valor={p} color={p >= AVISO_CUPO ? 'var(--aviso)' : DEPTO[d.depto].color} /></div>; })}</div>
-        <p className="muted nota">Te avisamos al llegar al 80 %. Si se te queda corto, añade el departamento que más usas o escríbenos.</p>
+        <div className="cupos cupos--am">{o.deptos.map((d) => { const c = cupoDe(o, d.depto); const p = Math.min(1, c.pct); return <div key={d.depto}><span>{DEPTO[d.depto].corto}<b>{fmt(c.usado)} / {fmt(c.total)} {DEPTO[d.depto].cupo.unidad}</b></span><Medidor valor={p} color={p >= AVISO_CUPO ? 'var(--aviso)' : DEPTO[d.depto].color} /><Ampliar o={o} depto={d.depto} sm texto={`+${fmt(unidadesBolsa(d.depto))} por ${BOLSA_EXTRA.precio} €`} /></div>; })}</div>
+        <p className="muted nota">Te avisamos al llegar al 80 % y al 100 %. Si un departamento se te queda corto, amplíalo solo este mes: +50 % de su cupo por {BOLSA_EXTRA.precio} € + IVA.</p>
+        {o.bolsas?.length > 0 && <ul className="kn">{o.bolsas.slice(0, 6).map((b) => <li key={b.id}><p>+{fmt(b.unidades)} {DEPTO[b.depto]?.cupo.unidad} en {DEPTO[b.depto]?.nombre}<small> · {new Date(b.creado).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} · {fmt(b.importe)} € + IVA</small></p></li>)}</ul>}
       </Tarjeta>
       {!n.cancela_el && <p className="nota muted">¿Quieres irte? <button className="enlace enlace--gris" onClick={() => setBaja(true)}>Cancelar la suscripción</button></p>}
       {baja && <Baja o={o} cerrar={() => setBaja(false)} />}

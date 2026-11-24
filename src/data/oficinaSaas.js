@@ -80,5 +80,7 @@ export const DEPARTAMENTOS = [
 export const DEPTO = Object.fromEntries(DEPARTAMENTOS.map((d) => [d.id, d]));
 
 // Bolsas extra cuando se acaba el cupo (precio pendiente de decidir).
-export const BOLSA_EXTRA = { porcentaje: 100, precio: null };
+// Ampliación de un departamento para el mes en curso: +50 % de su cupo por 25 € + IVA (pago único).
+export const BOLSA_EXTRA = { porcentaje: 50, precio: 25 };
+export const unidadesBolsa = (d) => Math.round(DEPTO[d].cupo.n * BOLSA_EXTRA.porcentaje / 100);
 export const AVISO_CUPO = 0.8;
