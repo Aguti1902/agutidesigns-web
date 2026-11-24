@@ -117,12 +117,19 @@ grant select on public.of_uso_mes to authenticated;
 -- Feed en directo
 alter publication supabase_realtime add table public.of_actividad;
 
--- ---------- Ajustes por departamento y conexiones de herramientas ----------
+
+-- ---------- Ajustes por departamento ----------
 alter table public.of_departamentos add column if not exists ajustes jsonb not null default '{}'::jsonb;
 create policy of_departamentos_ajustar on public.of_departamentos for update to authenticated
   using (public.of_es_mio(negocio_id)) with check (public.of_es_mio(negocio_id));
 grant update (ajustes) on public.of_departamentos to authenticated;
 
+-- ---------- Bandeja «Te necesitan»: avisos y tareas pendientes se resuelven ----------
+alter table public.of_actividad add column if not exists resuelto boolean not null default false;
+alter table public.of_actividad add column if not exists respuesta text;
+create index if not exists of_actividad_pendientes on public.of_actividad (negocio_id) where tipo in ('aviso','pendiente') and not resuelto;
+
+-- ---------- Conexiones de herramientas (tokens cifrados, nunca legibles desde el navegador) ----------
 create table if not exists public.of_conexiones (
   id              uuid primary key default gen_random_uuid(),
   created_at      timestamptz not null default now(),
@@ -131,13 +138,82 @@ create table if not exists public.of_conexiones (
   proveedor       text not null,
   estado          text not null default 'conectada' check (estado in ('conectada','caducada','error')),
   cuenta          text,
-  token_cifrado   text,   -- AES-256-GCM con OFICINA_CIFRADO_KEY; nunca se lee desde el navegador
+  externo_id      text,
+  token_cifrado   text,
   refresh_cifrado text,
   expira          timestamptz,
   scopes          text,
   unique (negocio_id, herramienta)
 );
+create index if not exists of_conexiones_externo on public.of_conexiones (herramienta, externo_id);
 alter table public.of_conexiones enable row level security;
 create policy of_conexiones_leer on public.of_conexiones for select to authenticated using (public.of_es_mio(negocio_id));
 revoke all on public.of_conexiones from anon, authenticated;
 grant select (id, created_at, negocio_id, herramienta, proveedor, estado, cuenta) on public.of_conexiones to authenticated;
+
+-- ---------- Estado en directo de cada agente ----------
+create table if not exists public.of_agentes (
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  depto       text not null,
+  estado      text not null default 'disponible',
+  tarea       text,
+  actualizado timestamptz not null default now(),
+  primary key (negocio_id, depto)
+);
+alter table public.of_agentes enable row level security;
+create policy of_agentes_leer on public.of_agentes for select to authenticated using (public.of_es_mio(negocio_id));
+revoke insert, update, delete on public.of_agentes from anon, authenticated;
+
+-- ---------- Conversaciones con clientes (chat web y WhatsApp) ----------
+create table if not exists public.of_conversaciones (
+  id          uuid primary key default gen_random_uuid(),
+  creado      timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  canal       text not null check (canal in ('web','whatsapp')),
+  contacto    text not null,
+  nombre      text,
+  estado      text not null default 'agente' check (estado in ('agente','humano','cerrada')),
+  necesita    text,
+  tema        text,
+  leido       boolean not null default false,
+  seguimiento timestamptz,
+  ultimo      timestamptz not null default now(),
+  unique (negocio_id, canal, contacto)
+);
+create index if not exists of_conversaciones_lista on public.of_conversaciones (negocio_id, ultimo desc);
+create table if not exists public.of_mensajes (
+  id              bigserial primary key,
+  creado          timestamptz not null default now(),
+  conversacion_id uuid not null references public.of_conversaciones(id) on delete cascade,
+  negocio_id      uuid not null references public.of_negocios(id) on delete cascade,
+  de              text not null check (de in ('cliente','agente','humano')),
+  texto           text not null,
+  externo_id      text unique
+);
+create index if not exists of_mensajes_conv on public.of_mensajes (conversacion_id, creado);
+alter table public.of_conversaciones enable row level security;
+alter table public.of_mensajes enable row level security;
+create policy of_conversaciones_leer on public.of_conversaciones for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_mensajes_leer on public.of_mensajes for select to authenticated using (public.of_es_mio(negocio_id));
+revoke insert, update, delete on public.of_conversaciones, public.of_mensajes from anon, authenticated;
+revoke all on public.of_conversaciones, public.of_mensajes from anon;
+
+-- ---------- Lo que el dueño enseña a sus agentes ----------
+create table if not exists public.of_conocimiento (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  tipo        text not null check (tipo in ('faq','nota')),
+  pregunta    text,
+  respuesta   text not null check (char_length(respuesta) <= 2000),
+  hasta       date
+);
+alter table public.of_conocimiento enable row level security;
+create policy of_conocimiento_leer   on public.of_conocimiento for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_conocimiento_crear  on public.of_conocimiento for insert to authenticated with check (public.of_es_mio(negocio_id));
+create policy of_conocimiento_borrar on public.of_conocimiento for delete to authenticated using (public.of_es_mio(negocio_id));
+revoke all on public.of_conocimiento from anon;
+grant select, insert, delete on public.of_conocimiento to authenticated;
+
+-- ---------- Tiempo real para el panel ----------
+alter publication supabase_realtime add table public.of_agentes, public.of_conversaciones, public.of_mensajes;

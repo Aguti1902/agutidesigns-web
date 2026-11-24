@@ -1,7 +1,6 @@
 // Vuelta de Stripe tras pagar: termina el alta y manda el enlace de acceso al panel.
 import { useEffect, useState } from 'react';
 import { Check, Mail } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import useSeo from '../../hooks/useSeo';
 import './Panel.css';
 
@@ -13,26 +12,25 @@ export default function Bienvenida() {
     if (!id) { setSt({ fase: 'error', msg: 'Falta la referencia del pago.' }); return; }
     (async () => {
       try {
-        const r = await fetch(`/api/oficina-alta?session_id=${encodeURIComponent(id)}`);
+        const r = await fetch(`/api/oficina/alta?session_id=${encodeURIComponent(id)}`);
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'No hemos podido terminar el alta.');
-        await supabase.auth.signInWithOtp({ email: j.email, options: { emailRedirectTo: `${window.location.origin}/app`, shouldCreateUser: true } });
-        setSt({ fase: 'ok', ...j });
+                setSt({ fase: 'ok', ...j });
       } catch (e) { setSt({ fase: 'error', msg: e.message }); }
     })();
   }, []);
   return (
-    <main className="ap-entrar">
-      <a href="/" className="ap-logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="120" height="33" /><span>Oficina de IA</span></a>
-      <div className="ap-entrar__caja">
-        {st.fase === 'cargando' && <p className="ap-carga__in"><span className="ap-spin" /> Preparando tu oficina…</p>}
+    <main className="acceso">
+      <a href="/" className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
+      <div className="acceso__c">
+        {st.fase === 'cargando' && <p className="fila-btn"><span className="spin" /> Preparando tu oficina…</p>}
         {st.fase === 'ok' && (<>
-          <p className="ap-k"><i /> Pago completado</p>
+          <p className="muted">Pago completado</p>
           <h1>¡{st.nombre} ya tiene oficina de IA!</h1>
-          <p className="ap-entrar__ok"><Mail size={18} /> Te hemos enviado un enlace a <b>{st.email}</b>. Ábrelo para entrar en tu panel.</p>
-          <ul className="ap-sig">
+          <p className="acceso__ok"><Mail size={18} /> Te hemos enviado un enlace a <b>{st.email}</b>. Ábrelo para entrar en tu panel.</p>
+          <ul className="acceso__lista">
             <li><Check size={15} /> Entra en tu panel con el enlace del correo</li>
-            <li><Check size={15} /> Rellena la puesta en marcha: tu negocio, horarios, precios y tono</li>
+            <li><Check size={15} /> Cuéntales a tus agentes cómo es tu negocio (3 minutos)</li>
             <li><Check size={15} /> Conecta tus cuentas y mira a tus agentes trabajar</li>
           </ul>
         </>)}

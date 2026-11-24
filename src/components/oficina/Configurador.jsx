@@ -23,7 +23,7 @@ export default function Configurador() {
     if (!n) return setEstado({ cargando: false, error: 'Elige al menos un departamento.' });
     setEstado({ cargando: true, error: '' });
     try {
-      const r = await fetch('/api/oficina-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email }) });
+      const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.url) throw new Error(j.error || 'No hemos podido abrir el pago.');
       window.location.href = j.url;

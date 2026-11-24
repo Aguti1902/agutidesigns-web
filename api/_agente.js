@@ -1,0 +1,137 @@
+// Núcleo de los agentes: llama a la IA con el contexto del negocio, controla el cupo antes de cada llamada y
+// registra consumo, actividad y estado en directo. Usa Claude si hay ANTHROPIC_API_KEY; si no, OpenAI.
+import { sb, rpc, uno, actividad, estadoAgente, consumo, DEPTO } from './_oficina.js';
+
+const TARIFA = { anthropic: { i: 1, o: 5 }, openai: { i: 0.15, o: 0.6 } }; // USD por millón de tokens (aprox.)
+
+export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = false }) {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const modelo = process.env.OFICINA_MODELO || 'claude-haiku-4-5-20251001';
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: modelo, max_tokens: maxTokens, system: sistema, messages: mensajes }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(`anthropic ${r.status}: ${j?.error?.message || ''}`);
+    const tin = j.usage?.input_tokens || 0; const tout = j.usage?.output_tokens || 0;
+    return { texto: (j.content || []).map((c) => c.text || '').join(''), tin, tout, modelo, coste: (tin * TARIFA.anthropic.i + tout * TARIFA.anthropic.o) / 1e6 };
+  }
+  if (process.env.OPENAI_API_KEY) {
+    const modelo = process.env.OFICINA_MODELO_OPENAI || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      body: JSON.stringify({ model: modelo, max_tokens: maxTokens, temperature: 0.4, ...(json ? { response_format: { type: 'json_object' } } : {}),
+        messages: [{ role: 'system', content: sistema }, ...mensajes] }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(`openai ${r.status}: ${j?.error?.message || ''}`);
+    const tin = j.usage?.prompt_tokens || 0; const tout = j.usage?.completion_tokens || 0;
+    return { texto: j.choices?.[0]?.message?.content || '', tin, tout, modelo, coste: (tin * TARIFA.openai.i + tout * TARIFA.openai.o) / 1e6 };
+  }
+  throw new Error('sin_ia');
+}
+
+export function leerJson(t) {
+  const m = String(t || '').match(/\{[\s\S]*\}/);
+  try { return m ? JSON.parse(m[0]) : null; } catch { return null; }
+}
+
+// ¿Puede trabajar este departamento? (activo, no pausado, con cupo del mes y del día)
+export async function puedeTrabajar(negocio, depto) {
+  if (negocio.estado !== 'activo') return { puede: false, motivo: 'inactivo' };
+  const dep = await uno(`of_departamentos?negocio_id=eq.${negocio.id}&depto=eq.${depto}&activo=eq.true&select=ajustes`);
+  if (!dep) return { puede: false, motivo: 'sin_departamento' };
+  if (dep.ajustes?.pausado) return { puede: false, motivo: 'pausado', ajustes: dep.ajustes };
+  const [s] = (await rpc('of_saldo', { p_negocio: negocio.id, p_depto: depto })) || [];
+  if (!s?.puede) return { puede: false, motivo: 'cupo', ajustes: dep.ajustes };
+  if (s.pct >= 0.8) {
+    const ya = await uno(`of_actividad?negocio_id=eq.${negocio.id}&depto=eq.${depto}&detalle->>aviso=eq.cupo80&creado=gte.${new Date(new Date().setDate(1)).toISOString().slice(0, 10)}&select=id`);
+    if (!ya) await actividad(negocio.id, depto, `${DEPTO[depto].nombre} lleva el ${Math.round(s.pct * 100)} % de su cupo de este mes.`, 'aviso', { aviso: 'cupo80' });
+  }
+  return { puede: true, ajustes: dep.ajustes || {} };
+}
+
+async function conocimiento(negocio) {
+  const filas = await sb(`of_conocimiento?negocio_id=eq.${negocio.id}&select=tipo,pregunta,respuesta,hasta&order=created_at.asc&limit=80`).catch(() => []);
+  const hoy = new Date().toISOString().slice(0, 10);
+  const faq = filas.filter((f) => f.tipo === 'faq').map((f) => `- P: ${f.pregunta}\n  R: ${f.respuesta}`).join('\n');
+  const notas = filas.filter((f) => f.tipo === 'nota' && (!f.hasta || f.hasta >= hoy)).map((f) => `- ${f.respuesta}${f.hasta ? ` (válido hasta ${f.hasta})` : ''}`).join('\n');
+  return { faq, notas };
+}
+
+export async function fichaNegocio(negocio) {
+  const { faq, notas } = await conocimiento(negocio);
+  return [
+    `NEGOCIO: ${negocio.nombre}${negocio.sector ? ` (${negocio.sector})` : ''}`,
+    negocio.direccion && `Dirección: ${negocio.direccion}`, negocio.telefono && `Teléfono: ${negocio.telefono}`,
+    negocio.horarios && `Horarios: ${negocio.horarios}`, negocio.precios && `Servicios y precios:\n${negocio.precios}`,
+    negocio.tono && `Tono con los clientes: ${negocio.tono}`, negocio.instrucciones && `Nunca hagas esto: ${negocio.instrucciones}`,
+    notas && `AVISOS ACTUALES (tienen prioridad):\n${notas}`, faq && `PREGUNTAS FRECUENTES:\n${faq}`,
+    `Hoy es ${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Madrid' })}.`,
+  ].filter(Boolean).join('\n');
+}
+
+// Responde a un cliente en una conversación (chat web o WhatsApp).
+export async function responderCliente({ negocio, conversacion, canal }) {
+  const depto = 'atencion';
+  const nombreCanal = canal === 'whatsapp' ? 'WhatsApp' : 'el chat de la web';
+  const quien = conversacion.nombre || 'un cliente';
+  const estado = await puedeTrabajar(negocio, depto);
+  if (!estado.puede) {
+    const ya = await uno(`of_mensajes?conversacion_id=eq.${conversacion.id}&de=eq.agente&select=id&limit=1`);
+    await actividad(negocio.id, depto, `${quien} ha escrito por ${nombreCanal} y no se ha podido contestar (${estado.motivo === 'cupo' ? 'cupo agotado' : estado.motivo === 'pausado' ? 'departamento en pausa' : 'oficina inactiva'}). Contéstale tú.`, 'aviso', { conversacion: conversacion.id });
+    return ya ? null : { respuesta: `¡Gracias por escribir a ${negocio.nombre}! Te contestaremos lo antes posible.`, escalar: true, sinIA: true };
+  }
+  await estadoAgente(negocio.id, depto, 'trabajando', `Contestando a ${quien} por ${nombreCanal}`);
+  const historial = await sb(`of_mensajes?conversacion_id=eq.${conversacion.id}&select=de,texto&order=creado.desc&limit=16`);
+  const mensajes = historial.reverse().map((m) => ({ role: m.de === 'cliente' ? 'user' : 'assistant', content: m.texto.slice(0, 1500) }));
+  while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
+  const sistema = `Eres el departamento de Atención al cliente de un negocio local y contestas por ${nombreCanal} en nombre del negocio.
+${await fichaNegocio(negocio)}
+
+REGLAS:
+- Responde en el idioma del cliente (castellano o catalán normalmente), breve y natural, como lo haría alguien del negocio. Máximo 3 frases.
+- Usa SOLO la información de arriba. Si no sabes algo (un precio, una disponibilidad, un dato), no lo inventes: di que lo consultas y que le contestarán enseguida, y marca pasar_a_humano.
+- No confirmes citas ni horas concretas: recoge el día y la hora que prefiere y di que se lo confirmáis enseguida (marca pasar_a_humano con motivo "cita").
+- Si pide hablar con una persona, se queja, pide un descuento o es un tema delicado, sé amable y marca pasar_a_humano.
+- No digas que eres una IA salvo que te lo pregunten; si te lo preguntan, di la verdad: eres el asistente virtual del negocio.
+Devuelve SOLO un JSON: {"respuesta": "...", "pasar_a_humano": true|false, "motivo": "cita|presupuesto|queja|persona|duda|otro|", "tema": "precios|horarios|servicios|ubicación|citas|presupuesto|otros", "nombre_cliente": "nombre si lo ha dicho o vacío"}`;
+  const t0 = Date.now();
+  let ia;
+  try { ia = await llamarIA({ sistema, mensajes, maxTokens: 400, json: true }); }
+  catch (e) {
+    console.error('[agente]', e.message);
+    await estadoAgente(negocio.id, depto, 'disponible', 'Esperando mensajes');
+    await actividad(negocio.id, depto, `No se ha podido contestar a ${quien} por un error técnico. Contéstale tú.`, 'aviso', { conversacion: conversacion.id });
+    return { respuesta: `¡Gracias por escribir a ${negocio.nombre}! Te contestamos enseguida.`, escalar: true, sinIA: true };
+  }
+  const o = leerJson(ia.texto) || { respuesta: ia.texto, pasar_a_humano: false, tema: 'otros' };
+  const ms = Date.now() - t0;
+  const nombre = String(o.nombre_cliente || '').trim().slice(0, 60) || conversacion.nombre || null;
+  const primera = !(await uno(`of_mensajes?conversacion_id=eq.${conversacion.id}&de=eq.agente&select=id&limit=1`));
+  await consumo(negocio.id, depto, { ...ia, unidades: primera ? 1 : 0 });
+  const quien2 = nombre || 'un cliente';
+  const cambios = { ultimo: new Date().toISOString(), tema: o.tema || conversacion.tema, ...(nombre ? { nombre } : {}) };
+  if (o.pasar_a_humano) cambios.necesita = o.motivo || 'duda';
+  await sb(`of_conversaciones?id=eq.${conversacion.id}`, { metodo: 'PATCH', cuerpo: cambios });
+  if (primera) await actividad(negocio.id, depto, `Ha contestado a ${quien2} por ${nombreCanal}${o.tema && o.tema !== 'otros' ? ` (${o.tema})` : ''}`, 'hecho', { canal, ms, tema: o.tema || 'otros', conversacion: conversacion.id });
+  if (o.pasar_a_humano) {
+    const motivo = { cita: 'quiere cita', presupuesto: 'pide presupuesto', queja: 'tiene una queja', persona: 'quiere hablar contigo', duda: 'pregunta algo que tus agentes no saben' }[o.motivo] || 'necesita que le contestes tú';
+    await actividad(negocio.id, o.motivo === 'cita' ? 'citas' : o.motivo === 'presupuesto' ? 'ventas' : depto, `${quien2} ${motivo}. Último mensaje: «${mensajes[mensajes.length - 1]?.content.slice(0, 140) || ''}»`, 'aviso', { conversacion: conversacion.id, motivo: o.motivo });
+  }
+  await estadoAgente(negocio.id, depto, 'disponible', `Última: ha contestado a ${quien2}`);
+  return { respuesta: String(o.respuesta || '').slice(0, 1200), escalar: !!o.pasar_a_humano, ms };
+}
+
+// Genera contenido (posts, artículos, respuestas a reseñas) para un departamento.
+export async function generar({ negocio, depto, encargo, maxTokens = 900 }) {
+  const estado = await puedeTrabajar(negocio, depto);
+  if (!estado.puede) return null;
+  await estadoAgente(negocio.id, depto, 'trabajando', encargo.tarea);
+  try {
+    const ia = await llamarIA({ sistema: `Trabajas en el departamento de ${DEPTO[depto].nombre} de este negocio local.\n${await fichaNegocio(negocio)}\nNunca inventes precios, ofertas, datos ni testimonios que no estén arriba. Devuelve SOLO el JSON que se te pide.`,
+      mensajes: [{ role: 'user', content: encargo.prompt }], maxTokens, json: true });
+    await consumo(negocio.id, depto, { ...ia, unidades: encargo.unidades ?? 1 });
+    return { ...leerJson(ia.texto), ajustes: estado.ajustes };
+  } finally { await estadoAgente(negocio.id, depto, 'disponible', encargo.fin || 'Esperando la siguiente tarea'); }
+}
