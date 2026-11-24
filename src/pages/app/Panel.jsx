@@ -1,82 +1,44 @@
-// Panel del cliente de la Oficina de IA (/app): su oficina 3D con los departamentos que paga, lo que hacen
-// los agentes en directo, el cupo de cada departamento y la puesta en marcha guiada.
-// /app?demo=1 enseña un negocio de ejemplo con actividad simulada (no son datos reales).
+// Panel del cliente de la Oficina de IA (/app/:vista) en modo dashboard: resumen con KPIs y gráficas, oficina 3D
+// en directo, actividad, estadísticas por departamento, departamentos y cupos, conexiones con un clic,
+// datos del negocio y facturación. /app?demo=1 enseña un negocio de ejemplo con actividad simulada.
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, LogOut, Mail, Plug, Settings2, Sparkles, Bell, CircleAlert } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Activity, ArrowRight, BarChart3, Bell, Box, Check, CircleAlert, Clock, Copy, CreditCard, Layers, LayoutDashboard, LogOut, Mail, Menu, MessageCircle,
+  CalendarCheck, Moon, Plug, Search, Sparkles, Star, Store, Timer, TrendingDown, TrendingUp, X, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import useSeo from '../../hooks/useSeo';
-import { DEPARTAMENTOS, DEPTO, AVISO_CUPO } from '../../data/oficinaSaas';
+import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina } from '../../data/oficinaSaas';
+import { useOficina, estadisticas, variacion } from './datos';
+import { HERRAMIENTAS, HERRAMIENTA } from './conexiones';
+import { BarrasDia, Donut, Calor, Sparkline, Medidor } from './graficos';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
 const Oficina3D = lazy(() => import('../../components/oficina/Oficina3D'));
 
-const fmt = (n) => Number(n || 0).toLocaleString('es-ES');
+const fmt = (n, d = 0) => Number(n || 0).toLocaleString('es-ES', { maximumFractionDigits: d, minimumFractionDigits: d });
 const hora = (d) => new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+const diaLargo = (d) => { const t = new Date(d).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }); return t[0].toUpperCase() + t.slice(1); };
 
-// ---------- datos de ejemplo (modo demo) ----------
-const DEMO_DEPTOS = ['atencion', 'citas', 'redes', 'google'];
-const DEMO_NEG = { id: 'demo', nombre: 'Peluquería Marta', owner_email: 'demo@agutidesigns.io', estado: 'activo', importe_mes: 169, sector: 'Peluquería', telefono: '600 000 000', direccion: 'Cornellà de Llobregat', horarios: 'L-V 9:30-20:00 · S 9:00-14:00', precios: '', tono: '', instrucciones: '' };
-const DEMO_USO = { atencion: [312, 0.58], citas: [141, 0.44], redes: [19, 0.61], google: [27, 0.83] };
-const DEMO_FEED = [
-  ['atencion', 'hecho', 'Ha contestado a Laura por WhatsApp: precio de mechas y horario del sábado'],
-  ['citas', 'hecho', 'Ha dado cita a Jordi el jueves a las 17:00 y le ha mandado la confirmación'],
-  ['google', 'hecho', 'Ha respondido una reseña de 5 estrellas de Núria'],
-  ['atencion', 'aviso', 'Un cliente quiere hablar contigo sobre un tratamiento para novia'],
-  ['redes', 'pendiente', 'Post del viernes listo: «Nuevo color de temporada». Esperando tu aprobación'],
-  ['citas', 'hecho', 'Ha enviado 9 recordatorios para las citas de mañana'],
-  ['atencion', 'hecho', 'Ha contestado a Marc por el chat de la web: ¿abrís el lunes?'],
-  ['google', 'hecho', 'Ha publicado la oferta de diciembre en tu ficha de Google'],
-  ['redes', 'hecho', 'Ha programado 3 publicaciones para la semana que viene'],
-  ['citas', 'hecho', 'Ha recolocado la cita cancelada de las 12:00 con una clienta en espera'],
+const VISTAS = [
+  { id: 'resumen', t: 'Resumen', I: LayoutDashboard },
+  { id: 'oficina', t: 'Oficina 3D', I: Box },
+  { id: 'actividad', t: 'Actividad', I: Activity },
+  { id: 'estadisticas', t: 'Estadísticas', I: BarChart3 },
+  { id: 'departamentos', t: 'Departamentos', I: Layers },
+  { id: 'conexiones', t: 'Conexiones', I: Plug },
+  { id: 'negocio', t: 'Mi negocio', I: Store },
+  { id: 'facturacion', t: 'Facturación', I: CreditCard },
 ];
 
-// ---------- carga de datos reales ----------
-function estadoDemo() {
-  const ahora = Date.now();
-  return { cargando: false, sesion: null, negocio: DEMO_NEG,
-    deptos: DEMO_DEPTOS.map((d) => ({ depto: d, cupo_n: DEPTO[d].cupo.n, activo: true })),
-    uso: Object.fromEntries(DEMO_DEPTOS.map((d) => [d, { unidades_mes: DEMO_USO[d][0], pct: DEMO_USO[d][1] }])),
-    feed: DEMO_FEED.slice(0, 5).map(([depto, tipo, texto], i) => ({ id: `d${i}`, depto, tipo, texto, creado: new Date(ahora - (i + 1) * 7 * 60000).toISOString() })) };
-}
+const CAMPOS = [
+  ['sector', 'A qué te dedicas', 'Peluquería y estética'], ['telefono', 'Teléfono de contacto', '600 000 000'], ['direccion', 'Dirección', 'Carrer…, Cornellà de Llobregat'],
+  ['horarios', 'Horarios', 'L-V 9:30-20:00 · S 9:00-14:00'], ['precios', 'Servicios y precios que pueden dar los agentes', 'Corte 18 € · Tinte desde 35 €…', true],
+  ['tono', 'Cómo hablas con tus clientes', 'Cercano, de tú, con algún emoji'], ['instrucciones', 'Lo que nunca deben hacer o decir', 'No dar descuentos. No prometer horas sin mirar la agenda…', true],
+];
 
-function useOficina(demo) {
-  const [estado, setEstado] = useState(() => (demo ? estadoDemo() : { cargando: true, sesion: null, negocio: null, deptos: [], uso: {}, feed: [] }));
-  useEffect(() => {
-    if (demo) return undefined;
-    let canal; let vivo = true;
-    async function cargar(sesion) {
-      if (!sesion) { setEstado((e) => ({ ...e, cargando: false, sesion: null })); return; }
-      const { data: negs } = await supabase.from('of_negocios').select('*').order('created_at', { ascending: false }).limit(1);
-      const negocio = negs?.[0] || null;
-      if (!negocio) { setEstado((e) => ({ ...e, cargando: false, sesion, negocio: null })); return; }
-      const [{ data: deptos }, { data: uso }, { data: feed }] = await Promise.all([
-        supabase.from('of_departamentos').select('*').eq('negocio_id', negocio.id).eq('activo', true),
-        supabase.from('of_uso_mes').select('*').eq('negocio_id', negocio.id),
-        supabase.from('of_actividad').select('*').eq('negocio_id', negocio.id).order('creado', { ascending: false }).limit(40),
-      ]);
-      if (!vivo) return;
-      const orden = DEPARTAMENTOS.map((d) => d.id);
-      setEstado({ cargando: false, sesion, negocio,
-        deptos: (deptos || []).sort((a, b) => orden.indexOf(a.depto) - orden.indexOf(b.depto)),
-        uso: Object.fromEntries((uso || []).map((u) => [u.depto, { unidades_mes: u.unidades_mes, pct: u.tokens_mes ? u.tokens_usados / u.tokens_mes : 0 }])),
-        feed: feed || [] });
-      canal = supabase.channel(`actividad-${negocio.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'of_actividad', filter: `negocio_id=eq.${negocio.id}` },
-          (p) => setEstado((e) => ({ ...e, feed: [p.new, ...e.feed].slice(0, 60) })))
-        .subscribe();
-    }
-    supabase.auth.getSession().then(({ data }) => cargar(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((ev, s) => { if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') cargar(s); });
-    return () => { vivo = false; sub.subscription.unsubscribe(); if (canal) supabase.removeChannel(canal); };
-  }, [demo]);
-  return [estado, setEstado];
-}
-
-// ---------- entrar ----------
-function Entrar({ aviso }) {
-  const [email, setEmail] = useState('');
-  const [st, setSt] = useState(aviso ? 'enviado' : '');
-  const [err, setErr] = useState('');
+// ---------- acceso ----------
+function Entrar() {
+  const [email, setEmail] = useState(''); const [st, setSt] = useState(''); const [err, setErr] = useState('');
   async function enviar(e) {
     e.preventDefault(); setErr(''); setSt('enviando');
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/app`, shouldCreateUser: true } });
@@ -88,9 +50,7 @@ function Entrar({ aviso }) {
       <div className="ap-entrar__caja">
         <p className="ap-k"><i /> Tu oficina de IA</p>
         <h1>Entra en tu oficina</h1>
-        {st === 'enviado' ? (
-          <p className="ap-entrar__ok"><Mail size={18} /> {aviso || 'Te hemos enviado un enlace a tu correo.'} Ábrelo desde este dispositivo para entrar.</p>
-        ) : (
+        {st === 'enviado' ? <p className="ap-entrar__ok"><Mail size={18} /> Te hemos enviado un enlace a tu correo. Ábrelo desde este dispositivo para entrar.</p> : (
           <form onSubmit={enviar}>
             <p>Escribe el correo con el que contrataste y te mandamos un enlace para entrar, sin contraseñas.</p>
             <label className="ap-campo"><span>Tu correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
@@ -104,101 +64,384 @@ function Entrar({ aviso }) {
   );
 }
 
-// ---------- puesta en marcha ----------
-const PASOS = [
-  { id: 'negocio', t: 'Tu negocio', campos: [['sector', 'A qué te dedicas', 'Peluquería y estética'], ['telefono', 'Teléfono de contacto', '600 000 000'], ['direccion', 'Dirección', 'Carrer…, Cornellà de Llobregat']] },
-  { id: 'horario', t: 'Horarios y precios', campos: [['horarios', 'Horarios', 'L-V 9:30-20:00 · S 9:00-14:00'], ['precios', 'Servicios y precios que pueden dar los agentes', 'Corte 18 € · Tinte desde 35 €…', true]] },
-  { id: 'tono', t: 'Tu forma de hablar', campos: [['tono', 'Cómo hablas con tus clientes', 'Cercano, de tú, con algún emoji'], ['instrucciones', 'Lo que nunca deben hacer o decir', 'No dar descuentos. No prometer horas sin mirar la agenda…', true]] },
-];
-const pasoHecho = (neg, p) => p.campos.every(([k]) => String(neg?.[k] || '').trim());
+// ---------- piezas ----------
+function Kpi(props) {
+  const { I: Icono, t, v, d, serie, color, nota } = props;
+  return (
+    <article className="db-kpi" style={{ '--c': color }}>
+      <header><span className="db-kpi__i"><Icono size={16} /></span>{t}</header>
+      <b>{v}</b>
+      <footer>
+        {d != null ? <span className={`db-delta ${d >= 0 ? 'is-up' : 'is-down'}`}>{d >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}{d > 0 ? '+' : ''}{d} %</span> : <span className="db-delta">{nota || '—'}</span>}
+        {serie && <Sparkline datos={serie} color={color} />}
+      </footer>
+    </article>
+  );
+}
 
-function PuestaEnMarcha({ negocio, deptos, demo, onGuardado }) {
-  const [abierto, setAbierto] = useState(() => PASOS.find((p) => !pasoHecho(negocio, p))?.id || null);
-  const [form, setForm] = useState(negocio);
-  const [st, setSt] = useState('');
-  const conexiones = [...new Set(deptos.flatMap((d) => DEPTO[d.depto]?.conexiones || []))];
-  const hechos = PASOS.filter((p) => pasoHecho(negocio, p)).length;
-  async function guardar(p) {
-    const cambios = Object.fromEntries(p.campos.map(([k]) => [k, (form[k] || '').trim()]));
-    if (demo) { onGuardado(cambios); setSt('Guardado (en la demo no se guarda de verdad)'); return; }
-    setSt('Guardando…');
-    const { error } = await supabase.from('of_negocios').update(cambios).eq('id', negocio.id);
-    if (error) { setSt('No se ha podido guardar. Inténtalo otra vez.'); return; }
-    onGuardado(cambios); setSt('Guardado'); setAbierto(PASOS.find((x) => x.id !== p.id && !pasoHecho({ ...negocio, ...cambios }, x))?.id || null);
+function Tarjeta(props) {
+  const { t, I: Icono, extra, children, className = '' } = props;
+  return (
+    <section className={`db-card ${className}`}>
+      <header className="db-card__h"><h2>{Icono && <Icono size={17} />}{t}</h2>{extra}</header>
+      {children}
+    </section>
+  );
+}
+
+function Evento({ e }) {
+  const d = DEPTO[e.depto];
+  return (
+    <li className={`ap-ev ap-ev--${e.tipo}`} style={{ '--c': d?.color || '#8fb0ff' }}>
+      <i /><div><span className="ap-ev__d">{d?.corto || 'Oficina'} · {hora(e.creado)}{e.tipo === 'aviso' ? ' · te necesita' : e.tipo === 'pendiente' ? ' · pendiente de ti' : ''}</span><p>{e.texto}</p></div>
+    </li>
+  );
+}
+
+function OficinaViva({ agentes, api, negocio, alto }) {
+  const [sel, setSel] = useState(0); const elegir = useCallback((i) => setSel(i), []);
+  const a = agentes[sel] || agentes[0];
+  if (!agentes.length) return null;
+  return (
+    <div className="db-3d" style={alto ? { '--alto': alto } : undefined}>
+      <Suspense fallback={<div className="o3-lienzo" />}>
+        <Oficina3D agentes={agentes} apiRef={api} onSelect={elegir} seleccionado={sel} titulo={negocio.nombre.slice(0, 22)} auto={false} />
+      </Suspense>
+      {a && <div className="ap-ficha" style={{ '--c': a.color }}><b>{a.nombre}</b><span>{a.que}</span>
+        <div className="o3-chips">{agentes.map((x, i) => <button key={x.id} type="button" aria-pressed={i === sel} onClick={() => setSel(i)}><i style={{ background: x.color }} />{x.corto}</button>)}</div></div>}
+    </div>
+  );
+}
+
+// ---------- vistas ----------
+function Resumen({ st, est, dias, eventos, agentes, api, negocio, ir, conexiones, deptos, uso, pasosHechos }) {
+  const a = est.act, p = est.prev; const d = (k) => (est.hayPrev ? variacion(a[k], p[k]) : null);
+  const ser = (k) => est.serie.map((s) => (k === 'total' ? s.total : s[k] || 0));
+  const pend = eventos.filter((e) => e.tipo === 'aviso' || e.tipo === 'pendiente').slice(0, 5);
+  const necesarias = HERRAMIENTAS.filter((h) => h.deptos.some((x) => deptos.some((dd) => dd.depto === x)));
+  const conectadas = necesarias.filter((h) => conexiones.some((c) => c.herramienta === h.id && c.estado === 'conectada')).length;
+  const listo = pasosHechos === CAMPOS.length && conectadas === necesarias.length;
+  return (
+    <div className="db-vista">
+      {!listo && (
+        <section className="db-aviso">
+          <Zap size={20} />
+          <div><b>Termina de poner en marcha tu oficina</b><span>Datos del negocio {pasosHechos}/{CAMPOS.length} · Conexiones {conectadas}/{necesarias.length}</span></div>
+          <Medidor valor={pasosHechos + conectadas} max={CAMPOS.length + necesarias.length} color="#e5fc63" />
+          <button className="ag-btn ag-btn--primary ag-btn--sm" onClick={() => ir(pasosHechos < CAMPOS.length ? 'negocio' : 'conexiones')}>Continuar <ArrowRight size={15} /></button>
+        </section>
+      )}
+      <div className="db-kpis">
+        <Kpi I={Sparkles} t="Tareas hechas" v={fmt(a.total)} d={d('total')} serie={ser('total')} color="#5b8cff" />
+        <Kpi I={MessageCircle} t="Clientes atendidos" v={fmt(a.conversaciones)} d={d('conversaciones')} serie={ser('atencion')} color="#3d7bff" />
+        <Kpi I={CalendarCheck} t="Citas gestionadas" v={fmt(a.citas)} d={d('citas')} serie={ser('citas')} color="#9d7ff0" />
+        <Kpi I={Clock} t="Horas que te ahorra" v={`${fmt(a.minutos / 60)} h`} d={d('minutos')} color="#e5fc63" nota="estimación" />
+        <Kpi I={Timer} t="Respuesta media" v={a.respuesta != null ? `${fmt(a.respuesta)} s` : '—'} color="#3ee0a1" nota={a.respuesta != null ? 'a tus clientes' : 'sin datos aún'} />
+        <Kpi I={Moon} t="Atendidos fuera de horario" v={fmt(a.fuera)} d={d('fuera')} color="#ff8a6b" />
+      </div>
+      <div className="db-fila db-fila--2-1">
+        <Tarjeta t={`Actividad de los últimos ${dias} días`} I={BarChart3} extra={<button className="db-mas" onClick={() => ir('estadisticas')}>Ver estadísticas <ArrowRight size={14} /></button>}>
+          <BarrasDia serie={est.serie} deptos={deptos.map((x) => x.depto)} />
+        </Tarjeta>
+        <Tarjeta t="Quién hace qué" I={Layers}>
+          <Donut partes={est.porDepto.filter((x) => x.n)} centro={fmt(a.total)} sub="tareas" />
+        </Tarjeta>
+      </div>
+      <div className="db-fila db-fila--3-2">
+        <Tarjeta t="Tu oficina, en directo" I={Box} extra={<span className="ap-vivo">En vivo</span>} className="db-card--flush">
+          <OficinaViva agentes={agentes} api={api} negocio={negocio} alto="420px" />
+        </Tarjeta>
+        <div className="db-col">
+          <Tarjeta t="Te necesitan" I={Bell} extra={<span className="db-chip">{pend.length}</span>}>
+            {pend.length ? <ol className="db-lista">{pend.map((e) => <Evento key={e.id} e={e} />)}</ol> : <p className="ap-mute">Nada pendiente. Tus agentes lo tienen todo bajo control.</p>}
+          </Tarjeta>
+          <Tarjeta t="Lo último" I={Activity} extra={<button className="db-mas" onClick={() => ir('actividad')}>Todo <ArrowRight size={14} /></button>}>
+            <ol className="db-lista">{eventos.slice(0, 5).map((e) => <Evento key={e.id} e={e} />)}</ol>
+          </Tarjeta>
+        </div>
+      </div>
+      <Tarjeta t="Cupo del mes" I={CircleAlert} extra={<button className="db-mas" onClick={() => ir('departamentos')}>Departamentos <ArrowRight size={14} /></button>}>
+        <div className="db-cupos">
+          {deptos.map((x) => { const info = DEPTO[x.depto]; const u = uso[x.depto] || {}; const pct = Math.min(1, Math.max(u.pct || 0, (u.unidades_mes || 0) / (x.cupo_n || 1)));
+            return <div key={x.depto} className="db-cupo"><span><i style={{ background: info.color }} />{info.corto}<b>{fmt(u.unidades_mes)} / {fmt(x.cupo_n)}</b></span><Medidor valor={pct} color={pct >= AVISO_CUPO ? '#e5fc63' : info.color} /></div>; })}
+        </div>
+      </Tarjeta>
+      {st.demo && <p className="db-nota">Datos de ejemplo de un negocio ficticio.</p>}
+    </div>
+  );
+}
+
+function Estadisticas({ est, deptos, dias }) {
+  const a = est.act, p = est.prev; const tiene = (d) => deptos.some((x) => x.depto === d);
+  const fila = (k, t) => ({ k, t, a: a[k], p: p[k], d: est.hayPrev ? variacion(a[k], p[k]) : null });
+  const tabla = [fila('total', 'Tareas hechas'), tiene('atencion') && fila('conversaciones', 'Clientes atendidos'), tiene('atencion') && fila('fuera', 'Atendidos fuera de horario'),
+    tiene('citas') && fila('citas', 'Citas gestionadas'), tiene('ventas') && fila('ventas', 'Gestiones de ventas'), tiene('ventas') && fila('ganados', 'Presupuestos aceptados'),
+    tiene('google') && fila('resenas', 'Reseñas respondidas'), tiene('redes') && fila('publicaciones', 'Tareas de redes'), tiene('contenido') && fila('articulos', 'Artículos'),
+    fila('avisos', 'Avisos que te han pasado')].filter(Boolean);
+  const totCanal = a.canales.whatsapp + a.canales.web || 1;
+  const maxTema = est.temas[0]?.[1] || 1;
+  return (
+    <div className="db-vista">
+      <Tarjeta t={`Comparativa: últimos ${dias} días frente a los ${dias} anteriores`} I={BarChart3}>
+        <div className="db-tabla-w"><table className="db-tabla"><thead><tr><th>Indicador</th><th>Ahora</th><th>Antes</th><th>Cambio</th></tr></thead>
+          <tbody>{tabla.map((r) => <tr key={r.k}><td>{r.t}</td><td><b>{fmt(r.a)}</b></td><td>{est.hayPrev ? fmt(r.p) : '—'}</td><td>{r.d == null ? '—' : <span className={`db-delta ${r.d >= 0 ? 'is-up' : 'is-down'}`}>{r.d > 0 ? '+' : ''}{r.d} %</span>}</td></tr>)}</tbody></table></div>
+      </Tarjeta>
+      {tiene('atencion') && (
+        <div className="db-fila db-fila--2-1">
+          <Tarjeta t="Cuándo te escriben tus clientes" I={MessageCircle}><Calor calor={est.calor} /><p className="ap-mute db-pie">Cuanto más intenso, más mensajes. Fuera de tu horario los atiende igual tu departamento de Atención.</p></Tarjeta>
+          <div className="db-col">
+            <Tarjeta t="Por dónde llegan" I={Plug}>
+              <div className="db-barras-h">
+                {[['WhatsApp', a.canales.whatsapp, '#25d366'], ['Chat de la web', a.canales.web, '#3d7bff']].map(([t, n, c]) => <div key={t}><span>{t}<b>{fmt(n)} · {Math.round((n / totCanal) * 100)} %</b></span><Medidor valor={n} max={totCanal} color={c} /></div>)}
+              </div>
+            </Tarjeta>
+            <Tarjeta t="Lo que más preguntan" I={Search}>
+              {est.temas.length ? <div className="db-barras-h">{est.temas.slice(0, 5).map(([t, n]) => <div key={t}><span>{t[0].toUpperCase() + t.slice(1)}<b>{fmt(n)}</b></span><Medidor valor={n} max={maxTema} color="#5b8cff" /></div>)}</div> : <p className="ap-mute">Aún sin datos.</p>}
+            </Tarjeta>
+          </div>
+        </div>
+      )}
+      <div className="db-kpis db-kpis--3">
+        {tiene('atencion') && <Kpi I={Timer} t="Tiempo medio de respuesta" v={a.respuesta != null ? `${fmt(a.respuesta, 1)} s` : '—'} color="#3ee0a1" nota="por mensaje" />}
+        {tiene('google') && <Kpi I={Star} t="Nota media de tus reseñas" v={a.estrellas != null ? `${fmt(a.estrellas, 1)} ★` : '—'} color="#e0a100" nota={`${fmt(a.resenas)} reseñas`} />}
+        {tiene('ventas') && <Kpi I={TrendingUp} t="Presupuestos aceptados" v={fmt(a.ganados)} color="#0a8f5a" d={est.hayPrev ? variacion(a.ganados, p.ganados) : null} />}
+        {tiene('citas') && <Kpi I={CalendarCheck} t="Citas gestionadas" v={fmt(a.citas)} color="#9d7ff0" d={est.hayPrev ? variacion(a.citas, p.citas) : null} />}
+        <Kpi I={Clock} t="Horas que te ahorra" v={`${fmt(a.minutos / 60)} h`} color="#e5fc63" nota="estimación" />
+      </div>
+      <Tarjeta t="Actividad por día y departamento" I={Activity}><BarrasDia serie={est.serie} deptos={deptos.map((x) => x.depto)} alto={260} /></Tarjeta>
+      <p className="db-nota">«Horas que te ahorra» es una estimación: minutos que llevaría a una persona cada tarea (3 min por cliente atendido, 4 por cita, 20 por publicación…).</p>
+    </div>
+  );
+}
+
+function Actividad({ eventos, deptos }) {
+  const [f, setF] = useState('todo'); const [q, setQ] = useState(''); const [n, setN] = useState(60);
+  const lista = eventos.filter((e) => (f === 'todo' || (f === 'tuyo' ? (e.tipo === 'aviso' || e.tipo === 'pendiente') : e.depto === f)) && (!q || e.texto.toLowerCase().includes(q.toLowerCase())));
+  const grupos = []; for (const e of lista.slice(0, n)) { const k = new Date(e.creado).toDateString(); const g = grupos[grupos.length - 1]; if (g && g.k === k) g.e.push(e); else grupos.push({ k, d: e.creado, e: [e] }); }
+  return (
+    <div className="db-vista">
+      <div className="db-filtros">
+        <div className="o3-chips" role="group" aria-label="Filtrar">
+          {[['todo', 'Todo'], ['tuyo', 'Te necesitan'], ...deptos.map((x) => [x.depto, DEPTO[x.depto].corto])].map(([k, t]) => <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)}>{DEPTO[k] && <i style={{ background: DEPTO[k].color }} />}{t}</button>)}
+        </div>
+        <label className="db-buscar"><Search size={15} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar en la actividad" /></label>
+      </div>
+      {grupos.map((g) => (
+        <Tarjeta key={g.k} t={diaLargo(g.d)} extra={<span className="db-chip">{g.e.length}</span>}><ol className="db-lista">{g.e.map((e) => <Evento key={e.id} e={e} />)}</ol></Tarjeta>
+      ))}
+      {!lista.length && <p className="ap-mute">No hay actividad con ese filtro.</p>}
+      {lista.length > n && <button className="ag-btn ag-btn--ghost db-cargar" onClick={() => setN(n + 80)}>Ver más</button>}
+    </div>
+  );
+}
+
+function Departamentos({ deptos, uso, demo, negocio, setEstado }) {
+  const faltan = DEPARTAMENTOS.filter((x) => !deptos.some((d) => d.depto === x.id));
+  async function ajustar(dep, cambios) {
+    const nuevo = { ...(dep.ajustes || {}), ...cambios };
+    setEstado((e) => ({ ...e, deptos: e.deptos.map((x) => (x.depto === dep.depto ? { ...x, ajustes: nuevo } : x)) }));
+    if (!demo) await supabase.from('of_departamentos').update({ ajustes: nuevo }).eq('negocio_id', negocio.id).eq('depto', dep.depto);
   }
   return (
-    <section className="ap-card ap-puesta" id="puesta">
-      <header className="ap-card__h"><h2><Settings2 size={18} /> Puesta en marcha</h2><span className="ap-prog"><b style={{ width: `${(hechos / (PASOS.length + 1)) * 100}%` }} /></span><small>{hechos} de {PASOS.length + 1}</small></header>
-      <p className="ap-mute">Cuanto mejor conozcan tus agentes tu negocio, mejor trabajan. Solo usan lo que pongas aquí: nunca se inventan precios ni horarios.</p>
-      <ol className="ap-pasos">
-        {PASOS.map((p) => {
-          const ok = pasoHecho(negocio, p);
+    <div className="db-vista">
+      <div className="db-deps">
+        {deptos.map((x) => {
+          const info = DEPTO[x.depto]; const u = uso[x.depto] || {}; const pct = Math.min(1, Math.max(u.pct || 0, (u.unidades_mes || 0) / (x.cupo_n || 1)));
+          const aj = x.ajustes || {};
           return (
-            <li key={p.id} className={`ap-paso ${ok ? 'is-ok' : ''} ${abierto === p.id ? 'is-open' : ''}`}>
-              <button type="button" className="ap-paso__h" onClick={() => setAbierto(abierto === p.id ? null : p.id)} aria-expanded={abierto === p.id}>
-                <span className="ap-paso__n">{ok ? <Check size={14} strokeWidth={3} /> : PASOS.indexOf(p) + 1}</span>{p.t}<em>{ok ? 'Hecho' : 'Pendiente'}</em>
-              </button>
-              {abierto === p.id && (
-                <form className="ap-paso__f" onSubmit={(e) => { e.preventDefault(); guardar(p); }}>
-                  {p.campos.map(([k, l, ph, largo]) => (
-                    <label key={k} className="ap-campo"><span>{l}</span>
-                      {largo ? <textarea rows={3} value={form[k] || ''} placeholder={ph} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />
-                        : <input value={form[k] || ''} placeholder={ph} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />}
-                    </label>
-                  ))}
-                  <div className="ap-fila"><button className="ag-btn ag-btn--primary ag-btn--sm">Guardar</button>{st && <small className="ap-mute">{st}</small>}</div>
-                </form>
-              )}
-            </li>
+            <article key={x.depto} className="db-card db-dep" style={{ '--c': info.color }}>
+              <header><i /><b>{info.nombre}</b><span className={`db-estado ${aj.pausado ? 'is-off' : ''}`}>{aj.pausado ? 'En pausa' : 'Trabajando'}</span></header>
+              <p className="ap-mute">{info.que}</p>
+              <div className="db-cupo db-cupo--grande"><span>Cupo del mes<b>{fmt(u.unidades_mes)} de {fmt(x.cupo_n)} {info.cupo.unidad}</b></span><Medidor valor={pct} color={pct >= AVISO_CUPO ? '#e5fc63' : info.color} /></div>
+              {pct >= AVISO_CUPO && <p className="ap-dep__aviso"><CircleAlert size={14} /> Llevas el {Math.round(pct * 100)} % del cupo de este mes</p>}
+              <ul className="db-checks">{info.hace.map((h) => <li key={h}><Check size={14} />{h}</li>)}</ul>
+              <div className="db-ajustes">
+                <label className="db-switch"><input type="checkbox" checked={!!aj.revisar} onChange={(e) => ajustar(x, { revisar: e.target.checked })} /><span />Revisar yo antes de que salga</label>
+                <label className="db-switch"><input type="checkbox" checked={!!aj.pausado} onChange={(e) => ajustar(x, { pausado: e.target.checked })} /><span />Pausar este departamento</label>
+              </div>
+              <p className="db-con">Usa: {HERRAMIENTAS.filter((h) => h.deptos.includes(x.depto)).map((h) => h.nombre).join(' · ')}</p>
+            </article>
           );
         })}
-        <li className={`ap-paso ${abierto === 'conectar' ? 'is-open' : ''}`}>
-          <button type="button" className="ap-paso__h" onClick={() => setAbierto(abierto === 'conectar' ? null : 'conectar')} aria-expanded={abierto === 'conectar'}>
-            <span className="ap-paso__n">{PASOS.length + 1}</span>Conecta tus cuentas<em>Pendiente</em>
-          </button>
-          {abierto === 'conectar' && (
-            <div className="ap-paso__f">
-              <ul className="ap-conex">{conexiones.map((c) => <li key={c}><Plug size={15} />{c}<span>Por conectar</span></li>)}</ul>
-              <p className="ap-mute">Estamos activando la conexión automática. Mientras, escríbenos a <b>info@agutidesigns.io</b> y lo conectamos contigo en una videollamada corta.</p>
-            </div>
-          )}
-        </li>
-      </ol>
-    </section>
+      </div>
+      {faltan.length > 0 && (<>
+        <h2 className="ap-h2">Añade más departamentos</h2>
+        <div className="db-deps">
+          {faltan.map((info) => (
+            <article key={info.id} className="db-card db-dep db-dep--nuevo" style={{ '--c': info.color }}>
+              <header><i /><b>{info.nombre}</b></header>
+              <p className="ap-mute">{info.que}</p>
+              <p className="db-precio">+{precioOficina(deptos.length + 1) - precioOficina(deptos.length)} €/mes · {fmt(info.cupo.n)} {info.cupo.unidad}</p>
+              <a className="ag-btn ag-btn--primary ag-btn--sm" href={demo ? '/oficina-ia#precios' : `mailto:info@agutidesigns.io?subject=${encodeURIComponent(`Añadir ${info.nombre} a ${negocio.nombre}`)}`}>Añadir</a>
+            </article>
+          ))}
+        </div>
+      </>)}
+    </div>
+  );
+}
+
+function Conexiones({ deptos, conexiones, demo, negocio, setEstado, aviso }) {
+  const [ocupado, setOcupado] = useState(''); const [modal, setModal] = useState(null); const [msg, setMsg] = useState(aviso || '');
+  const mis = deptos.map((d) => d.depto);
+  const lista = [...HERRAMIENTAS].sort((a, b) => Number(b.deptos.some((d) => mis.includes(d))) - Number(a.deptos.some((d) => mis.includes(d))));
+  const estadoDe = (id) => conexiones.find((c) => c.herramienta === id);
+  const necesarias = lista.filter((h) => h.deptos.some((d) => mis.includes(d)));
+  const hechas = necesarias.filter((h) => estadoDe(h.id)?.estado === 'conectada').length;
+  const marcar = (id, cuenta) => setEstado((e) => ({ ...e, conexiones: [...e.conexiones.filter((c) => c.herramienta !== id), { herramienta: id, estado: 'conectada', cuenta }] }));
+
+  async function conectar(h, extra) {
+    if (h.proveedor === 'snippet' && !extra) { setModal({ h }); return; }
+    if (h.proveedor === 'clave' && !extra) { setModal({ h, form: { url: '', usuario: '', clave: '' } }); return; }
+    setOcupado(h.id); setMsg('');
+    if (demo) { setTimeout(() => { marcar(h.id, h.proveedor === 'clave' ? extra.url : 'Cuenta de ejemplo'); setOcupado(''); setModal(null); setMsg(`${h.nombre} conectado (demo).`); }, 1100); return; }
+    try {
+      const { data } = await supabase.auth.getSession();
+      const r = await fetch('/api/oficina-conectar', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token}` }, body: JSON.stringify({ herramienta: h.id, ...extra }) });
+      const j = await r.json().catch(() => ({}));
+      if (j.url) { window.location.assign(j.url); return; }
+      if (r.ok && j.conectada) { marcar(h.id, j.cuenta); setModal(null); setMsg(`${h.nombre} conectado.`); }
+      else setMsg(j.error || 'No se ha podido conectar. Inténtalo de nuevo.');
+    } catch { setMsg('No se ha podido conectar. Inténtalo de nuevo.'); }
+    setOcupado('');
+  }
+  async function desconectar(h) {
+    setEstado((e) => ({ ...e, conexiones: e.conexiones.filter((c) => c.herramienta !== h.id) }));
+    if (demo) return;
+    const { data } = await supabase.auth.getSession();
+    await fetch('/api/oficina-conectar', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token}` }, body: JSON.stringify({ herramienta: h.id }) });
+  }
+  const codigo = `<script src="https://agutidesigns.io/oficina-chat.js" data-oficina="${negocio.id}" async></script>`;
+  return (
+    <div className="db-vista">
+      <section className="db-aviso db-aviso--azul">
+        <Plug size={20} />
+        <div><b>{hechas} de {necesarias.length} conexiones que necesitan tus departamentos</b><span>Pulsa «Conectar», inicia sesión en la herramienta y acepta los permisos. Nada más.</span></div>
+        <Medidor valor={hechas} max={necesarias.length || 1} color="#e5fc63" />
+      </section>
+      {msg && <p className="db-msg" role="status">{msg}<button onClick={() => setMsg('')} aria-label="Cerrar"><X size={14} /></button></p>}
+      <div className="db-conex">
+        {lista.map((h) => {
+          const c = estadoDe(h.id); const usa = h.deptos.filter((d) => mis.includes(d)); const on = c?.estado === 'conectada';
+          return (
+            <article key={h.id} className={`db-card db-tool ${on ? 'is-on' : ''} ${usa.length ? '' : 'is-opc'}`}>
+              <header><span className="db-tool__logo" style={{ background: h.color }}>{h.letra}</span><div><b>{h.nombre}</b><small>{usa.length ? `La usa${usa.length > 1 ? 'n' : ''}: ${usa.map((d) => DEPTO[d].corto).join(', ')}` : 'Opcional'}</small></div></header>
+              <p className="ap-mute">{h.que}</p>
+              {on ? (
+                <footer><span className="db-ok"><Check size={14} strokeWidth={3} /> {c.cuenta || 'Conectada'}</span><button className="db-link" onClick={() => desconectar(h)}>Desconectar</button></footer>
+              ) : (
+                <footer><button className="ag-btn ag-btn--primary ag-btn--sm" disabled={ocupado === h.id} onClick={() => conectar(h)}>{ocupado === h.id ? 'Conectando…' : 'Conectar'}</button></footer>
+              )}
+            </article>
+          );
+        })}
+      </div>
+      {modal && (
+        <div className="db-modal" role="dialog" aria-modal="true" aria-label={modal.h.nombre} onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+          <div className="db-modal__caja">
+            <header><b>{modal.h.nombre}</b><button className="db-link" onClick={() => setModal(null)} aria-label="Cerrar"><X size={18} /></button></header>
+            {modal.h.proveedor === 'snippet' ? (<>
+              <p className="ap-mute">Pega este código en tu web, justo antes de <code>&lt;/body&gt;</code>. Si tu web la llevamos nosotros, lo hacemos por ti.</p>
+              <pre className="db-code">{codigo}</pre>
+              <div className="ap-fila">
+                <button className="ag-btn ag-btn--primary ag-btn--sm" onClick={() => { navigator.clipboard?.writeText(codigo).then(() => setMsg('Código copiado.'), () => {}); }}><Copy size={14} /> Copiar código</button>
+                <button className="ag-btn ag-btn--ghost ag-btn--sm" onClick={() => conectar(modal.h, { instalado: true })}>Ya lo he pegado</button>
+              </div>
+            </>) : (
+              <form className="db-form" onSubmit={(e) => { e.preventDefault(); conectar(modal.h, modal.form); }}>
+                <p className="ap-mute">En tu WordPress ve a Usuarios → Perfil → Contraseñas de aplicación, crea una llamada «Oficina de IA» y pégala aquí. Se guarda cifrada.</p>
+                {[['url', 'Dirección de tu web', 'https://tuweb.com'], ['usuario', 'Usuario de WordPress', 'admin'], ['clave', 'Contraseña de aplicación', 'xxxx xxxx xxxx xxxx']].map(([k, l, ph]) => (
+                  <label key={k} className="ap-campo"><span>{l}</span><input required value={modal.form[k]} placeholder={ph} type={k === 'clave' ? 'password' : 'text'} onChange={(e) => setModal({ ...modal, form: { ...modal.form, [k]: e.target.value } })} /></label>
+                ))}
+                <button className="ag-btn ag-btn--primary ag-btn--sm" disabled={ocupado === modal.h.id}>{ocupado === modal.h.id ? 'Conectando…' : 'Conectar'}</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiNegocio({ negocio, demo, setEstado }) {
+  const [form, setForm] = useState(negocio); const [st, setSt] = useState('');
+  async function guardar(e) {
+    e.preventDefault();
+    const cambios = Object.fromEntries(CAMPOS.map(([k]) => [k, (form[k] || '').trim()]));
+    if (!demo) { setSt('Guardando…'); const { error } = await supabase.from('of_negocios').update(cambios).eq('id', negocio.id); if (error) { setSt('No se ha podido guardar.'); return; } }
+    setEstado((s) => ({ ...s, negocio: { ...s.negocio, ...cambios } })); setSt(demo ? 'Guardado (en la demo no se guarda de verdad)' : 'Guardado');
+  }
+  return (
+    <div className="db-vista">
+      <Tarjeta t="Lo que saben tus agentes de tu negocio" I={Store}>
+        <p className="ap-mute">Tus agentes solo usan lo que pongas aquí: nunca se inventan precios, horarios ni promociones. Cuanto más completo, mejor trabajan.</p>
+        <form className="db-form db-form--2" onSubmit={guardar}>
+          {CAMPOS.map(([k, l, ph, largo]) => (
+            <label key={k} className={`ap-campo ${largo ? 'is-ancho' : ''}`}><span>{l} {String(negocio[k] || '').trim() ? <Check size={13} className="db-ok-i" /> : null}</span>
+              {largo ? <textarea rows={4} value={form[k] || ''} placeholder={ph} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /> : <input value={form[k] || ''} placeholder={ph} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />}
+            </label>
+          ))}
+          <div className="ap-fila is-ancho"><button className="ag-btn ag-btn--primary">Guardar</button>{st && <small className="ap-mute">{st}</small>}</div>
+        </form>
+      </Tarjeta>
+    </div>
+  );
+}
+
+function Facturacion({ negocio, deptos, uso, demo, portal }) {
+  return (
+    <div className="db-vista">
+      <div className="db-fila db-fila--1-1">
+        <Tarjeta t="Tu plan" I={CreditCard}>
+          <p className="db-plan"><b>{negocio.importe_mes ?? precioOficina(deptos.length)} €</b>/mes · {deptos.length} departamento{deptos.length === 1 ? '' : 's'}</p>
+          <ul className="db-checks">{deptos.map((d) => <li key={d.depto}><Check size={14} />{DEPTO[d.depto].nombre} · {fmt(d.cupo_n)} {DEPTO[d.depto].cupo.unidad}/mes</li>)}</ul>
+          <p className="ap-mute">Sin permanencia. Precios sin IVA.</p>
+          <button className="ag-btn ag-btn--primary ag-btn--sm" onClick={portal} disabled={demo}>Facturas, tarjeta y baja</button>
+          {demo && <p className="ap-mute">En la demo no hay facturas.</p>}
+        </Tarjeta>
+        <Tarjeta t="Consumo de IA este mes" I={Zap}>
+          <p className="ap-mute">Cada departamento tiene su presupuesto de IA incluido. Te avisamos al 80 % y nunca te cobramos de más sin que lo sepas.</p>
+          <div className="db-cupos">{deptos.map((d) => { const p = uso[d.depto]?.pct || 0; return <div key={d.depto} className="db-cupo"><span><i style={{ background: DEPTO[d.depto].color }} />{DEPTO[d.depto].corto}<b>{Math.round(p * 100)} %</b></span><Medidor valor={p} color={p >= AVISO_CUPO ? '#e5fc63' : DEPTO[d.depto].color} /></div>; })}</div>
+        </Tarjeta>
+      </div>
+    </div>
   );
 }
 
 // ---------- panel ----------
 export default function Panel() {
-  const demo = new URLSearchParams(window.location.search).has('demo');
-  useSeo({ title: demo ? 'Demo del panel · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA: tus departamentos trabajando en directo.', path: '/app', noindex: true });
-  const [{ cargando, sesion, negocio, deptos, uso, feed }, setEstado] = useOficina(demo);
-  const [sel, setSel] = useState(0);
-  const api = useRef(null);
-  const visto = useRef(new Set());
-
+  const qs = new URLSearchParams(window.location.search);
+  const demo = qs.has('demo');
+  const { vista: v } = useParams(); const vista = VISTAS.some((x) => x.id === v) ? v : 'resumen';
+  const nav = useNavigate();
+  const ir = (id) => { nav(`/app/${id}${demo ? '?demo=1' : ''}`); window.scrollTo(0, 0); };
+  useSeo({ title: demo ? 'Demo del panel · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
+  const [estado, setEstado] = useOficina(demo);
+  const { cargando, sesion, negocio, deptos, uso, eventos, conexiones } = estado;
+  const [dias, setDias] = useState(30); const [menu, setMenu] = useState(false);
+  const api = useRef(null); const visto = useRef(new Set());
   const agentes = useMemo(() => deptos.map((d) => ({ ...DEPTO[d.depto], nombre: DEPTO[d.depto].corto })), [deptos]);
   const idx = useMemo(() => Object.fromEntries(deptos.map((d, i) => [d.depto, i])), [deptos]);
-  const elegir = useCallback((i) => setSel(i), []);
+  const est = useMemo(() => estadisticas(eventos || [], dias, deptos.map((d) => d.depto)), [eventos, dias, deptos]);
+  const aviso = qs.get('conectado') ? `${HERRAMIENTA[qs.get('conectado')]?.nombre || 'Herramienta'} conectada.` : qs.get('error_conexion') ? 'No se ha completado la conexión. Inténtalo de nuevo.' : '';
 
-  // cada actividad nueva viaja de su mesa al panel en la oficina 3D
   useEffect(() => {
-    const nuevos = feed.filter((f) => !visto.current.has(f.id));
-    const primera = visto.current.size === 0;
-    nuevos.forEach((f) => visto.current.add(f.id));
-    if (primera) return;
-    nuevos.forEach((f, k) => setTimeout(() => api.current?.aviso(idx[f.depto] ?? -1, f.texto), k * 400));
-  }, [feed, idx]);
+    const nuevos = (eventos || []).filter((f) => !visto.current.has(f.id)); const primera = visto.current.size === 0;
+    nuevos.forEach((f) => visto.current.add(f.id)); if (primera) return;
+    nuevos.slice(0, 4).forEach((f, k) => setTimeout(() => api.current?.aviso(idx[f.depto] ?? -1, f.texto), k * 400));
+  }, [eventos, idx]);
 
-  // demo: actividad simulada cada pocos segundos
   useEffect(() => {
     if (!demo) return undefined;
-    let n = 5;
+    const plant = [['atencion', 'hecho', 'Ha contestado a Laura por WhatsApp: precio de mechas', { canal: 'whatsapp', ms: 6200, tema: 'precios' }], ['citas', 'hecho', 'Ha dado cita a Jordi el jueves a las 17:00', {}],
+      ['google', 'hecho', 'Ha respondido una reseña de 5 estrellas de Núria', { estrellas: 5 }], ['atencion', 'hecho', 'Ha contestado a Marc por el chat de la web: ¿abrís el lunes?', { canal: 'web', ms: 4100, tema: 'horarios' }],
+      ['ventas', 'hecho', 'Ha enviado el seguimiento de los 2 días a Carla', { resultado: 'abierto' }], ['redes', 'pendiente', 'Post del sábado listo: «Recogidos de fiesta». Esperando tu aprobación', {}]];
+    let n = 0;
     const id = setInterval(() => {
-      const [depto, tipo, texto] = DEMO_FEED[n % DEMO_FEED.length]; n += 1;
-      setEstado((e) => ({ ...e, feed: [{ id: `d${n}-${Date.now()}`, depto, tipo, texto, creado: new Date().toISOString() }, ...e.feed].slice(0, 30),
+      const [depto, tipo, texto, detalle] = plant[n % plant.length]; n += 1;
+      setEstado((e) => ({ ...e, eventos: [{ id: `v${n}-${Date.now()}`, depto, tipo, texto, detalle, creado: new Date().toISOString() }, ...e.eventos],
         uso: { ...e.uso, [depto]: { ...e.uso[depto], unidades_mes: (e.uso[depto]?.unidades_mes || 0) + 1 } } }));
-    }, 4200);
+    }, 4500);
     return () => clearInterval(id);
   }, [demo, setEstado]);
 
@@ -206,8 +449,7 @@ export default function Panel() {
     if (demo) return;
     const { data } = await supabase.auth.getSession();
     const r = await fetch('/api/oficina-portal', { method: 'POST', headers: { Authorization: `Bearer ${data.session?.access_token}` } });
-    const j = await r.json().catch(() => ({}));
-    if (j.url) window.location.href = j.url;
+    const j = await r.json().catch(() => ({})); if (j.url) window.location.assign(j.url);
   }
 
   if (cargando) return <main className="ap-carga"><span className="ap-spin" /> Abriendo tu oficina…</main>;
@@ -222,91 +464,63 @@ export default function Panel() {
     );
   }
 
-  const a = agentes[sel] || agentes[0];
-  const pendientes = feed.filter((f) => f.tipo === 'aviso' || f.tipo === 'pendiente').slice(0, 3);
+  const pend = (eventos || []).filter((e) => e.tipo === 'aviso' || e.tipo === 'pendiente').length;
+  const pasosHechos = CAMPOS.filter(([k]) => String(negocio[k] || '').trim()).length;
+  const necesarias = HERRAMIENTAS.filter((h) => h.deptos.some((x) => deptos.some((d) => d.depto === x)));
+  const conectadas = necesarias.filter((h) => conexiones.some((c) => c.herramienta === h.id && c.estado === 'conectada')).length;
   const activo = negocio.estado === 'activo';
+  const insignia = { actividad: pend || null, conexiones: necesarias.length - conectadas || null, negocio: CAMPOS.length - pasosHechos || null };
+  const titulo = VISTAS.find((x) => x.id === vista).t;
+  const props = { st: { demo }, est, dias, eventos: eventos || [], agentes, api, negocio, ir, conexiones, deptos, uso, pasosHechos, demo, setEstado, portal };
 
   return (
-    <div className="ap">
-      {demo && <div className="ap-demo">Estás viendo una demo con un negocio de ejemplo y actividad simulada. <a href="/oficina-ia#precios">Monta la tuya <ArrowRight size={14} /></a></div>}
-      <header className="ap-top">
-        <div className="ap-wrap ap-top__in">
-          <a href="/" className="ap-logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="120" height="33" /><span>Oficina de IA</span></a>
-          <div className="ap-top__neg"><b>{negocio.nombre}</b><span className={`ap-estado ${activo ? '' : 'is-off'}`}>{activo ? 'En marcha' : negocio.estado === 'impago' ? 'Pago pendiente' : 'Pausada'}</span></div>
-          <nav className="ap-top__acc">
-            {!demo && <button type="button" onClick={portal} className="ap-link">Suscripción y facturas</button>}
-            {!demo && <button type="button" onClick={() => supabase.auth.signOut()} className="ap-link" aria-label="Salir"><LogOut size={16} /></button>}
-          </nav>
+    <div className={`db ${menu ? 'is-menu' : ''}`}>
+      {demo && <div className="ap-demo">Demo con un negocio de ejemplo y actividad simulada. <a href="/oficina-ia#precios">Monta la tuya <ArrowRight size={14} /></a></div>}
+      <aside className="db-side">
+        <div className="db-side__top">
+          <a href="/" className="ap-logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="120" height="33" /></a>
+          <button className="db-side__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button>
         </div>
-      </header>
-
-      <main className="ap-wrap ap-main">
-        <section className="ap-hero">
-          <div>
-            <p className="ap-k"><i /> En directo · {hora(new Date())}</p>
-            <h1>Tu oficina de IA</h1>
-            <p className="ap-mute">{deptos.length} departamento{deptos.length === 1 ? '' : 's'} trabajando para {negocio.nombre}{negocio.importe_mes ? ` · ${negocio.importe_mes} €/mes` : ''}</p>
-          </div>
-          {pendientes.length > 0 && (
-            <ul className="ap-alertas">{pendientes.map((p) => <li key={p.id}><Bell size={15} /><span>{p.texto}</span></li>)}</ul>
+        <div className="db-neg"><span className="db-neg__av">{negocio.nombre.slice(0, 1)}</span><div><b>{negocio.nombre}</b><small><i className={activo ? '' : 'is-off'} />{activo ? 'Oficina en marcha' : negocio.estado === 'impago' ? 'Pago pendiente' : 'Pausada'}</small></div></div>
+        <nav className="db-nav" aria-label="Secciones">
+          {/* eslint-disable-next-line no-unused-vars */}
+          {VISTAS.map(({ id, t, ...x }) => (
+            <button key={id} type="button" className={vista === id ? 'is-on' : ''} aria-current={vista === id ? 'page' : undefined} onClick={() => { ir(id); setMenu(false); }}>
+              <x.I size={18} />{t}{insignia[id] ? <em>{insignia[id]}</em> : null}
+            </button>
+          ))}
+        </nav>
+        <div className="db-side__pie">
+          <span>{demo ? 'demo@agutidesigns.io' : sesion.user.email}</span>
+          {!demo && <button className="ap-link" onClick={() => supabase.auth.signOut()}><LogOut size={15} /> Salir</button>}
+        </div>
+      </aside>
+      <div className="db-velo" onClick={() => setMenu(false)} aria-hidden="true" />
+      <div className="db-main">
+        <header className="db-top">
+          <button className="db-burger" onClick={() => setMenu(true)} aria-label="Abrir menú"><Menu size={22} /></button>
+          <div className="db-top__t"><h1>{titulo}</h1><span>{diaLargo(new Date())} · <i className="db-punto" /> en directo</span></div>
+          {(vista === 'resumen' || vista === 'estadisticas') && (
+            <div className="db-periodo" role="group" aria-label="Periodo">{[7, 14, 30].map((d) => <button key={d} type="button" aria-pressed={dias === d} onClick={() => setDias(d)}>{d} días</button>)}</div>
           )}
-        </section>
-
-        <div className="ap-grid">
-          <section className="ap-card ap-3d">
-            <Suspense fallback={<div className="o3-lienzo" />}>
-              {agentes.length > 0 && <Oficina3D agentes={agentes} apiRef={api} onSelect={elegir} seleccionado={sel} titulo={negocio.nombre.slice(0, 22)} auto={false} />}
-            </Suspense>
-            {a && (
-              <div className="ap-ficha" style={{ '--c': a.color }}>
-                <b>{a.nombre}</b><span>{a.que}</span>
-                <div className="o3-chips">{agentes.map((x, i) => <button key={x.id} type="button" aria-pressed={i === sel} onClick={() => setSel(i)}><i style={{ background: x.color }} />{x.corto}</button>)}</div>
-              </div>
-            )}
-          </section>
-
-          <section className="ap-card ap-feed" aria-live="polite">
-            <header className="ap-card__h"><h2><Sparkles size={18} /> Lo que están haciendo</h2><span className="ap-vivo">En vivo</span></header>
-            {feed.length === 0 ? <p className="ap-mute">Aún no hay actividad. En cuanto termines la puesta en marcha, aquí verás cada cosa que hagan tus agentes.</p> : (
-              <ol>
-                {feed.slice(0, 14).map((f) => {
-                  const d = DEPTO[f.depto];
-                  return (
-                    <li key={f.id} className={`ap-ev ap-ev--${f.tipo}`} style={{ '--c': d?.color || '#8fb0ff' }}>
-                      <i /><div><span className="ap-ev__d">{d?.corto || 'Oficina'} · {hora(f.creado)}{f.tipo === 'aviso' ? ' · te necesita' : f.tipo === 'pendiente' ? ' · pendiente de ti' : ''}</span><p>{f.texto}</p></div>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </section>
-        </div>
-
-        <section className="ap-deptos">
-          <h2 className="ap-h2">Tus departamentos y su cupo del mes</h2>
-          <div className="ap-deptos__grid">
-            {deptos.map((d) => {
-              const info = DEPTO[d.depto]; const u = uso[d.depto] || {};
-              const pct = Math.min(1, Math.max(u.pct || 0, (u.unidades_mes || 0) / (d.cupo_n || 1)));
-              const alto = pct >= AVISO_CUPO;
-              return (
-                <article key={d.depto} className="ap-card ap-dep" style={{ '--c': info.color }}>
-                  <header><i /><b>{info.nombre}</b></header>
-                  <p className="ap-dep__n"><b>{fmt(u.unidades_mes)}</b> de {fmt(d.cupo_n)} {info.cupo.unidad}</p>
-                  <span className={`ap-barra ${alto ? 'is-alto' : ''}`}><b style={{ width: `${pct * 100}%` }} /></span>
-                  {alto && <p className="ap-dep__aviso"><CircleAlert size={14} /> Llevas el {Math.round(pct * 100)} % del cupo de este mes</p>}
-                  <ul>{info.hace.map((h) => <li key={h}><Check size={14} />{h}</li>)}</ul>
-                </article>
-              );
-            })}
-            <a className="ap-card ap-dep ap-dep--mas" href={demo ? '/oficina-ia#precios' : 'mailto:info@agutidesigns.io?subject=A%C3%B1adir%20departamento%20a%20mi%20oficina'}>
-              <b>+ Añadir departamento</b><span>{DEPARTAMENTOS.filter((x) => !deptos.some((d) => d.depto === x.id)).map((x) => x.corto).join(' · ') || 'Ya tienes todos'}</span>
-            </a>
-          </div>
-        </section>
-
-        <PuestaEnMarcha negocio={negocio} deptos={deptos} demo={demo} onGuardado={(c) => setEstado((e) => ({ ...e, negocio: { ...e.negocio, ...c } }))} />
-      </main>
+          <button className="db-campana" onClick={() => ir('actividad')} aria-label={`${pend} avisos`}><Bell size={19} />{pend > 0 && <em>{pend > 9 ? '9+' : pend}</em>}</button>
+        </header>
+        <main className="db-cont">
+          {vista === 'resumen' && <Resumen {...props} />}
+          {vista === 'oficina' && (
+            <div className="db-vista db-fila db-fila--3-2">
+              <Tarjeta t="Tu oficina, en directo" I={Box} extra={<span className="ap-vivo">En vivo</span>} className="db-card--flush"><OficinaViva agentes={agentes} api={api} negocio={negocio} alto="clamp(420px, 62vh, 680px)" /></Tarjeta>
+              <Tarjeta t="Lo que están haciendo" I={Sparkles} className="db-card--scroll"><ol className="db-lista">{(eventos || []).slice(0, 25).map((e) => <Evento key={e.id} e={e} />)}</ol></Tarjeta>
+            </div>
+          )}
+          {vista === 'actividad' && <Actividad eventos={eventos || []} deptos={deptos} />}
+          {vista === 'estadisticas' && <Estadisticas est={est} deptos={deptos} dias={dias} />}
+          {vista === 'departamentos' && <Departamentos {...props} />}
+          {vista === 'conexiones' && <Conexiones {...props} aviso={aviso} />}
+          {vista === 'negocio' && <MiNegocio {...props} />}
+          {vista === 'facturacion' && <Facturacion {...props} />}
+        </main>
+      </div>
     </div>
   );
 }

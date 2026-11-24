@@ -116,3 +116,28 @@ grant select on public.of_uso_mes to authenticated;
 
 -- Feed en directo
 alter publication supabase_realtime add table public.of_actividad;
+
+-- ---------- Ajustes por departamento y conexiones de herramientas ----------
+alter table public.of_departamentos add column if not exists ajustes jsonb not null default '{}'::jsonb;
+create policy of_departamentos_ajustar on public.of_departamentos for update to authenticated
+  using (public.of_es_mio(negocio_id)) with check (public.of_es_mio(negocio_id));
+grant update (ajustes) on public.of_departamentos to authenticated;
+
+create table if not exists public.of_conexiones (
+  id              uuid primary key default gen_random_uuid(),
+  created_at      timestamptz not null default now(),
+  negocio_id      uuid not null references public.of_negocios(id) on delete cascade,
+  herramienta     text not null,
+  proveedor       text not null,
+  estado          text not null default 'conectada' check (estado in ('conectada','caducada','error')),
+  cuenta          text,
+  token_cifrado   text,   -- AES-256-GCM con OFICINA_CIFRADO_KEY; nunca se lee desde el navegador
+  refresh_cifrado text,
+  expira          timestamptz,
+  scopes          text,
+  unique (negocio_id, herramienta)
+);
+alter table public.of_conexiones enable row level security;
+create policy of_conexiones_leer on public.of_conexiones for select to authenticated using (public.of_es_mio(negocio_id));
+revoke all on public.of_conexiones from anon, authenticated;
+grant select (id, created_at, negocio_id, herramienta, proveedor, estado, cuenta) on public.of_conexiones to authenticated;

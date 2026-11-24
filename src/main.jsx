@@ -45,6 +45,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/oficina-ia" element={<OficinaIA />} />
           <Route path="/app" element={<PanelOficina />} />
           <Route path="/app/bienvenida" element={<BienvenidaOficina />} />
+          <Route path="/app/:vista" element={<PanelOficina />} />
           <Route path="/clinicas-dentales/consulta" element={<ClinicasConsulta />} />
           <Route path="/casos" element={<Casos />} />
           <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />

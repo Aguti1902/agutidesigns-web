@@ -29,3 +29,22 @@ Motor de agentes por cliente con la API de Claude (Haiku por defecto), comproban
 cada llamada y registrando cada gasto en `of_consumo` y cada acción en `of_actividad`. Primero: Atención
 (WhatsApp Cloud API + chat web) y Google y reseñas. Después: alta de departamentos desde el panel, bolsas
 extra y panel de admin con margen por cliente.
+
+## Panel en modo dashboard (/app/:vista)
+Resumen (KPIs con comparativa, actividad por día, reparto por departamento, oficina 3D en directo, «te necesitan»,
+cupos), Oficina 3D, Actividad (filtros y búsqueda), Estadísticas (comparativa de periodos, mapa de calor de mensajes,
+canales, temas más preguntados, respuesta media, nota de reseñas), Departamentos (cupo, revisar antes de publicar,
+pausar), Conexiones, Mi negocio y Facturación. «Horas que te ahorra» es una estimación y se indica así.
+
+## Conexiones con un clic
+`api/oficina-conectar.js` devuelve la URL de OAuth y `api/oficina-oauth.js` guarda los tokens cifrados
+(AES-256-GCM) en `of_conexiones`. Hace falta, por proveedor, registrar la app y poner en Vercel:
+- `OFICINA_CIFRADO_KEY` (cadena larga aleatoria; sin ella no se guarda ninguna conexión).
+- Google (Perfil de Empresa, Calendar, Gmail): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`.
+  Perfil de Empresa exige solicitar acceso a la API a Google; Gmail con permisos de escritura pasa verificación.
+- Meta (WhatsApp, Instagram, Facebook): `META_APP_ID`, `META_APP_SECRET`, con revisión de la app por Meta.
+- TikTok: `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`. Microsoft (Outlook): `MS_CLIENT_ID`, `MS_CLIENT_SECRET`.
+URL de vuelta a registrar en todos: `https://agutidesigns.io/api/oficina-oauth` (y la de la vista previa).
+Mientras un proveedor no tenga claves, el botón responde «te la conectamos nosotros» en lugar de fallar.
+WordPress se conecta con contraseña de aplicación; el chat web con un código para pegar (el widget
+`oficina-chat.js` llega con la fase 3).
