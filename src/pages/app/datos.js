@@ -1,6 +1,6 @@
 // Datos del panel: carga real desde Supabase con tiempo real (o un negocio de ejemplo en modo demo) y estadísticas.
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/oficinaSupabase';
 import { DEPARTAMENTOS, DEPTO } from '../../data/oficinaSaas';
 
 const DIA = 864e5;

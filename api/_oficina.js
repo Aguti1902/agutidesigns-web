@@ -7,9 +7,10 @@ import { DEPARTAMENTOS, DEPTO, precioOficina } from '../src/data/oficinaSaas.js'
 
 export { DEPARTAMENTOS, DEPTO, precioOficina };
 export const stripeKey = () => process.env.STRIPE_OFICINA_KEY || process.env.STRIPE_SECRET_KEY;
-export const sbUrl = () => (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const sbKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY;
-const anonKey = () => process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+// La oficina usa su propio proyecto de Supabase (OFICINA_*); si no está, cae al de la web.
+export const sbUrl = () => (process.env.OFICINA_SUPABASE_URL || process.env.VITE_OFICINA_SUPABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+const sbKey = () => process.env.OFICINA_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = () => process.env.VITE_OFICINA_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 export const configurado = () => Boolean(stripeKey() && sbUrl() && sbKey());
 export const hayBase = () => Boolean(sbUrl() && sbKey());
 export const origen = (req) => `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;

@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Activity, BarChart3, BookOpen, Home, LogOut, Mail, Menu, MessageCircle, Plug, Settings, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/oficinaSupabase';
 import useSeo from '../../hooks/useSeo';
 import { DEPTO } from '../../data/oficinaSaas';
 import { useOficina, estadisticas, pendiente } from './datos';

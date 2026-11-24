@@ -48,3 +48,11 @@ URL de vuelta a registrar en todos: `https://agutidesigns.io/api/oficina-oauth` 
 Mientras un proveedor no tenga claves, el botón responde «te la conectamos nosotros» en lugar de fallar.
 WordPress se conecta con contraseña de aplicación; el chat web con un código para pegar (el widget
 `oficina-chat.js` llega con la fase 3).
+
+## Proyecto de Supabase propio
+La oficina usa su propio proyecto (cuenta info@agutidesigns.io), separado del de la web.
+- Públicas (navegador): `VITE_OFICINA_SUPABASE_URL`, `VITE_OFICINA_SUPABASE_ANON_KEY`.
+- Servidor: `OFICINA_SUPABASE_SERVICE_ROLE_KEY` (y opcional `OFICINA_SUPABASE_URL`).
+- Auth → URL Configuration: Site URL `https://agutidesigns.io`, Redirect URLs `https://agutidesigns.io/app` y `https://*-nexgents-projects.vercel.app/app`.
+- Auth → SMTP: Resend (host smtp.resend.com, puerto 465, usuario `resend`, contraseña = clave de Resend, remitente info@agutidesigns.io).
+  Sin SMTP propio, Supabase solo envía unos pocos correos por hora.

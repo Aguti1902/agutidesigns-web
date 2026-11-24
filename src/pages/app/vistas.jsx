@@ -1,7 +1,7 @@
 // Vistas del panel de la Oficina de IA. Lenguaje llano, una acción clara por bloque.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, CircleHelp, Copy, ExternalLink, MessageCircle, Pause, Play, Plus, Search, Send, Trash2, UserRound, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/oficinaSupabase';
 import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina } from '../../data/oficinaSaas';
 import { api, pendiente, variacion } from './datos';
 import { HERRAMIENTAS } from './conexiones';
