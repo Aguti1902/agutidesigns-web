@@ -1,5 +1,5 @@
 -- Oficina de IA en modo SaaS: negocios, departamentos contratados, consumo de IA y actividad en vivo.
--- Solo crea tablas nuevas (prefijo of_). No toca quotes, briefings ni nada existente.
+-- Proyecto propio de la oficina (Supabase de info@agutidesigns.io). Todas las tablas llevan el prefijo of_.
 
 create table if not exists public.of_negocios (
   id              uuid primary key default gen_random_uuid(),
