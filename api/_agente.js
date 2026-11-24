@@ -1,6 +1,7 @@
 // Núcleo de los agentes: llama a la IA con el contexto del negocio, controla el cupo antes de cada llamada y
 // registra consumo, actividad y estado en directo. Usa Claude si hay ANTHROPIC_API_KEY; si no, OpenAI.
 import { sb, rpc, uno, actividad, estadoAgente, consumo, DEPTO } from './_oficina.js';
+import { instruccionesDe } from '../src/data/oficinaAjustes.js';
 
 const TARIFA = { anthropic: { i: 1, o: 5 }, openai: { i: 0.15, o: 0.6 } }; // USD por millón de tokens (aprox.)
 
@@ -94,11 +95,15 @@ export async function responderCliente({ negocio, conversacion, canal }) {
   const historial = await sb(`of_mensajes?conversacion_id=eq.${conversacion.id}&select=de,texto&order=creado.desc&limit=16`);
   const mensajes = historial.reverse().map((m) => ({ role: m.de === 'cliente' ? 'user' : 'assistant', content: m.texto.slice(0, 1500) }));
   while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
+  // «Cómo trabaja» de Atención y, si están contratados, de Citas y Ventas (que también hablan por este canal).
+  const otros = await sb(`of_departamentos?negocio_id=eq.${negocio.id}&activo=eq.true&depto=in.(citas,ventas)&select=depto,ajustes`).catch(() => []);
+  const comoTrabaja = [instruccionesDe('atencion', estado.ajustes), ...otros.map((d) => instruccionesDe(d.depto, d.ajustes))].filter(Boolean).join('\n');
   const sistema = `Eres el departamento de Atención al cliente de un negocio local y contestas por ${nombreCanal} en nombre del negocio.
 ${await fichaNegocio(negocio)}
 
 REGLAS:
-- Responde en el idioma del cliente (castellano o catalán normalmente), breve y natural, como lo haría alguien del negocio. Máximo 3 frases.
+- Responde breve y natural, como lo haría alguien del negocio.
+${comoTrabaja}
 - Usa SOLO la información de arriba. Si no sabes algo (un precio, una disponibilidad, un dato), no lo inventes: di que lo consultas y que le contestarán enseguida, y marca pasar_a_humano.
 - No confirmes citas ni horas concretas: recoge el día y la hora que prefiere y di que se lo confirmáis enseguida (marca pasar_a_humano con motivo "cita").
 - Si pide hablar con una persona, se queja, pide un descuento o es un tema delicado, sé amable y marca pasar_a_humano.
@@ -151,7 +156,7 @@ export async function generar({ negocio, depto, encargo, maxTokens = 900 }) {
   if (!estado.puede) return null;
   await estadoAgente(negocio.id, depto, 'trabajando', encargo.tarea);
   try {
-    const ia = await llamarIA({ sistema: `Trabajas en el departamento de ${DEPTO[depto].nombre} de este negocio local.\n${await fichaNegocio(negocio)}\nNunca inventes precios, ofertas, datos ni testimonios que no estén arriba. Devuelve SOLO el JSON que se te pide.`,
+    const ia = await llamarIA({ sistema: `Trabajas en el departamento de ${DEPTO[depto].nombre} de este negocio local.\n${await fichaNegocio(negocio)}\n${instruccionesDe(depto, estado.ajustes)}\nNunca inventes precios, ofertas, datos ni testimonios que no estén arriba. Devuelve SOLO el JSON que se te pide.`,
       mensajes: [{ role: 'user', content: encargo.prompt }], maxTokens, json: true });
     await consumo(negocio.id, depto, { ...ia, unidades: encargo.unidades ?? 1 });
     return { ...leerJson(ia.texto), ajustes: estado.ajustes };

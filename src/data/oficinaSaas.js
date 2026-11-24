@@ -13,6 +13,15 @@ export const WEB_DESDE = 3;
 export const webIncluida = (periodo, n) => periodo === 'anio' && n >= WEB_DESDE;
 // Plan mensual: 7 días de prueba (se pide tarjeta, no se cobra hasta el día 8) con el 25 % del cupo.
 export const DIAS_PRUEBA = 7;
+// Impuestos de las facturas: IVA que se suma y retención de IRPF que se descuenta (el cliente la ingresa a Hacienda).
+export const IVA = 21;
+export const IRPF = 15;
+export const impuestos = (base) => {
+  const iva = Math.round(base * IVA) / 100; const irpf = Math.round(base * IRPF) / 100;
+  return { base, iva, irpf, total: Math.round((base + iva - irpf) * 100) / 100 };
+};
+// Lo que se cobra con tarjeta (en céntimos): base + IVA − retención.
+export const cobroCentimos = (base) => Math.round(impuestos(base).total * 100);
 export const CUPO_PRUEBA = 0.25;
 
 // cupo: lo que ve el cliente. tokensMes: presupuesto interno de IA (entrada + salida) con el que se corta.

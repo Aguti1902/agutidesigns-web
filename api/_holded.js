@@ -2,9 +2,9 @@
 // (numeración correlativa de Holded), con IVA, marcada como cobrada y enviada al cliente. Idempotente.
 // Variables: HOLDED_API_KEY (obligatoria), HOLDED_SERIE_FACTURAS (opcional, por defecto la serie «Factura»).
 import { sb, uno, DEPTO } from './_oficina.js';
+import { IVA, IRPF } from '../src/data/oficinaSaas.js';
 
 const BASE = 'https://api.holded.com/api/invoicing/v1';
-export const IVA = 21;
 const clave = () => process.env.HOLDED_API_KEY;
 export const hayHolded = () => Boolean(clave());
 const serie = () => process.env.HOLDED_SERIE_FACTURAS || '63c6d64f6b2fb27505055672';
@@ -29,8 +29,8 @@ export async function facturaDesdeStripe(inv) {
   if (!neg) return null;
   const [fila] = await sb('of_facturas', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, stripe_invoice: inv.id, estado: 'pendiente', total: pagado, stripe_url: inv.hosted_invoice_url || null }] });
   try {
-    // Lo cobrado ya lleva el IVA: base = total / 1,21 (así la factura cuadra al céntimo con el cargo).
-    const base = redondea(pagado / (1 + IVA / 100)); const iva = redondea(pagado - base);
+    // Lo cobrado es base + IVA − retención de IRPF: base = cobrado / (1 + IVA − IRPF), así la factura cuadra al céntimo.
+    const base = redondea(pagado / (1 + (IVA - IRPF) / 100)); const iva = redondea(base * IVA / 100); const retencion = redondea(pagado - base - iva);
     const linea = (inv.lines?.data || []).map((l) => l.description).filter(Boolean).join(' · ');
     const deptos = String(inv.subscription_details?.metadata?.deptos || inv.parent?.subscription_details?.metadata?.deptos || '').split(',').map((d) => DEPTO[d]?.nombre).filter(Boolean).join(', ');
     const periodo = inv.lines?.data?.[0]?.period;
@@ -42,8 +42,8 @@ export async function facturaDesdeStripe(inv) {
         contactName: inv.customer_name || neg.razon_social || neg.nombre, contactEmail: inv.customer_email || neg.owner_email, ...(nif ? { contactCode: nif } : {}),
         contactAddress: [dir.line1, dir.line2].filter(Boolean).join(' '), contactCity: dir.city || '', contactCp: dir.postal_code || '', contactProvince: dir.state || '', contactCountryCode: dir.country || 'ES' }),
       date: Math.floor((inv.status_transitions?.paid_at || inv.created) || Date.now() / 1000), numSerieId: serie(), approveDoc: true, currency: 'eur',
-      notes: `Pagado con tarjeta. Referencia de cobro: ${inv.number || inv.id}.`,
-      items: [{ name: 'Oficina de IA · Agutidesigns', desc: [linea || 'Suscripción', deptos && `Departamentos: ${deptos}`, desde && `Periodo: ${desde} - ${hasta}`].filter(Boolean).join('\n'), units: 1, subtotal: base, tax: IVA }],
+      notes: `Pagado con tarjeta. Referencia de cobro: ${inv.number || inv.id}.${IRPF ? ` Retención del ${IRPF} % de IRPF a ingresar por el cliente.` : ''}`,
+      items: [{ name: 'Oficina de IA · Agutidesigns', desc: [linea || 'Suscripción', deptos && `Departamentos: ${deptos}`, desde && `Periodo: ${desde} - ${hasta}`].filter(Boolean).join('\n'), units: 1, subtotal: base, taxes: [`s_iva_${IVA}`, ...(IRPF ? [`s_ret_${IRPF}`] : [])] }],
     } });
     const id = doc.id;
     const detalle = await holded(`documents/invoice/${id}`).catch(() => ({}));
@@ -51,7 +51,7 @@ export async function facturaDesdeStripe(inv) {
     await holded(`documents/invoice/${id}/send`, { metodo: 'POST', cuerpo: { emails: inv.customer_email || neg.owner_email, subject: `Tu factura de la Oficina de IA · ${detalle.docNumber || ''}`.trim(), message: `Hola, te enviamos la factura de tu Oficina de IA. Gracias por confiar en Agutidesigns.` } })
       .catch((e) => console.error('[holded] envío', e.message));
     if (!neg.holded_contacto && detalle.contact) await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { holded_contacto: detalle.contact, ...(nif ? { nif } : {}), ...(inv.customer_name ? { razon_social: inv.customer_name } : {}) } });
-    await sb(`of_facturas?id=eq.${fila.id}`, { metodo: 'PATCH', cuerpo: { holded_id: id, numero: detalle.docNumber || null, base, iva, total: pagado, estado: 'pagada', concepto: linea || 'Oficina de IA',
+    await sb(`of_facturas?id=eq.${fila.id}`, { metodo: 'PATCH', cuerpo: { holded_id: id, numero: detalle.docNumber || null, base, iva, retencion: -retencion, total: pagado, estado: 'pagada', concepto: linea || 'Oficina de IA',
       fecha: new Date(((inv.status_transitions?.paid_at || inv.created) || Date.now() / 1000) * 1000).toISOString().slice(0, 10) } });
     return id;
   } catch (e) {

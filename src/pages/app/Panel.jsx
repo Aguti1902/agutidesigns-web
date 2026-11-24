@@ -1,50 +1,87 @@
 // Panel del cliente de la Oficina de IA (/app/:vista). Minimalista y en directo: el equipo de agentes trabajando,
 // lo que te necesita, conversaciones, actividad, estadísticas, lo que saben tus agentes, conexiones y ajustes.
 // /app?demo=1 enseña un negocio de ejemplo con actividad simulada.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Activity, BarChart3, BookOpen, CalendarCheck, CreditCard, Handshake, Home, Inbox, Lock, LogOut, Mail, Megaphone, Menu, MessageCircle, PenLine, Plug, Receipt, Settings, Star, X } from 'lucide-react';
+import { Activity, BarChart3, Bell, BookOpen, Box, CalendarCheck, CalendarPlus, Clapperboard, CreditCard, FolderOpen, Handshake, Home, Inbox, LayoutGrid, LogOut, Mail, Megaphone, Menu, MessageCircle, MessagesSquare, PenLine, Plug, Plus, Receipt, Search, Settings, Star, TrendingUp, X, LifeBuoy } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
 import useSeo from '../../hooks/useSeo';
 import { DEPTO } from '../../data/oficinaSaas';
 import { useOficina, estadisticas, pendiente } from './datos';
 import { HERRAMIENTA } from './conexiones';
-import { Inicio, Conversaciones, Actividad, Estadisticas, Ensenar, Conexiones, Bandeja } from './vistas';
+import { Actividad, Ensenar, Conexiones } from './vistas';
+import { Inicio, TeNecesitan, Conversaciones, Departamentos, Oficina } from './pantallas';
+import { ChatEquipo, Analitica, Seo, Videos, Material, Informes } from './marketing';
 import { Agenda, Clientes, Publicaciones, Articulos, Resenas, Mejora, Plan, Facturas, Avisos, SugerenciaMejora } from './vistas2';
-import { Tarjeta } from './ui';
+import { CabeceraDepto } from './departamentos';
+import { Tutorial, Ayuda } from './ayuda';
 import { CAMPOS } from './formato';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
+import './PanelPro.css';
 
 // Menú por grupos. `depto`: solo aparece activo si ese departamento está contratado (si no, se ofrece como mejora).
 const GRUPOS = [
   { t: null, items: [
     { id: 'inicio', t: 'Inicio', I: Home },
     { id: 'bandeja', t: 'Te necesitan', I: Inbox },
+    { id: 'chat', t: 'Chat con tu equipo', I: MessagesSquare },
     { id: 'conversaciones', t: 'Conversaciones', I: MessageCircle, depto: 'atencion' },
-    { id: 'actividad', t: 'Actividad', I: Activity },
   ] },
   { t: 'Tu equipo', items: [
+    { id: 'equipo', t: 'Departamentos', I: LayoutGrid },
+    { id: 'oficina', t: 'Oficina 3D', I: Box },
     { id: 'agenda', t: 'Agenda', I: CalendarCheck, depto: 'citas' },
     { id: 'clientes', t: 'Clientes potenciales', I: Handshake, depto: 'ventas' },
     { id: 'publicaciones', t: 'Publicaciones', I: Megaphone, depto: 'redes' },
+    { id: 'videos', t: 'Vídeos', I: Clapperboard, depto: 'redes' },
     { id: 'resenas', t: 'Reseñas', I: Star, depto: 'google' },
-    { id: 'articulos', t: 'Artículos', I: PenLine, depto: 'contenido' },
+    { id: 'articulos', t: 'Blog', I: PenLine, depto: 'contenido' },
+    { id: 'seo', t: 'SEO y competencia', I: TrendingUp, depto: ['contenido', 'google'] },
   ] },
-  { t: 'Tu oficina', items: [
-    { id: 'estadisticas', t: 'Estadísticas', I: BarChart3 },
+  { t: 'Resultados', items: [
+    { id: 'analitica', t: 'Analítica', I: BarChart3 },
+    { id: 'informes', t: 'Informes', I: Mail },
+    { id: 'actividad', t: 'Actividad', I: Activity },
+  ] },
+  { t: 'Configuración', items: [
     { id: 'ensenar', t: 'Lo que saben', I: BookOpen },
+    { id: 'material', t: 'Tu material', I: FolderOpen },
     { id: 'conexiones', t: 'Conexiones', I: Plug },
   ] },
   { t: 'Cuenta', items: [
     { id: 'plan', t: 'Plan', I: CreditCard },
     { id: 'facturas', t: 'Facturas', I: Receipt },
     { id: 'ajustes', t: 'Avisos y cuenta', I: Settings },
+    { id: 'ayuda', t: 'Ayuda y vídeos', I: LifeBuoy },
   ] },
 ];
 const VISTAS = GRUPOS.flatMap((g) => g.items);
+const DEPARTAMENTOS_IDS = ['atencion', 'citas', 'ventas', 'redes', 'google', 'contenido'];
+// Vistas que aún usan la cabecera sencilla (las nuevas traen la suya).
+const VIEJAS = ['actividad', 'agenda', 'clientes', 'publicaciones', 'resenas', 'articulos', 'mejora', 'ensenar', 'conexiones', 'plan', 'facturas', 'ajustes', 'ayuda'];
+
+// Buscador global (⌘K): clientes, conversaciones, citas y lo que han hecho los agentes.
+function Buscador({ o }) {
+  const [q, setQ] = useState(''); const [abierto, setAbierto] = useState(false); const ref = useRef(null);
+  useEffect(() => { const k = (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ref.current?.focus(); } if (e.key === 'Escape') { setAbierto(false); ref.current?.blur(); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
+  const t = q.trim().toLowerCase();
+  const res = t.length < 2 ? [] : [
+    ...o.conversaciones.filter((c) => `${c.nombre || ''} ${c.contacto || ''} ${c.ultimo_texto || ''}`.toLowerCase().includes(t)).slice(0, 4).map((c) => ({ k: `c${c.id}`, I: MessageCircle, t: c.nombre || `+${c.contacto}`, s: c.ultimo_texto || 'Conversación', ir: () => o.ir('conversaciones', c.id) })),
+    ...o.citas.filter((c) => `${c.nombre || ''} ${c.servicio || ''}`.toLowerCase().includes(t)).slice(0, 3).map((c) => ({ k: `ci${c.id}`, I: CalendarCheck, t: `${c.nombre || 'Cita'} · ${c.servicio || ''}`, s: c.fecha ? new Date(c.fecha).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Cita', ir: () => o.ir('agenda') })),
+    ...o.leads.filter((l) => `${l.nombre || ''} ${l.interes || ''}`.toLowerCase().includes(t)).slice(0, 3).map((l) => ({ k: `l${l.id}`, I: Handshake, t: l.nombre || 'Cliente', s: l.interes || 'Cliente potencial', ir: () => o.ir('clientes') })),
+    ...o.eventos.filter((e) => e.texto.toLowerCase().includes(t)).slice(0, 4).map((e) => ({ k: `e${e.id}`, I: Activity, t: e.texto, s: DEPTO[e.depto]?.nombre || 'Oficina', ir: () => o.ir('actividad') })),
+  ];
+  return (
+    <div className="top__buscar">
+      <Search size={17} /><input ref={ref} value={q} onChange={(e) => { setQ(e.target.value); setAbierto(true); }} onFocus={() => setAbierto(true)} onBlur={() => setTimeout(() => setAbierto(false), 150)} placeholder="Buscar cliente, teléfono, cita, mensaje…" aria-label="Buscar" /><kbd>⌘K</kbd>
+      {abierto && t.length >= 2 && (
+        <div className="top__res" role="listbox">{res.length ? res.map((r) => <button key={r.k} type="button" onMouseDown={() => { r.ir(); setQ(''); }}><r.I size={16} /><span><b>{r.t}</b><small>{r.s}</small></span></button>) : <p className="muted">Nada con «{q}».</p>}</div>
+      )}
+    </div>
+  );
+}
 const SUB = {
-  bandeja: 'Lo que tus agentes no pueden resolver solos. Con un clic lo dejas listo.',
   agenda: 'Las citas que piden tus clientes. Confírmalas con un clic y se les avisa solo.',
   clientes: 'Quién te ha pedido presupuesto y en qué punto está cada uno.',
   publicaciones: 'Los posts que prepara tu agente de Redes. Revisa, aprueba o pide uno nuevo.',
@@ -52,12 +89,11 @@ const SUB = {
   articulos: 'Los artículos para tu web que escribe tu agente de Contenido.',
   plan: 'Tu plan, tus departamentos y tu consumo del mes.',
   facturas: 'Todas tus facturas, listas para descargar.',
-  conversaciones: 'Lo que hablan tus agentes con tus clientes. Entra cuando quieras.',
   actividad: 'Todo lo que hacen tus agentes, al momento.',
-  estadisticas: 'Cómo está rindiendo tu oficina.',
   ensenar: 'Tus agentes solo usan lo que pongas aquí. Nunca se inventan precios, horarios ni promociones.',
   conexiones: 'Pulsa «Conectar», entra con tu cuenta y acepta los permisos. Tus contraseñas no pasan por nosotros.',
   ajustes: 'Cuándo te avisamos por correo y tu cuenta.',
+  ayuda: 'Vídeos cortos, el tutorial de bienvenida y una persona del equipo si la necesitas.',
 };
 
 function Entrar() {
@@ -118,6 +154,7 @@ export default function Panel() {
   const nav = useNavigate();
   const [extra, setExtra] = useState({}); const [menu, setMenu] = useState(false); const [dias, setDias] = useState(30);
   const [ahora, setAhora] = useState(() => Date.now());
+  const [tutoAbierto, setTutoAbierto] = useState(() => qs.has('tutorial'));
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 15000); return () => clearInterval(t); }, []);
   const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
   useSeo({ title: demo ? 'Demo · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
@@ -157,13 +194,15 @@ export default function Panel() {
   const pend = (estado.eventos || []).filter(pendiente).length;
   const sinLeer = (estado.conversaciones || []).filter((c) => !c.leido || c.necesita).length;
   const faltanDatos = CAMPOS.slice(0, 5).some(([k]) => !String(negocio[k] || '').trim());
-  const tiene = (d) => !d || estado.deptos.some((x) => x.depto === d);
+  const tiene = (d) => !d || (Array.isArray(d) ? d : [d]).some((y) => estado.deptos.some((x) => x.depto === y));
   const citasPend = (estado.citas || []).filter((c) => c.estado === 'pendiente').length;
   const leadsNuevos = (estado.leads || []).filter((l) => l.etapa === 'nuevo').length;
-  const insignia = { bandeja: pend, conversaciones: sinLeer, agenda: citasPend, clientes: leadsNuevos, ensenar: faltanDatos ? '!' : 0, conexiones: estado.conexiones.some((c) => c.estado === 'conectada') ? 0 : '!' };
+  const videosPend = (estado.videos || []).filter((v) => v.estado === 'guion' || v.estado === 'revision').length;
+  const insignia = { bandeja: pend, conversaciones: sinLeer, agenda: citasPend, clientes: leadsNuevos, videos: videosPend, ensenar: faltanDatos ? '!' : 0, conexiones: estado.conexiones.some((c) => c.estado === 'conectada') ? 0 : '!' };
+  const urgente = { conversaciones: (estado.conversaciones || []).some((c) => c.necesita) };
   // Si se entra en una sección de un departamento no contratado, se enseña la mejora.
   const vistaReal = (() => { const it = VISTAS.find((x) => x.id === vista); return it?.depto && !tiene(it.depto) ? 'mejora' : vista; })();
-  const deptoMejora = mejoraDe || VISTAS.find((x) => x.id === vista)?.depto;
+  const deptoMejora = mejoraDe || [VISTAS.find((x) => x.id === vista)?.depto].flat()[0];
   const activo = negocio.estado === 'activo';
   const fechaL = (d) => new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
   const banners = (<>
@@ -172,59 +211,83 @@ export default function Panel() {
     {negocio.estado === 'impago' && <p className="banda-prueba banda--aviso"><X size={17} /><span><b>No hemos podido cobrar tu último pago.</b> Actualiza tu tarjeta para que tus agentes sigan trabajando.</span><button className="enlace" onClick={() => ir('plan')}>Actualizar tarjeta</button></p>}
   </>);
   const o = { ...estado, demo, est, ir, setEstado, banners, sugerencia: null, ahora: Math.max(ahora, ...Object.values(estado.agentes || {}).map((a) => new Date(a.actualizado).getTime() || 0)) };
+  const deptoVista = VISTAS.find((x) => x.id === vistaReal)?.depto;
+  const verTuto = tutoAbierto || (!demo && !negocio.onboarding?.tutorial);
   const titulo = vistaReal === 'mejora' ? 'Mejora tu oficina' : VISTAS.find((x) => x.id === vista).t;
   const trabajando = Object.values(estado.agentes || {}).filter((a) => a.estado === 'trabajando' && o.ahora - new Date(a.actualizado).getTime() < 180e3).length;
 
+  const sinContratar = DEPARTAMENTOS_IDS.filter((d) => !tiene(d));
   return (
-    <div className={`app ${menu ? 'menu-on' : ''}`}>
+    <div className={`app app--pro ${menu ? 'menu-on' : ''}`}>
       {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
       <aside className="lado">
-        <div className="lado__top"><a href="/" className="lado__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="118" height="32" /></a><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
-        <div className="neg"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><div><b>{negocio.nombre}</b><small className={activo ? '' : 'is-off'}><i />{activo ? (trabajando ? `${trabajando} trabajando ahora` : 'Oficina en marcha') : negocio.estado === 'impago' ? 'Pago pendiente' : 'Pausada'}</small></div></div>
+        <div className="lado__top"><a href="/" className="lado__logo"><img src="/images/logo-blanco.png" alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
         <nav aria-label="Secciones">
-          {GRUPOS.map((g) => (
-            <div key={g.t || 'g'} className="nav-g">
-              {g.t && <p className="nav-g__t">{g.t}</p>}
-              {g.items.map((x) => { const Icono = x.I; const ok = tiene(x.depto); const destino = ok ? x.id : `mejora-${x.depto}`; const on = vista === x.id || (vista === 'mejora' && mejoraDe === x.depto); return (
-                <button key={x.id} type="button" className={`${on ? 'is-on' : ''} ${ok ? '' : 'is-lock'}`} aria-current={on ? 'page' : undefined} onClick={() => ir(destino)}>
-                  <Icono size={18} strokeWidth={1.9} />{x.t}{!ok ? <Lock size={13} className="nav-lock" /> : insignia[x.id] ? <em className={insignia[x.id] === '!' ? 'is-tarea' : ''}>{insignia[x.id]}</em> : null}
-                </button>
-              ); })}
-            </div>
-          ))}
+          {GRUPOS.map((g) => {
+            const items = g.items.filter((x) => tiene(x.depto));
+            if (!items.length) return null;
+            return (
+              <div key={g.t || 'g'} className="nav-g">
+                {g.t && <p className="nav-g__t">{g.t}</p>}
+                {items.map((x) => { const Icono = x.I; const on = vista === x.id; return (
+                  <button key={x.id} type="button" className={on ? 'is-on' : ''} aria-current={on ? 'page' : undefined} onClick={() => ir(x.id)}>
+                    <Icono size={18} strokeWidth={1.8} />{x.t}{insignia[x.id] ? <em className={insignia[x.id] === '!' ? 'is-tarea' : urgente[x.id] ? 'is-mal' : ''}>{insignia[x.id]}</em> : null}
+                  </button>
+                ); })}
+              </div>
+            );
+          })}
+          {sinContratar.length > 0 && <button type="button" className={`nav-mas ${vistaReal === 'mejora' ? 'is-on' : ''}`} onClick={() => ir(`mejora-${sinContratar[0]}`)}><Plus size={16} /> Añadir departamentos <span>{sinContratar.length}</span></button>}
         </nav>
         <div className="lado__pie">
-          <div className="equipo-mini">{estado.deptos.map((d) => <span key={d.depto} title={DEPTO[d.depto].nombre} style={{ background: DEPTO[d.depto].color }} />)}</div>
-          <small>{negocio.periodo === 'anio' ? 'Plan anual' : 'Plan mensual'} · {estado.deptos.length} departamento{estado.deptos.length === 1 ? '' : 's'}{''}</small>
-          {!demo && <button className="enlace enlace--gris" onClick={() => supabase.auth.signOut()}><LogOut size={14} /> Salir</button>}
+          <p className="lado__vivo"><i />{trabajando ? `${trabajando} agente${trabajando > 1 ? 's' : ''} trabajando ahora` : 'Agentes conectados'}</p>
+          <div className="neg"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><div><b>{negocio.nombre}</b><small className={activo ? '' : 'is-off'}>{negocio.periodo === 'anio' ? 'Plan anual' : 'Plan mensual'} · {estado.deptos.length} dpto{estado.deptos.length === 1 ? '' : 's'}</small></div></div>
+          <div className="lado__acc"><button className="enlace enlace--gris" onClick={() => ir('ajustes')}><Settings size={14} /> Mi cuenta</button>{!demo && <button className="enlace enlace--gris" onClick={() => supabase.auth.signOut()}><LogOut size={14} /> Salir</button>}</div>
         </div>
       </aside>
       <div className="velo" onClick={() => setMenu(false)} aria-hidden="true" />
       <div className="prin">
-        <header className="cab">
-          <button className="ico cab__menu" onClick={() => setMenu(true)} aria-label="Abrir menú"><Menu size={22} /></button>
-          {vista !== 'inicio' ? <div className="cab__t"><h1>{titulo}</h1>{SUB[vistaReal] && <p>{SUB[vistaReal]}</p>}</div> : <span className="cab__marca">Oficina de IA</span>}
+        <header className="top">
+          <button className="ico top__menu" onClick={() => setMenu(true)} aria-label="Abrir menú"><Menu size={22} /></button>
+          <Buscador o={o} />
+          <div className="top__a">
+            {tiene('citas') && <button className="btn btn--osc btn--sm top__btn" onClick={() => ir('agenda')}><CalendarPlus size={15} /> Agenda</button>}
+            <button className="btn btn--sec btn--sm top__btn" onClick={() => ir('chat')}><MessagesSquare size={15} /> Tu equipo</button>
+            <button className="ico top__campana" onClick={() => ir('bandeja')} aria-label={`Te necesitan: ${pend}`}><Bell size={20} />{pend > 0 && <em>{pend > 99 ? '99+' : pend}</em>}</button>
+            <span className="top__yo"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><b>{negocio.nombre}</b></span>
+          </div>
         </header>
         <main className="cont">
           {vistaReal !== 'inicio' && vistaReal !== 'plan' && <div className="banners-top">{banners}</div>}
-          {vistaReal === 'inicio' && <Inicio o={{ ...o, sugerencia: <SugerenciaMejora o={o} /> }} />}
-          {vistaReal === 'bandeja' && <div className="vista"><Tarjeta><Bandeja o={o} /></Tarjeta></div>}
+          {VIEJAS.includes(vistaReal) && <div className="pc-cab pc-cab--simple"><div><p className="pc-cab__k">{GRUPOS.find((g) => g.items.some((x) => x.id === vista))?.t || 'Oficina de IA'}</p><h1>{titulo}</h1>{SUB[vistaReal] && <p className="pc-cab__s">{SUB[vistaReal]}</p>}</div></div>}
+          {typeof deptoVista === 'string' && VIEJAS.includes(vistaReal) && <CabeceraDepto key={deptoVista} o={o} depto={deptoVista} />}
+          {vistaReal === 'inicio' && <Inicio o={o} extras={<>{banners}<SugerenciaMejora o={o} /></>} />}
+          {vistaReal === 'bandeja' && <TeNecesitan o={o} />}
+          {vistaReal === 'chat' && <ChatEquipo o={o} />}
           {vistaReal === 'conversaciones' && <Conversaciones o={o} abrir={extra.abrir} />}
+          {vistaReal === 'equipo' && <Departamentos o={o} />}
+          {vistaReal === 'oficina' && <Oficina o={o} />}
           {vistaReal === 'actividad' && <Actividad o={o} inicial={extra.filtro === 'tuyo' ? 'tuyo' : undefined} />}
           {vistaReal === 'agenda' && <Agenda o={o} />}
           {vistaReal === 'clientes' && <Clientes o={o} />}
           {vistaReal === 'publicaciones' && <Publicaciones o={o} />}
+          {vistaReal === 'videos' && <Videos o={o} abrir={extra.abrir} />}
           {vistaReal === 'resenas' && <Resenas o={o} />}
           {vistaReal === 'articulos' && <Articulos o={o} />}
+          {vistaReal === 'seo' && <Seo o={o} />}
           {vistaReal === 'mejora' && deptoMejora && <Mejora key={deptoMejora} o={o} depto={deptoMejora} />}
-          {vistaReal === 'estadisticas' && <Estadisticas o={o} dias={dias} setDias={setDias} />}
+          {vistaReal === 'analitica' && <Analitica key={extra.filtro || 'a'} o={o} dias={dias} setDias={setDias} inicial={extra.filtro} />}
+          {vistaReal === 'informes' && <Informes o={o} />}
           {vistaReal === 'ensenar' && <Ensenar o={o} />}
+          {vistaReal === 'material' && <Material o={o} />}
           {vistaReal === 'conexiones' && <Conexiones o={o} aviso={aviso} />}
           {vistaReal === 'plan' && <Plan o={o} />}
           {vistaReal === 'facturas' && <Facturas o={o} />}
           {vistaReal === 'ajustes' && <Avisos o={o} />}
+          {vistaReal === 'ayuda' && <Ayuda o={o} abrirTutorial={() => setTutoAbierto(true)} />}
         </main>
       </div>
+      {verTuto && <Tutorial o={o} cerrar={() => { setTutoAbierto(false); ir('inicio'); }} />}
     </div>
   );
 }

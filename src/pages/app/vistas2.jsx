@@ -1,7 +1,8 @@
 // Secciones por departamento (Agenda, Clientes, Publicaciones, Reseñas, Artículos), mejoras del plan,
 // plan y baja, facturas y avisos. Cada sección solo aparece si el departamento está contratado.
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, Lock, MessageCircle, PauseCircle, Plus, Sparkles, Star, X } from 'lucide-react';
+import { ajustesDe } from '../../data/oficinaAjustes';
+import { ArrowLeft, ArrowRight, CalendarCheck, CalendarPlus, UserPlus, Link2, Check, Copy, Download, ExternalLink, Lock, MessageCircle, PauseCircle, Plus, Sparkles, Star, X } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
 import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina, precioAnual, webIncluida, WEB_DESDE } from '../../data/oficinaSaas';
 import { api, pendiente } from './datos';
@@ -31,8 +32,8 @@ function Cita({ c, o }) {
   }
   return (
     <li className={`cita is-${c.estado}`}>
-      <div className="cita__h"><span className="conv-av">{(c.nombre || '?').slice(0, 1)}</span><div><b>{c.nombre || 'Cliente'}</b><small>{c.servicio || 'Cita'} · {c.canal === 'whatsapp' ? 'WhatsApp' : 'Chat web'} · {hace(c.creado)}</small></div>
-        <span className={`chip ${c.estado === 'pendiente' ? 'chip--aviso' : ''}`}>{{ pendiente: 'Por confirmar', confirmada: 'Confirmada', cancelada: 'Rechazada', hecha: 'Hecha' }[c.estado]}</span></div>
+      <div className="cita__h"><span className="conv-av">{(c.nombre || '?').slice(0, 1)}</span><div><b>{c.nombre || 'Cliente'}</b><small>{c.servicio || 'Cita'} · {{ whatsapp: 'WhatsApp', web: 'Chat web', manual: 'Apuntada por ti' }[c.canal] || 'Apuntada por ti'} · {hace(c.creado)}</small></div>
+        <span className={`chip ${c.estado === 'pendiente' ? 'chip--aviso' : ''}`}>{{ pendiente: 'Por confirmar', confirmada: c.recordado ? 'Confirmada · recordada' : 'Confirmada', cancelada: 'Rechazada', hecha: 'Hecha' }[c.estado]}</span></div>
       <p className="cita__cuando"><CalendarCheck size={15} /> {c.fecha ? fechaCorta(c.fecha) : 'Sin hora concreta'}{c.cuando_texto && <span className="muted"> · pidió «{c.cuando_texto}»</span>}</p>
       {c.estado === 'pendiente' && (
         <div className="cita__acc">
@@ -47,8 +48,34 @@ function Cita({ c, o }) {
     </li>
   );
 }
+export function NuevaCita({ o, cerrar }) {
+  const servicios = String(ajustesDe('citas', o.deptos.find((d) => d.depto === 'citas')?.ajustes).servicios || '').split('\n').map((x) => x.split('·')[0].trim()).filter(Boolean);
+  const [f, setF] = useState({ nombre: '', telefono: '', servicio: '', fecha: '' }); const [st, setSt] = useState('');
+  async function guardar(e) {
+    e.preventDefault(); setSt('Guardando…');
+    try {
+      const nueva = { ...f, fecha: f.fecha ? new Date(f.fecha).toISOString() : '' };
+      const c = o.demo ? { id: `ci${Date.now()}`, ...nueva, canal: f.telefono ? 'whatsapp' : 'manual', estado: 'confirmada', creado: new Date().toISOString() } : (await api('cita', { nueva })).cita;
+      o.setEstado((s) => ({ ...s, citas: [c, ...s.citas] })); cerrar();
+    } catch (err) { setSt(err.message); }
+  }
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-label="Apuntar una cita" onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
+      <form className="modal__c form1" onSubmit={guardar}>
+        <header><b>Apuntar una cita</b><button type="button" className="ico" onClick={cerrar} aria-label="Cerrar"><X size={18} /></button></header>
+        <p className="muted">Para las que te piden por teléfono o en persona. Si pones el móvil, tu agente le mandará el recordatorio.</p>
+        <label className="campo"><span>Nombre</span><input required value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} placeholder="Laura" /></label>
+        <label className="campo"><span>Móvil (opcional)</span><input type="tel" value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value })} placeholder="600 000 000" /></label>
+        <label className="campo"><span>Servicio</span><input list="servicios-cita" value={f.servicio} onChange={(e) => setF({ ...f, servicio: e.target.value })} placeholder="Corte" />
+          <datalist id="servicios-cita">{servicios.map((x) => <option key={x} value={x} />)}</datalist></label>
+        <label className="campo"><span>Día y hora</span><input required type="datetime-local" value={f.fecha} onChange={(e) => setF({ ...f, fecha: e.target.value })} /></label>
+        <div className="fila-btn"><button className="btn btn--pri"><Check size={15} /> Apuntar cita</button>{st && <span className="muted">{st}</span>}</div>
+      </form>
+    </div>
+  );
+}
 export function Agenda({ o }) {
-  const [tab, setTab] = useState('pendiente');
+  const [tab, setTab] = useState('pendiente'); const [nueva, setNueva] = useState(false);
   const ahora = o.ahora;
   const grupos = {
     pendiente: o.citas.filter((c) => c.estado === 'pendiente'),
@@ -62,7 +89,9 @@ export function Agenda({ o }) {
     <div className="vista">
       <div className="semana">{dias.map((d) => { const n = enDia(d); return <div key={d} className={n ? 'con' : ''}><span>{d.toLocaleDateString('es-ES', { weekday: 'short' })}</span><b>{d.getDate()}</b><small>{n ? `${n} cita${n > 1 ? 's' : ''}` : '—'}</small></div>; })}</div>
       {!calendario && <p className="banda-prueba"><CalendarCheck size={17} /><span>Conecta tu <b>Google Calendar</b> y cada cita que confirmes se apuntará sola en tu agenda.</span><button className="enlace" onClick={() => o.ir('conexiones')}>Conectar</button></p>}
-      <div className="seg">{[['pendiente', `Por confirmar (${grupos.pendiente.length})`], ['proximas', `Próximas (${grupos.proximas.length})`], ['pasadas', 'Pasadas']].map(([k, t]) => <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t}</button>)}</div>
+      <div className="filtros"><div className="seg">{[['pendiente', `Por confirmar (${grupos.pendiente.length})`], ['proximas', `Próximas (${grupos.proximas.length})`], ['pasadas', 'Pasadas']].map(([k, t]) => <button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>{t}</button>)}</div>
+        <button className="btn btn--pri btn--sm" onClick={() => setNueva(true)}><CalendarPlus size={15} /> Apuntar una cita</button></div>
+      {nueva && <NuevaCita o={o} cerrar={() => setNueva(false)} />}
       {grupos[tab].length ? <ul className="citas">{grupos[tab].map((c) => <Cita key={c.id} c={c} o={o} />)}</ul>
         : <Vacio icono={CalendarCheck} titulo={tab === 'pendiente' ? 'Ninguna cita por confirmar' : 'Nada por aquí'} texto="Cuando un cliente pida cita por WhatsApp o por el chat, tu agente le pedirá el día y la hora y te la dejará aquí para que la confirmes con un clic." />}
     </div>
@@ -71,17 +100,43 @@ export function Agenda({ o }) {
 
 // ---------- Clientes potenciales (Ventas) ----------
 const ETAPAS = [['nuevo', 'Nuevos'], ['contactado', 'Hablando'], ['presupuesto', 'Presupuesto enviado'], ['ganado', 'Ganados'], ['perdido', 'Perdidos']];
+export function NuevoCliente({ o, cerrar }) {
+  const [f, setF] = useState({ nombre: '', telefono: '', interes: '', importe: '' }); const [st, setSt] = useState('');
+  async function guardar(e) {
+    e.preventDefault(); setSt('Guardando…');
+    try {
+      const l = o.demo ? { id: `l${Date.now()}`, ...f, importe: f.importe || null, canal: 'manual', etapa: 'nuevo', creado: new Date().toISOString() } : (await api('lead', { nuevo: f })).lead;
+      o.setEstado((s) => ({ ...s, leads: [l, ...s.leads] })); cerrar();
+    } catch (err) { setSt(err.message); }
+  }
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-label="Añadir cliente" onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
+      <form className="modal__c form1" onSubmit={guardar}>
+        <header><b>Añadir un cliente potencial</b><button type="button" className="ico" onClick={cerrar} aria-label="Cerrar"><X size={18} /></button></header>
+        <label className="campo"><span>Nombre</span><input required value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} placeholder="Paula" /></label>
+        <label className="campo"><span>Móvil (opcional)</span><input type="tel" value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value })} placeholder="600 000 000" /></label>
+        <label className="campo"><span>Qué le interesa</span><input value={f.interes} onChange={(e) => setF({ ...f, interes: e.target.value })} placeholder="Pack novia con prueba" /></label>
+        <label className="campo"><span>Importe aproximado (€)</span><input type="number" min="0" value={f.importe} onChange={(e) => setF({ ...f, importe: e.target.value })} /></label>
+        <div className="fila-btn"><button className="btn btn--pri"><Check size={15} /> Añadir</button>{st && <span className="muted">{st}</span>}</div>
+      </form>
+    </div>
+  );
+}
 export function Clientes({ o }) {
-  const [abierto, setAbierto] = useState(null);
+  const [abierto, setAbierto] = useState(null); const [nuevo, setNuevo] = useState(false);
+  const modal = nuevo && <NuevoCliente o={o} cerrar={() => setNuevo(false)} />;
+  const boton = <button className="btn btn--pri btn--sm" onClick={() => setNuevo(true)}><UserPlus size={15} /> Añadir cliente</button>;
   const total = o.leads.length; const ganados = o.leads.filter((l) => l.etapa === 'ganado');
   const cerrados = ganados.length + o.leads.filter((l) => l.etapa === 'perdido').length;
   async function mover(l, cambios) {
     o.setEstado((s) => ({ ...s, leads: s.leads.map((x) => (x.id === l.id ? { ...x, ...cambios } : x)) }));
     if (!o.demo) await api('lead', { id: l.id, ...cambios }).catch(() => {});
   }
-  if (!total) return <div className="vista"><Vacio icono={Sparkles} titulo="Aún no hay clientes potenciales" texto="Cada persona que pida presupuesto o muestre interés en comprar aparecerá aquí, y tu agente de Ventas le hará el seguimiento." /></div>;
+  if (!total) return <div className="vista"><Vacio icono={Sparkles} titulo="Aún no hay clientes potenciales" texto="Cada persona que pida presupuesto o muestre interés en comprar aparecerá aquí, y tu agente de Ventas le hará el seguimiento. También puedes añadirlos tú.">{boton}</Vacio>{modal}</div>;
   return (
     <div className="vista">
+      <div className="filtros"><span className="muted">Mueve cada cliente con las flechas o márcalo como ganado o perdido.</span>{boton}</div>
+      {modal}
       <div className="kpis">
         <article className="kpi"><span>En marcha</span><b>{fmt(o.leads.filter((l) => !['ganado', 'perdido'].includes(l.etapa)).length)}</b><footer><em>{eur(o.leads.filter((l) => !['ganado', 'perdido'].includes(l.etapa)).reduce((a, l) => a + Number(l.importe || 0), 0))} en juego</em></footer></article>
         <article className="kpi"><span>Ganados</span><b>{fmt(ganados.length)}</b><footer><em>{eur(ganados.reduce((a, l) => a + Number(l.importe || 0), 0))}</em></footer></article>
@@ -95,10 +150,12 @@ export function Clientes({ o }) {
               <header><b>{t}</b><span>{col.length}{col.some((l) => l.importe) ? ` · ${eur(col.reduce((a, l) => a + Number(l.importe || 0), 0))}` : ''}</span></header>
               {col.map((l) => (
                 <article key={l.id} className="lead">
-                  <button className="lead__c" onClick={() => setAbierto(abierto === l.id ? null : l.id)}><b>{l.nombre || 'Cliente'}</b><span>{l.interes}</span><small>{l.canal === 'whatsapp' ? 'WhatsApp' : 'Web'} · {hace(l.creado)}{l.importe ? ` · ${eur(l.importe)}` : ''}</small></button>
+                  <button className="lead__c" onClick={() => setAbierto(abierto === l.id ? null : l.id)}><b>{l.nombre || 'Cliente'}</b><span>{l.interes}</span><small>{{ whatsapp: 'WhatsApp', web: 'Web', manual: 'Añadido por ti' }[l.canal] || 'Web'} · {hace(l.creado)}{l.importe ? ` · ${eur(l.importe)}` : ''}</small></button>
                   {abierto === l.id && (
                     <div className="lead__d">
                       <label className="campo campo--linea"><span>Importe (€)</span><input type="number" min="0" defaultValue={l.importe ?? ''} onBlur={(e) => mover(l, { importe: e.target.value })} /></label>
+                      <label className="campo"><span>Notas</span><textarea rows={2} defaultValue={l.nota || ''} onBlur={(e) => mover(l, { nota: e.target.value })} placeholder="Lo hablado, cuándo volver a llamar…" /></label>
+                      {l.contacto && l.canal !== 'web' && <small className="muted">Móvil: +{l.contacto}</small>}
                       {l.conversacion_id && <button className="enlace" onClick={() => o.ir('conversaciones', l.conversacion_id)}><MessageCircle size={14} /> Conversación</button>}
                     </div>
                   )}
@@ -145,7 +202,7 @@ function Pieza({ e, o, largo }) {
   const titulo = e.detalle?.titulo || (e.texto.match(/«(.+?)»/) || [])[1] || e.texto;
   return (
     <li className="pieza">
-      <div className="pieza__h"><div><b>{titulo}</b><small>{hace(e.creado)} · {pend ? 'Esperando tu aprobación' : e.respuesta || 'Hecho'}</small></div>
+      <div className="pieza__h"><div><b>{titulo}</b><small>{e.detalle?.dia ? `Para el ${e.detalle.dia} · ` : ''}{hace(e.creado)} · {pend ? 'Esperando tu aprobación' : e.respuesta || 'Hecho'}</small></div>
         <span className={`chip ${pend ? 'chip--aviso' : ''}`}>{pend ? 'Por revisar' : e.respuesta === 'Descartado' ? 'Descartado' : 'Aprobado'}</span></div>
       {texto && (ver || !largo) && <textarea className="pieza__t" rows={largo ? 14 : 4} value={texto} onChange={(x) => setTexto(x.target.value)} readOnly={!pend} aria-label="Texto" />}
       {e.detalle?.idea_imagen && <p className="muted nota">Idea de imagen: {e.detalle.idea_imagen}</p>}
@@ -185,6 +242,20 @@ export function Articulos({ o }) {
 }
 
 // ---------- Reseñas (Google) ----------
+function PedirResenas({ o }) {
+  const aj = ajustesDe('google', o.deptos.find((d) => d.depto === 'google')?.ajustes); const [st, setSt] = useState('');
+  const texto = `¡Gracias por venir a ${o.negocio.nombre}! Si te ha gustado, nos ayudas muchísimo dejándonos una reseña en Google: ${aj.enlace_resenas || '[tu enlace]'}`;
+  const copiar = (t) => navigator.clipboard?.writeText(t).then(() => setSt('Copiado. Pégalo en WhatsApp o donde quieras.'), () => setSt('Selecciónalo y cópialo a mano.'));
+  return (
+    <Tarjeta titulo="Consigue más reseñas" extra={<Link2 size={17} className="muted" />}>
+      {aj.enlace_resenas ? (<>
+        <p className="muted">Mándale este mensaje a tus clientes contentos (después de la cita, por ejemplo). Cuantas más reseñas, más arriba sales en Google Maps.</p>
+        <blockquote className="cita-t">{texto}</blockquote>
+        <div className="fila-btn"><button className="btn btn--pri btn--sm" onClick={() => copiar(texto)}><Copy size={14} /> Copiar mensaje</button><button className="btn btn--sec btn--sm" onClick={() => copiar(aj.enlace_resenas)}>Copiar solo el enlace</button>{st && <span className="muted">{st}</span>}</div>
+      </>) : <p className="muted">Pon tu enlace para pedir reseñas en <b>Cómo trabaja</b> (arriba) y aquí tendrás el mensaje listo para mandar a tus clientes. Lo encuentras en tu ficha de Google, en «Pedir reseñas».</p>}
+    </Tarjeta>
+  );
+}
 export function Resenas({ o }) {
   const res = o.eventos.filter((e) => e.depto === 'google' && e.detalle?.estrellas);
   const media = res.length ? res.reduce((a, e) => a + e.detalle.estrellas, 0) / res.length : null;
@@ -193,6 +264,7 @@ export function Resenas({ o }) {
   return (
     <div className="vista">
       {!conectado && <p className="banda-prueba"><Star size={17} /><span>Conecta tu <b>Perfil de Empresa de Google</b> para que tu agente responda tus reseñas.</span><button className="enlace" onClick={() => o.ir('conexiones')}>Conectar</button></p>}
+      <PedirResenas o={o} />
       <div className="fila fila--1-2">
         <Tarjeta titulo="Tu nota"><div className="nota-g"><b>{media ? fmt(media, 1) : '—'}</b><span className="estrellas">{'★★★★★'.slice(0, Math.round(media || 0))}<i>{'★★★★★'.slice(Math.round(media || 0))}</i></span><small>{fmt(res.length)} reseñas respondidas</small></div>
           <div className="barras-h">{dist.map(([n, c]) => <div key={n}><span>{n} ★<b>{c}</b></span><Medidor valor={c} max={Math.max(1, res.length)} color="#e0a100" /></div>)}</div></Tarjeta>
@@ -347,7 +419,7 @@ export function Plan({ o }) {
         {!anual ? (
           <Tarjeta titulo="Plan anual" className="upsell">
             <p><b>Ahorra {ahorro} € al año</b> pagando una vez al año (20 % de descuento).{o.deptos.length >= WEB_DESDE ? <> Y <b>te diseñamos tu web</b> o rediseñamos la que tienes.</> : <> Con {WEB_DESDE} departamentos o más, tu web va incluida.</>}</p>
-            {confAnual ? <div className="fila-btn"><span className="muted">Se cobran {precioAnual(o.deptos.length)} € + IVA hoy (descontando lo que no hayas usado de este mes).</span><button className="btn btn--pri btn--sm" onClick={pasarAnual}>Confirmar</button><button className="btn btn--fan btn--sm" onClick={() => setConfAnual(false)}>No</button></div>
+            {confAnual ? <div className="fila-btn"><span className="muted">Se cobran {precioAnual(o.deptos.length)} € + IVA − IRPF hoy (descontando lo que no hayas usado de este mes).</span><button className="btn btn--pri btn--sm" onClick={pasarAnual}>Confirmar</button><button className="btn btn--fan btn--sm" onClick={() => setConfAnual(false)}>No</button></div>
               : <button className="btn btn--pri centro-izq" onClick={() => setConfAnual(true)}>Pasarme al anual <ArrowRight size={15} /></button>}
           </Tarjeta>
         ) : <Tarjeta titulo="Plan anual"><p className="muted">Ya tienes el mejor precio. {n.web_incluida ? 'Tu web va incluida.' : `Con ${WEB_DESDE} departamentos o más, tu web va incluida.`}</p></Tarjeta>}
@@ -391,8 +463,8 @@ export function Facturas({ o }) {
     <div className="vista">
       <Tarjeta titulo="Tus facturas" extra={<span className="muted">{o.facturas.length ? `${eur(total)} en total` : ''}</span>}>
         {o.facturas.length ? (
-          <div className="tabla-w"><table className="tabla"><thead><tr><th>Fecha</th><th>Nº</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th /></tr></thead>
-            <tbody>{o.facturas.map((f) => <tr key={f.id}><td>{new Date(f.fecha).toLocaleDateString('es-ES')}</td><td>{f.numero || '—'}</td><td>{f.concepto || 'Oficina de IA'}</td><td>{eur(f.base)}</td><td>{eur(f.iva)}</td><td><b>{eur(f.total)}</b></td>
+          <div className="tabla-w"><table className="tabla"><thead><tr><th>Fecha</th><th>Nº</th><th>Concepto</th><th>Base</th><th>IVA</th><th>IRPF</th><th>Total</th><th /></tr></thead>
+            <tbody>{o.facturas.map((f) => <tr key={f.id}><td>{new Date(f.fecha).toLocaleDateString('es-ES')}</td><td>{f.numero || '—'}</td><td>{f.concepto || 'Oficina de IA'}</td><td>{eur(f.base)}</td><td>{eur(f.iva)}</td><td>{Number(f.retencion) ? `−${eur(f.retencion)}` : '—'}</td><td><b>{eur(f.total)}</b></td>
               <td>{f.estado === 'pagada' ? <button className="btn btn--sec btn--sm" onClick={() => descargar(f)}><Download size={14} /> PDF</button> : <span className="chip">{f.estado === 'error' ? 'En revisión' : 'Generando'}</span>}</td></tr>)}</tbody></table></div>
         ) : <p className="muted">Aquí aparecerá cada factura en cuanto se haga un cobro. También te llega cada una por correo.</p>}
         {st && <p className="muted">{st}</p>}

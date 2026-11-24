@@ -196,12 +196,15 @@ export const PROVEEDORES = {
 };
 export const HERRAMIENTAS_OAUTH = {
   whatsapp: { p: 'meta', scopes: ['whatsapp_business_management', 'whatsapp_business_messaging', 'business_management'] },
-  instagram: { p: 'meta', scopes: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_messages', 'pages_show_list', 'pages_read_engagement'] },
-  facebook: { p: 'meta', scopes: ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'pages_messaging'] },
+  instagram: { p: 'meta', scopes: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_messages', 'instagram_manage_insights', 'pages_show_list', 'pages_read_engagement'] },
+  facebook: { p: 'meta', scopes: ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'pages_messaging', 'read_insights'] },
+  google_analytics: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/analytics.readonly'] },
+  search_console: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/webmasters.readonly'] },
+  google_drive: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/drive.readonly'] },
   google_business: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/business.manage'] },
   google_calendar: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'] },
   gmail: { p: 'google', scopes: ['openid', 'email', 'https://www.googleapis.com/auth/gmail.modify'] },
-  tiktok: { p: 'tiktok', scopes: ['user.info.basic', 'video.upload', 'video.publish'] },
+  tiktok: { p: 'tiktok', scopes: ['user.info.basic', 'user.info.stats', 'video.list', 'video.upload', 'video.publish'] },
   outlook: { p: 'microsoft', scopes: ['openid', 'email', 'offline_access', 'User.Read', 'Mail.ReadWrite', 'Mail.Send'] },
 };
 
