@@ -1,5 +1,5 @@
 // Utilidades de formato y estado compartidas por el panel (sin componentes).
-import { Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
+import { Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine, MessageCircle, Sparkles, Clapperboard, FileText, AlertTriangle } from 'lucide-react';
 import { DEPTO } from '../../data/oficinaSaas';
 import { HERRAMIENTAS } from './conexiones';
 
@@ -36,3 +36,29 @@ export const CAMPOS = [
 
 // Sección del panel de cada departamento.
 export const SECCION_DE = { citas: 'agenda', ventas: 'clientes', redes: 'publicaciones', google: 'resenas', contenido: 'articulos', atencion: 'conversaciones' };
+
+export const uid = (p = 'x') => `${p}${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+
+// ---------- tipos de lo que te necesita ----------
+export function tipoDe(e) {
+  const a = e.detalle?.accion;
+  if (a === 'publicar') return 'post';
+  if (a === 'responder_resena') return 'resena';
+  if (a === 'articulo') return 'articulo';
+  if (a === 'video') return 'video';
+  if (a === 'seguimiento') return 'seguimiento';
+  if (e.depto === 'citas') return 'cita';
+  if (e.detalle?.conversacion) return 'conversacion';
+  return 'aviso';
+}
+export const TIPOS = {
+  conversacion: { t: 'Clientes que te esperan', s: 'Tu agente te ha pasado la conversación', I: MessageCircle, c: '#e5484d' },
+  cita: { t: 'Citas por confirmar', s: 'Confírmalas y se les avisa solo', I: CalendarCheck, c: '#7c5cff' },
+  post: { t: 'Publicaciones para aprobar', s: 'Revisa y se publican solas', I: Sparkles, c: '#ff6b5a' },
+  video: { t: 'Vídeos para revisar', s: 'Guion listo: elige la voz y apruébalo', I: Clapperboard, c: '#ff6b5a' },
+  resena: { t: 'Reseñas delicadas', s: 'Mejor responder en menos de 24 h', I: Star, c: '#e0a100' },
+  articulo: { t: 'Artículos para el blog', s: 'Revisa y se publican en tu web', I: FileText, c: '#14a3a3' },
+  seguimiento: { t: 'Seguimientos listos', s: 'Mensaje escrito: solo pulsa Enviar', I: Handshake, c: '#14995a' },
+  aviso: { t: 'Avisos', s: 'Cosas que conviene que sepas', I: AlertTriangle, c: '#d97a06' },
+};
+

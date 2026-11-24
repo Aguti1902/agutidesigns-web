@@ -4,9 +4,12 @@
 import crypto from 'node:crypto';
 import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
-  negocioDeSesion, altaDesdeSesion, enviarAcceso, ivaStripe, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
+  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
+import { cobroCentimos, IVA, IRPF } from '../../src/data/oficinaSaas.js';
+import { ajustesDe } from '../../src/data/oficinaAjustes.js';
+import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, buscarCompetidores, hayPlaces, enviarInforme } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
 
 const json = (res, c, o) => res.status(c).json(o);
@@ -23,11 +26,12 @@ async function checkout(req, res) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return json(res, 400, { error: 'Revisa tu correo.' });
   const base = origen(req);
   const datos = {
-    mode: 'subscription', locale: 'es', customer_email: mail, billing_address_collection: 'required', 'tax_id_collection[enabled]': 'true',
+    mode: 'subscription', locale: 'es', customer_email: mail, billing_address_collection: 'required', 'tax_id_collection[enabled]': 'true', 'tax_id_collection[required]': 'if_supported',
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
-    'line_items[0][price_data][unit_amount]': String((anual ? precioAnual(ids.length) : precioOficina(ids.length)) * 100),
+    'line_items[0][price_data][unit_amount]': String(cobroCentimos(anual ? precioAnual(ids.length) : precioOficina(ids.length))),
     'line_items[0][price_data][recurring][interval]': anual ? 'year' : 'month',
     'line_items[0][price_data][product_data][name]': anual ? `Oficina de IA · plan anual${webIncluida('anio', ids.length) ? ' con web incluida' : ''}` : 'Oficina de IA · plan mensual',
+    'line_items[0][price_data][product_data][description]': `${anual ? precioAnual(ids.length) : precioOficina(ids.length)} € + ${IVA} % IVA − ${IRPF} % retención IRPF. Recibirás la factura completa por correo.`,
     'metadata[app]': 'oficina-saas', 'metadata[deptos]': ids.join(','), 'metadata[nombre]': nom, 'metadata[periodo]': anual ? 'anio' : 'mes',
     'subscription_data[metadata][app]': 'oficina-saas', 'subscription_data[metadata][deptos]': ids.join(','), 'subscription_data[metadata][periodo]': anual ? 'anio' : 'mes',
     'subscription_data[description]': ids.map((id) => DEPTO[id].nombre).join(' · '), payment_method_collection: 'always',
@@ -35,7 +39,6 @@ async function checkout(req, res) {
     success_url: `${base}/app/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/oficina-ia#precios`,
   };
   try {
-    datos['line_items[0][tax_rates][0]'] = await ivaStripe();
     const s = await stripe('checkout/sessions', { metodo: 'POST', datos }); return json(res, 200, { url: s.url }); }
   catch (e) { console.error('[checkout]', e.message); return json(res, 502, { error: 'No hemos podido abrir el pago. Inténtalo de nuevo en un momento.' }); }
 }
@@ -110,8 +113,8 @@ async function plan(req, res, neg) {
   const prueba = neg.prueba_hasta && new Date(neg.prueba_hasta) > new Date();
   await stripe(`subscriptions/${sub.id}`, { metodo: 'POST', datos: {
     'items[0][id]': item.id, 'items[0][price_data][currency]': 'eur', 'items[0][price_data][product]': typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
-    'items[0][price_data][unit_amount]': String(euros * 100), 'items[0][price_data][recurring][interval]': anual ? 'year' : 'month', proration_behavior: 'create_prorations',
-    'items[0][tax_rates][0]': await ivaStripe(),
+    'items[0][price_data][unit_amount]': String(cobroCentimos(euros)), 'items[0][price_data][recurring][interval]': anual ? 'year' : 'month', proration_behavior: 'create_prorations',
+    'items[0][tax_rates]': '',
     'metadata[deptos]': ids.join(','), description: ids.map((id) => DEPTO[id].nombre).join(' · ') } });
   await sb(`of_departamentos?negocio_id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { activo: false } });
   await sb('of_departamentos?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=merge-duplicates',
@@ -180,7 +183,7 @@ async function anual(req, res, neg) {
   const euros = precioAnual(deps.length);
   await stripe(`subscriptions/${sub.id}`, { metodo: 'POST', datos: {
     'items[0][id]': item.id, 'items[0][price_data][currency]': 'eur', 'items[0][price_data][product]': typeof item.price.product === 'string' ? item.price.product : item.price.product.id,
-    'items[0][price_data][unit_amount]': String(euros * 100), 'items[0][price_data][recurring][interval]': 'year', 'items[0][tax_rates][0]': await ivaStripe(),
+    'items[0][price_data][unit_amount]': String(cobroCentimos(euros)), 'items[0][price_data][recurring][interval]': 'year', 'items[0][tax_rates]': '',
     proration_behavior: 'always_invoice', billing_cycle_anchor: 'now', ...(sub.status === 'trialing' ? { trial_end: 'now' } : {}), payment_behavior: 'error_if_incomplete', 'metadata[periodo]': 'anio' } });
   const web = webIncluida('anio', deps.length);
   await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { periodo: 'anio', importe_mes: Math.round(euros / 12), prueba_hasta: null, web_incluida: web || neg.web_incluida, ...(web && !neg.web_estado ? { web_estado: 'pendiente' } : {}) } });
@@ -189,8 +192,10 @@ async function anual(req, res, neg) {
   return json(res, 200, { ok: true, web });
 }
 async function preferencias(req, res, neg) {
-  const { avisos_email, resumen_semanal, email_avisos } = cuerpo(req);
+  const { avisos_email, resumen_semanal, email_avisos, informe: inf, drive } = cuerpo(req);
   const p = { ...(neg.preferencias || {}), ...(typeof avisos_email === 'boolean' ? { avisos_email } : {}), ...(typeof resumen_semanal === 'boolean' ? { resumen_semanal } : {}),
+    ...(['diario', 'semanal', 'mensual', 'nunca'].includes(inf) ? { informe: inf } : {}),
+    ...(drive !== undefined ? { drive: /^https:\/\/(drive|docs)\.google\.com\//.test(String(drive)) ? String(drive).slice(0, 400) : null } : {}),
     ...(email_avisos !== undefined ? { email_avisos: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email_avisos)) ? String(email_avisos).toLowerCase() : null } : {}) };
   await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { preferencias: p } });
   return json(res, 200, { ok: true, preferencias: p });
@@ -198,7 +203,20 @@ async function preferencias(req, res, neg) {
 
 // ---------------- agenda y ventas ----------------
 async function cita(req, res, neg) {
-  const { id, estado, fecha, mensaje: texto } = cuerpo(req);
+  const { id, estado, fecha, mensaje: texto, nueva } = cuerpo(req);
+  if (nueva) { // cita apuntada a mano desde la Agenda (por teléfono, en persona…)
+    const f = nueva.fecha ? new Date(nueva.fecha) : null;
+    if (!f || Number.isNaN(f.getTime()) || !String(nueva.nombre || '').trim()) return json(res, 400, { error: 'Pon el nombre y el día y la hora.' });
+    const tel = String(nueva.telefono || '').replace(/\D/g, '');
+    const [c] = await sb('of_citas', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, nombre: String(nueva.nombre).trim().slice(0, 80), servicio: String(nueva.servicio || '').trim().slice(0, 160) || null,
+      contacto: tel ? (tel.length === 9 ? `34${tel}` : tel) : null, canal: tel ? 'whatsapp' : 'manual', fecha: f.toISOString(), estado: 'confirmada', nota: String(nueva.nota || '').slice(0, 500) || null }] });
+    const con = await uno(`of_conexiones?negocio_id=eq.${neg.id}&herramienta=eq.google_calendar&estado=eq.conectada&select=*`);
+    const tok = con && await tokenDe(con);
+    if (tok) await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summary: `${c.servicio || 'Cita'} · ${c.nombre}`, start: { dateTime: f.toISOString() }, end: { dateTime: new Date(f.getTime() + 3600e3).toISOString() } }) }).catch(() => {});
+    await actividad(neg.id, 'citas', `Has apuntado la cita de ${c.nombre}`, 'hecho', { cita: c.id });
+    return json(res, 200, { ok: true, cita: c });
+  }
   const c = esUuid(id) && await uno(`of_citas?id=eq.${id}&negocio_id=eq.${neg.id}&select=*`);
   if (!c || !['pendiente', 'confirmada', 'cancelada', 'hecha'].includes(estado)) return json(res, 400, {});
   const cuando = fecha ? new Date(fecha) : (c.fecha ? new Date(c.fecha) : null);
@@ -222,7 +240,14 @@ async function cita(req, res, neg) {
   return json(res, 200, { ok: true });
 }
 async function lead(req, res, neg) {
-  const { id, etapa, importe, nota } = cuerpo(req);
+  const { id, etapa, importe, nota, nuevo } = cuerpo(req);
+  if (nuevo) { // cliente potencial añadido a mano
+    if (!String(nuevo.nombre || '').trim()) return json(res, 400, { error: 'Pon al menos el nombre.' });
+    const tel = String(nuevo.telefono || '').replace(/\D/g, '');
+    const [l] = await sb('of_leads', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, nombre: String(nuevo.nombre).trim().slice(0, 80), interes: String(nuevo.interes || '').trim().slice(0, 200) || null,
+      contacto: tel || null, canal: 'manual', importe: nuevo.importe ? Number(nuevo.importe) : null, etapa: 'nuevo', nota: String(nuevo.nota || '').slice(0, 1000) || null }] });
+    return json(res, 200, { ok: true, lead: l });
+  }
   if (!esUuid(id)) return json(res, 400, {});
   const cambios = { actualizado: new Date().toISOString() };
   if (['nuevo', 'contactado', 'presupuesto', 'ganado', 'perdido'].includes(etapa)) cambios.etapa = etapa;
@@ -234,18 +259,23 @@ async function lead(req, res, neg) {
 }
 // Encargos directos del dueño: «hazme un post sobre…», «escribe un artículo sobre…».
 async function encargo(req, res, neg) {
-  const { depto, tema } = cuerpo(req); const t = String(tema || '').trim().slice(0, 400);
-  if (!t || !['redes', 'contenido'].includes(depto)) return json(res, 400, { error: 'Cuéntanos sobre qué quieres que trabaje.' });
-  if (!(await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.${depto}&activo=eq.true&select=depto`))) return json(res, 403, { error: 'No tienes este departamento.' });
+  const { depto, tema } = cuerpo(req);
+  const r = await encargoInterno(neg, depto, tema);
+  return json(res, r.status, r.cuerpo);
+}
+async function encargoInterno(neg, depto, tema) {
+  const json = (status, cuerpo) => ({ status, cuerpo }); const t = String(tema || '').trim().slice(0, 400);
+  if (!t || !['redes', 'contenido'].includes(depto)) return json(400, { error: 'Cuéntanos sobre qué quieres que trabaje.' });
+  if (!(await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.${depto}&activo=eq.true&select=depto`))) return json(403, { error: 'No tienes este departamento.' });
   const o = depto === 'redes'
     ? await generar({ negocio: neg, depto, encargo: { tarea: `Escribiendo un post sobre «${t.slice(0, 50)}»`, fin: 'Post listo para que lo revises',
       prompt: `Escribe una publicación para Instagram y Facebook sobre: «${t}». Con el tono del negocio, 2-4 frases y 3-5 hashtags locales. Sin inventar precios ni ofertas. JSON: {"titulo":"...","texto":"...","idea_imagen":"..."}` } })
     : await generar({ negocio: neg, depto, maxTokens: 2200, encargo: { tarea: `Escribiendo un artículo sobre «${t.slice(0, 50)}»`, fin: 'Artículo listo para que lo revises',
       prompt: `Escribe un artículo para el blog del negocio sobre: «${t}». Pensado para Google y para clientes de la zona. 600-800 palabras con subtítulos. Sin inventar datos. JSON: {"titulo":"...","resumen":"...","texto":"... (markdown)"}` } });
-  if (!o?.titulo) return json(res, 409, { error: 'Ahora mismo no se ha podido (puede que se haya acabado el cupo del mes).' });
+  if (!o?.titulo) return json(409, { error: 'Ahora mismo no se ha podido (puede que se haya acabado el cupo del mes).' });
   await actividad(neg.id, depto, `${depto === 'redes' ? 'Post' : 'Artículo'} listo: «${o.titulo}». Revísalo y apruébalo`, 'pendiente',
     depto === 'redes' ? { accion: 'publicar', red: 'instagram', texto: o.texto, idea_imagen: o.idea_imagen, titulo: o.titulo } : { accion: 'articulo', titulo: o.titulo, texto: o.texto, resumen: o.resumen });
-  return json(res, 200, { ok: true });
+  return json(200, { ok: true });
 }
 async function factura(req, res, neg) {
   const f = await uno(`of_facturas?id=eq.${cuerpo(req).id}&negocio_id=eq.${neg.id}&select=*`);
@@ -342,7 +372,10 @@ async function conversacionDe(neg, canal, contacto, nombre) {
     cuerpo: { negocio_id: neg.id, canal, contacto, nombre: nombre || null, estado: 'agente', ultimo: new Date().toISOString() } });
   return n;
 }
-const mensaje = (conversacion_id, negocio_id, de, texto) => sb('of_mensajes', { metodo: 'POST', cuerpo: [{ conversacion_id, negocio_id, de, texto: String(texto).slice(0, 4000) }] });
+const mensaje = async (conversacion_id, negocio_id, de, texto) => {
+  await sb('of_mensajes', { metodo: 'POST', cuerpo: [{ conversacion_id, negocio_id, de, texto: String(texto).slice(0, 4000) }] });
+  await sb(`of_conversaciones?id=eq.${conversacion_id}`, { metodo: 'PATCH', cuerpo: { ultimo_texto: String(texto).slice(0, 200), ultimo: new Date().toISOString() } }).catch(() => {});
+};
 
 const CORS = (res) => { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS'); };
 
@@ -460,8 +493,100 @@ async function tarea(req, res, neg) {
       respuesta = r.ok ? 'Publicada en Google' : 'No se ha podido publicar en Google';
     }
   }
+  if (decision === 'aprobar' && d.accion === 'seguimiento' && d.conversacion) {
+    const conv = await uno(`of_conversaciones?id=eq.${d.conversacion}&negocio_id=eq.${neg.id}&select=*`);
+    const msj = String(texto || d.texto || '').trim();
+    if (conv && msj) {
+      const ok = conv.canal === 'web' || await enviarWhatsapp(neg, conv.contacto, msj);
+      if (ok) { await mensaje(conv.id, neg.id, 'agente', msj); respuesta = 'Seguimiento enviado'; } else respuesta = 'WhatsApp no lo ha aceptado: escríbele desde tu móvil';
+    }
+  }
   await sb(`of_actividad?id=eq.${t.id}`, { metodo: 'PATCH', cuerpo: { resuelto: true, respuesta, ...(texto ? { detalle: { ...d, texto } } : {}) } });
   return json(res, 200, { ok: true, respuesta });
+}
+
+
+// ---------------- chat con el equipo, vídeos, competencia, informes ----------------
+async function equipo(req, res, neg) {
+  const t = String(cuerpo(req).texto || '').trim().slice(0, 1500);
+  if (!t) return json(res, 400, { error: 'Escribe algo.' });
+  let r;
+  try { r = await hablarConEquipo(neg, t); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
+  if (r.accion) {
+    const { tipo, tema } = r.accion;
+    if (tipo === 'video') guionVideo(neg, tema, ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes)).catch((e) => console.error('[equipo/video]', e.message));
+    else await encargoInterno(neg, tipo === 'post' ? 'redes' : 'contenido', tema).catch((e) => console.error('[equipo/encargo]', e.message));
+  }
+  return json(res, 200, { ok: true, respuesta: r.respuesta, accion: r.accion });
+}
+
+async function video(req, res, neg) {
+  const { op, id, tema, voz: vozId, estilo, guion } = cuerpo(req);
+  if (op === 'muestra') {
+    const v = VOCES.includes(vozId) ? vozId : 'nova'; const ruta = `_muestras/${v}.mp3`;
+    const base = process.env.VITE_OFICINA_SUPABASE_URL; const clave = process.env.OFICINA_SUPABASE_SERVICE_ROLE_KEY;
+    const ya = await fetch(`${base}/storage/v1/object/info/oficina-material/${ruta}`, { headers: { Authorization: `Bearer ${clave}`, apikey: clave } });
+    if (!ya.ok) await subirArchivo(ruta, await voz(`Hola, soy la voz que pondremos a tus vídeos de ${neg.nombre}. ¿Te gusta cómo sueno?`, v), 'audio/mpeg');
+    return json(res, 200, { url: await firmar(ruta) });
+  }
+  if (op === 'nuevo') {
+    if (!String(tema || '').trim()) return json(res, 400, { error: 'Cuéntanos de qué quieres el vídeo.' });
+    const aj = ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes);
+    const v = await guionVideo(neg, String(tema).slice(0, 300), { ...aj, voz: vozId || aj.voz, estilo: estilo || aj.estilo_video });
+    return v ? json(res, 200, { ok: true, video: v }) : json(res, 409, { error: 'Ahora mismo no se ha podido (puede que se haya acabado el cupo del mes).' });
+  }
+  const v = esUuid(id) && await uno(`of_videos?id=eq.${id}&negocio_id=eq.${neg.id}&select=*`);
+  if (!v) return json(res, 404, {});
+  if (op === 'guardar') {
+    await sb(`of_videos?id=eq.${v.id}`, { metodo: 'PATCH', cuerpo: { ...(vozId ? { voz: vozId } : {}), ...(estilo ? { estilo } : {}), ...(guion ? { guion: { ...v.guion, ...guion } } : {}), actualizado: new Date().toISOString() } });
+    return json(res, 200, { ok: true });
+  }
+  if (op === 'aprobar_guion') {
+    // Voz en off real con la voz elegida; el montaje con tu material lo hace el equipo de producción.
+    const texto = [v.guion?.gancho, ...(v.guion?.escenas || []).map((e) => e.voz), v.guion?.cierre].filter(Boolean).join(' ');
+    let audio = null;
+    try { audio = await subirArchivo(`${neg.id}/videos/${v.id}.mp3`, await voz(texto, vozId || v.voz, v.estilo ? `Estilo ${v.estilo}.` : ''), 'audio/mpeg'); } catch (e) { console.error('[video/voz]', e.message); }
+    await sb(`of_videos?id=eq.${v.id}`, { metodo: 'PATCH', cuerpo: { estado: 'montaje', audio_path: audio, ...(vozId ? { voz: vozId } : {}), actualizado: new Date().toISOString() } });
+    await actividad(neg.id, 'redes', `Guion aprobado: «${v.titulo}». Voz en off grabada; el vídeo pasa a montaje`, 'hecho', { video: v.id });
+    const pend = await uno(`of_actividad?negocio_id=eq.${neg.id}&detalle->>video=eq.${v.id}&tipo=eq.pendiente&resuelto=eq.false&select=id`);
+    if (pend) await sb(`of_actividad?id=eq.${pend.id}`, { metodo: 'PATCH', cuerpo: { resuelto: true, respuesta: 'Aprobado' } });
+    if (process.env.RESEND_API_KEY) {
+      const { Resend } = await import('resend');
+      await new Resend(process.env.RESEND_API_KEY).emails.send({ from: 'Oficina de IA <info@agutidesigns.io>', to: 'info@agutidesigns.io', subject: `Montar vídeo: ${neg.nombre} · ${v.titulo}`,
+        text: `Guion aprobado por ${neg.nombre}. Voz: ${vozId || v.voz}. Estilo: ${v.estilo || '-'}.\n\n${JSON.stringify(v.guion, null, 2)}` }).catch(() => {});
+    }
+    return json(res, 200, { ok: true, audio: audio ? await firmar(audio) : null });
+  }
+  if (['aprobado', 'descartado', 'publicado'].includes(op)) { await sb(`of_videos?id=eq.${v.id}`, { metodo: 'PATCH', cuerpo: { estado: op, actualizado: new Date().toISOString() } }); return json(res, 200, { ok: true }); }
+  if (op === 'audio') return json(res, 200, { url: v.audio_path ? await firmar(v.audio_path) : null, video: v.video_path ? await firmar(v.video_path) : null });
+  return json(res, 400, {});
+}
+async function firmar(ruta, segundos = 3600) {
+  const base = process.env.VITE_OFICINA_SUPABASE_URL; const clave = process.env.OFICINA_SUPABASE_SERVICE_ROLE_KEY;
+  const r = await fetch(`${base}/storage/v1/object/sign/oficina-material/${ruta}`, { method: 'POST', headers: { Authorization: `Bearer ${clave}`, apikey: clave, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: segundos }) });
+  const j = await r.json().catch(() => ({}));
+  return j.signedURL ? `${base}/storage/v1${j.signedURL}` : null;
+}
+
+async function competencia(req, res, neg) {
+  const { op, id, nombre, web: url } = cuerpo(req);
+  if (op === 'buscar') {
+    if (!hayPlaces()) return json(res, 503, { error: 'La búsqueda automática de competencia se está activando. Mientras, añade a mano los que conozcas.' });
+    const n = await buscarCompetidores(neg); return json(res, 200, { ok: true, n });
+  }
+  if (op === 'anadir') {
+    if (!String(nombre || '').trim()) return json(res, 400, { error: 'Pon el nombre.' });
+    const [c] = await sb('of_competidores', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, nombre: String(nombre).trim().slice(0, 120), web: String(url || '').trim().slice(0, 200) || null }] });
+    return json(res, 200, { ok: true, competidor: c });
+  }
+  if (op === 'quitar' && esUuid(id)) { await sb(`of_competidores?id=eq.${id}&negocio_id=eq.${neg.id}`, { metodo: 'DELETE' }); return json(res, 200, { ok: true }); }
+  return json(res, 400, {});
+}
+
+async function informe(req, res, neg) {
+  const { periodo } = cuerpo(req);
+  const ok = await enviarInforme(neg, ['diario', 'semanal', 'mensual'].includes(periodo) ? periodo : 'semanal', neg.owner_email).catch((e) => { console.error('[informe]', e.message); return false; });
+  return ok ? json(res, 200, { ok: true }) : json(res, 409, { error: 'Aún no hay trabajo suficiente para un informe. En cuanto tus agentes empiecen, te llegará.' });
 }
 
 // ---------------- trabajo programado (Vercel Cron, una vez al día) ----------------
@@ -482,7 +607,8 @@ async function resenasGoogle(neg) {
           prompt: `Escribe la respuesta del negocio a esta reseña de Google (${estrellas} estrellas) de ${r.reviewer?.displayName || 'un cliente'}: «${r.comment || '(sin texto)'}». Agradecida, cercana, 2-3 frases, sin inventar nada. Si es negativa, pide disculpas y ofrece hablar en persona. JSON: {"respuesta":"..."}` } });
         if (!o?.respuesta) continue;
         const nombre = r.reviewer?.displayName || 'un cliente';
-        if (estrellas <= 3 || o.ajustes?.revisar) {
+        const aj = ajustesDe('google', o.ajustes);
+        if (estrellas <= 3 || aj.revisar || aj.auto === false) {
           await actividad(neg.id, 'google', `Reseña de ${estrellas} ★ de ${nombre}: revisa la respuesta propuesta antes de publicarla`, 'pendiente', { accion: 'responder_resena', resena: r.name, estrellas, texto: o.respuesta, original: r.comment || '' });
         } else {
           const ok = (await fetch(`https://mybusiness.googleapis.com/v4/${r.name}/reply`, { method: 'PUT', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: o.respuesta }) })).ok;
@@ -493,23 +619,21 @@ async function resenasGoogle(neg) {
   }
 }
 
-// Resumen semanal por correo (lunes): lo que han hecho los agentes los últimos 7 días.
-async function resumenSemanal(neg) {
-  if (!process.env.RESEND_API_KEY) return;
-  const desde = new Date(Date.now() - 7 * 864e5).toISOString();
-  const ev = await sb(`of_actividad?negocio_id=eq.${neg.id}&creado=gte.${desde}&tipo=in.(hecho,aviso,pendiente)&select=depto,tipo`);
-  if (!ev.length) return;
-  const por = {}; for (const e of ev) if (e.tipo === 'hecho') por[e.depto] = (por[e.depto] || 0) + 1;
-  const minutos = { atencion: 3, citas: 4, ventas: 6, redes: 20, google: 5, contenido: 90 };
-  const horas = Math.round(Object.entries(por).reduce((a, [d, n]) => a + n * (minutos[d] || 0), 0) / 6) / 10;
-  const filas = Object.entries(por).map(([d, n]) => `<tr><td style="padding:6px 0;color:#3b3f52">${DEPTO[d]?.nombre || d}</td><td style="padding:6px 0;text-align:right;font-weight:700">${n}</td></tr>`).join('');
-  const { Resend } = await import('resend');
-  await new Resend(process.env.RESEND_API_KEY).emails.send({ from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: neg.preferencias?.email_avisos || neg.owner_email,
-    subject: `Tu semana: ${ev.filter((e) => e.tipo === 'hecho').length} tareas hechas por tu oficina de IA`,
-    html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px 22px;color:#0d1020"><h1 style="font-size:20px;margin:0 0 6px">Tu semana en ${neg.nombre}</h1>
-      <p style="color:#6c7086;margin:0 0 18px">Unas ${horas} h de trabajo que no has tenido que hacer tú (estimación).</p><table style="width:100%;border-collapse:collapse;font-size:15px">${filas}</table>
-      ${ev.some((e) => e.tipo !== 'hecho') ? `<p style="margin:18px 0 0">Tienes ${ev.filter((e) => e.tipo !== 'hecho').length} cosas en «Te necesitan».</p>` : ''}
-      <a href="https://agutidesigns.io/app/estadisticas" style="display:inline-block;margin-top:22px;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Ver mis estadísticas</a></div>` });
+// Recordatorio por WhatsApp el día antes de cada cita confirmada (ajuste «Recordatorio el día antes» de Citas).
+async function recordatorios(neg) {
+  const manana = new Date(Date.now() + 864e5); const ini = new Date(manana); ini.setUTCHours(0, 0, 0, 0); const fin = new Date(ini.getTime() + 864e5);
+  const citas = await sb(`of_citas?negocio_id=eq.${neg.id}&estado=eq.confirmada&recordado=is.null&fecha=gte.${ini.toISOString()}&fecha=lt.${fin.toISOString()}&select=*`).catch(() => []);
+  let n = 0;
+  for (const c of citas) {
+    if (c.canal !== 'whatsapp' || !c.contacto) continue;
+    const h = new Date(c.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
+    const t = `¡Hola${c.nombre ? ` ${c.nombre}` : ''}! Te recordamos tu cita${c.servicio ? ` de ${c.servicio.toLowerCase()}` : ''} mañana a las ${h} en ${neg.nombre}. Si no puedes venir, avísanos por aquí. ¡Hasta mañana!`;
+    if (await enviarWhatsapp(neg, c.contacto, t)) {
+      n += 1; await sb(`of_citas?id=eq.${c.id}`, { metodo: 'PATCH', cuerpo: { recordado: new Date().toISOString() } });
+      if (c.conversacion_id) await mensaje(c.conversacion_id, neg.id, 'agente', t);
+    }
+  }
+  if (n) await actividad(neg.id, 'citas', `Ha enviado ${n === 1 ? 'el recordatorio de la cita' : `los recordatorios de las ${n} citas`} de mañana`, 'hecho', { recordatorios: n });
 }
 
 async function cron(req, res) {
@@ -521,38 +645,55 @@ async function cron(req, res) {
   const negocios = await sb('of_negocios?estado=eq.activo&select=*');
   const hoy = new Date(); const lunes = hoy.getDay() === 1; const dia1 = hoy.getDate() === 1;
   for (const neg of negocios) {
-    const deps = (await sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto,ajustes`)).map((d) => d.depto);
+    const filas = await sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto,ajustes`);
+    const deps = filas.map((d) => d.depto); const aj = Object.fromEntries(filas.map((d) => [d.depto, ajustesDe(d.depto, d.ajustes)]));
+    const activo = (d) => deps.includes(d) && !aj[d]?.pausado;
     const listo = neg.sector && neg.horarios;
     try {
-      if (deps.includes('google')) await resenasGoogle(neg);
-      if (deps.includes('redes') && listo && (lunes || !(await uno(`of_actividad?negocio_id=eq.${neg.id}&depto=eq.redes&detalle->>accion=eq.publicar&select=id`)))) {
-        const o = await generar({ negocio: neg, depto: 'redes', encargo: { tarea: 'Preparando las publicaciones de la semana', unidades: 3, fin: 'Publicaciones de la semana listas para que las revises',
-          prompt: 'Prepara 3 publicaciones para Instagram y Facebook de esta semana: variadas (servicio, consejo útil, día a día del negocio), con el tono del negocio, 2-4 frases y 3-5 hashtags locales (Cornellà, Baix Llobregat si encaja). Sin precios ni ofertas que no estén en los datos. JSON: {"posts":[{"titulo":"...","texto":"...","idea_imagen":"..."}]}' } });
-        for (const p of o?.posts || []) await actividad(neg.id, 'redes', `Post listo: «${p.titulo}». Revísalo y apruébalo`, 'pendiente', { accion: 'publicar', red: 'instagram', texto: p.texto, idea_imagen: p.idea_imagen });
+      if (activo('google')) await resenasGoogle(neg);
+      if (activo('citas') && aj.citas.recordatorio) await recordatorios(neg);
+      if (activo('redes') && listo && (lunes || !(await uno(`of_actividad?negocio_id=eq.${neg.id}&depto=eq.redes&detalle->>accion=eq.publicar&select=id`)))) {
+        const n = Math.max(1, Math.min(7, Number(aj.redes.posts_semana) || 3)); const redes = aj.redes.redes?.length ? aj.redes.redes : ['instagram'];
+        const o = await generar({ negocio: neg, depto: 'redes', maxTokens: 300 + n * 250, encargo: { tarea: 'Preparando las publicaciones de la semana', unidades: n, fin: 'Publicaciones de la semana listas para que las revises',
+          prompt: `Prepara ${n} publicaciones para esta semana: variadas (servicio, consejo útil, día a día del negocio), con el tono del negocio, 2-4 frases y 3-5 hashtags locales (Cornellà, Baix Llobregat si encaja). Sin precios ni ofertas que no estén en los datos. Para cada una sugiere el día de la semana. JSON: {"posts":[{"titulo":"...","dia":"lunes|martes|...","texto":"...","idea_imagen":"..."}]}` } });
+        for (const p of (o?.posts || []).slice(0, n)) await actividad(neg.id, 'redes', `Post listo${p.dia ? ` para el ${p.dia}` : ''}: «${p.titulo}». Revísalo y apruébalo`, 'pendiente', { accion: 'publicar', red: redes[0], redes, dia: p.dia, titulo: p.titulo, texto: p.texto, idea_imagen: p.idea_imagen });
       }
-      if (deps.includes('contenido') && listo && (dia1 || !(await uno(`of_actividad?negocio_id=eq.${neg.id}&depto=eq.contenido&select=id&detalle->>accion=eq.articulo`)))) {
+      const porMes = Number(aj.contenido?.articulos_mes) || 1; const diaMes = hoy.getDate();
+      const tocaArticulo = dia1 || (porMes >= 2 && diaMes === 15) || (porMes >= 4 && (diaMes === 8 || diaMes === 22));
+      if (activo('contenido') && listo && (tocaArticulo || !(await uno(`of_actividad?negocio_id=eq.${neg.id}&depto=eq.contenido&select=id&detalle->>accion=eq.articulo`)))) {
         const o = await generar({ negocio: neg, depto: 'contenido', maxTokens: 2200, encargo: { tarea: 'Escribiendo el artículo del mes', fin: 'Artículo del mes listo para revisar',
-          prompt: 'Escribe un artículo para el blog del negocio pensado para que lo encuentren en Google personas de Cornellà y alrededores que buscan lo que hace el negocio. 600-800 palabras, útil, con subtítulos. Sin inventar datos. JSON: {"titulo":"...","resumen":"...","texto":"... (markdown)"}' } });
+          prompt: 'Escribe un artículo para el blog del negocio pensado para que lo encuentren en Google personas de Cornellà y alrededores que buscan lo que hace el negocio. Útil, con subtítulos y sin repetir temas de artículos anteriores. Sin inventar datos. JSON: {"titulo":"...","resumen":"...","texto":"... (markdown)"}' } });
         if (o?.titulo) await actividad(neg.id, 'contenido', `Artículo listo: «${o.titulo}». Revísalo y apruébalo`, 'pendiente', { accion: 'articulo', titulo: o.titulo, texto: o.texto, resumen: o.resumen });
       }
-      if (deps.includes('ventas')) {
-        const dos = new Date(Date.now() - 2 * 864e5).toISOString();
-        const frias = await sb(`of_conversaciones?negocio_id=eq.${neg.id}&tema=eq.presupuesto&estado=neq.cerrada&ultimo=lt.${dos}&seguimiento=is.null&select=id,nombre,canal&limit=10`);
+      if (activo('ventas')) {
+        const dias = Number(aj.ventas.dias_seguimiento) || 2;
+        const limite = new Date(Date.now() - dias * 864e5).toISOString();
+        const frias = await sb(`of_conversaciones?negocio_id=eq.${neg.id}&tema=eq.presupuesto&estado=neq.cerrada&ultimo=lt.${limite}&seguimiento=is.null&select=id,nombre,canal,contacto&limit=10`);
         for (const c of frias) {
-          await actividad(neg.id, 'ventas', `${c.nombre || 'Un cliente'} pidió presupuesto hace más de 2 días y no ha vuelto a escribir. Toca hacer seguimiento`, 'aviso', { conversacion: c.id, motivo: 'seguimiento' });
+          let texto = null;
+          if (aj.ventas.mensaje_listo) {
+            const hist = await sb(`of_mensajes?conversacion_id=eq.${c.id}&select=de,texto&order=creado.desc&limit=8`).catch(() => []);
+            const o = await generar({ negocio: neg, depto: 'ventas', maxTokens: 300, encargo: { tarea: `Preparando el seguimiento de ${c.nombre || 'un cliente'}`, fin: 'Seguimiento listo para enviar',
+              prompt: `Este cliente pidió presupuesto hace ${dias} días y no ha vuelto a escribir. Conversación (de más reciente a más antigua):\n${hist.map((m) => `${m.de}: ${m.texto}`).join('\n').slice(0, 2500)}\nEscribe un mensaje corto y amable de seguimiento (2 frases), sin presionar y sin inventar precios. JSON: {"texto":"..."}` } });
+            texto = o?.texto || null;
+          }
+          await actividad(neg.id, 'ventas', `${c.nombre || 'Un cliente'} pidió presupuesto hace más de ${dias} días y no ha vuelto a escribir. ${texto ? 'Te he dejado el mensaje de seguimiento listo' : 'Toca hacer seguimiento'}`,
+            texto ? 'pendiente' : 'aviso', { conversacion: c.id, motivo: 'seguimiento', ...(texto ? { accion: 'seguimiento', texto } : {}) });
           await sb(`of_conversaciones?id=eq.${c.id}`, { metodo: 'PATCH', cuerpo: { seguimiento: new Date().toISOString() } });
         }
       }
     } catch (e) { console.error('[cron]', neg.id, e.message); }
     for (const d of deps) await estadoAgente(neg.id, d, 'disponible', 'Esperando la siguiente tarea');
-    if (lunes && neg.preferencias?.resumen_semanal !== false) await resumenSemanal(neg).catch((e) => console.error('[resumen]', e.message));
+    await actualizarMetricas(neg).catch((e) => console.error('[metricas]', e.message));
+    const cada = neg.preferencias?.informe || (neg.preferencias?.resumen_semanal === false ? 'nunca' : 'semanal');
+    if ((cada === 'diario') || (cada === 'semanal' && lunes) || (cada === 'mensual' && dia1)) await enviarInforme(neg, cada).catch((e) => console.error('[informe]', e.message));
   }
   return json(res, 200, { ok: true, negocios: negocios.length });
 }
 
 // ---------------- enrutador ----------------
 const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');

@@ -4,11 +4,10 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Gift, Globe, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
 import useSeo from '../hooks/useSeo';
-import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_PRUEBA, WEB_DESDE, webIncluida } from '../data/oficinaSaas';
+import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_PRUEBA, WEB_DESDE, webIncluida, impuestos, IVA, IRPF } from '../data/oficinaSaas';
 import './Contratar.css';
 
 const ICONO = { atencion: Headphones, citas: CalendarCheck, ventas: Handshake, redes: Megaphone, google: Star, contenido: PenLine };
-const IVA = 0.21;
 const eur = (n) => `${n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })} €`;
 const PACKS = [
   { id: 'belleza', t: 'Peluquería y estética', d: ['atencion', 'citas', 'google', 'redes'] },
@@ -33,7 +32,7 @@ export default function Contratar() {
   const listaMes = n * PRECIO_SUELTO; const lista = anual ? listaMes * 12 : listaMes;
   const descPack = anual ? (listaMes - precioOficina(n)) * 12 : listaMes - precioOficina(n);
   const descAnual = anual ? precioOficina(n) * 12 - precioAnual(n) : 0;
-  const iva = Math.round(base * IVA * 100) / 100; const total = Math.round((base + iva) * 100) / 100;
+  const { iva, irpf, total } = impuestos(base);
   const web = webIncluida(plan, n);
   const ahorroAnual = precioOficina(n) * 12 - precioAnual(n);
   const finPrueba = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + DIAS_PRUEBA); return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }); }, []);
@@ -112,7 +111,7 @@ export default function Contratar() {
           {paso === 3 && (
             <form onSubmit={pagar}>
               <h1>Ya casi está</h1>
-              <p className="ct-lead">Con estos datos creamos tu oficina. En el siguiente paso pagas con tarjeta en Stripe, donde también puedes poner los datos fiscales de tu empresa para la factura.</p>
+              <p className="ct-lead">Con estos datos creamos tu oficina. En el siguiente paso pagas con tarjeta en Stripe, donde pones el NIF y los datos fiscales de tu empresa para la factura.</p>
               <div className="ct-form">
                 <label><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /></label>
                 <label><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegará el acceso a tu panel y las facturas.</small></label>
@@ -137,14 +136,15 @@ export default function Contratar() {
               {descAnual > 0 && <div className="ahorro"><dt>Descuento plan anual (20 %)</dt><dd>−{eur(descAnual)}</dd></div>}
               <div className="sub"><dt>Base imponible</dt><dd>{eur(base)}</dd></div>
               {web && <div className="ahorro"><dt>Diseño de tu web</dt><dd>Incluido</dd></div>}
-              <div><dt>IVA (21 %)</dt><dd>{eur(iva)}</dd></div>
-              <div className="total"><dt>{anual ? 'Total hoy' : `Total por mes`}</dt><dd>{eur(total)}</dd></div>
+              <div><dt>IVA ({IVA} %)</dt><dd>{eur(iva)}</dd></div>
+              {IRPF > 0 && <div><dt>Retención IRPF ({IRPF} %)</dt><dd>−{eur(irpf)}</dd></div>}
+              <div className="total"><dt>{anual ? 'A pagar hoy' : 'A pagar cada mes'}</dt><dd>{eur(total)}</dd></div>
             </dl>
             {!anual && <p className="ct-hoy"><Gift size={16} /><span><b>Hoy pagas 0 €.</b> Prueba {DIAS_PRUEBA} días gratis; el primer cobro es el {finPrueba} y puedes cancelar antes sin coste.</span></p>}
           </>)}
           <ul className="ct-garantias">
             <li><ShieldCheck size={16} /> Pago con Stripe. No guardamos tu tarjeta.</li>
-            <li><Check size={16} /> {anual ? 'Factura con IVA a nombre de tu empresa.' : 'Sin permanencia. Factura con IVA cada mes.'}</li>
+            <li><Check size={16} /> {anual ? 'Factura con IVA y retención a nombre de tu empresa.' : 'Sin permanencia. Factura con IVA y retención cada mes.'}</li>
             <li><Check size={16} /> Equipo humano en Cornellà para ayudarte a ponerla en marcha.</li>
           </ul>
         </aside>

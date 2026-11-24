@@ -73,3 +73,27 @@ export function Calor({ calor }) {
 export function Medidor({ valor, max = 1, color = 'var(--acento)' }) {
   return <span className="g-medidor" role="meter" aria-valuenow={Math.round((valor / (max || 1)) * 100)} aria-valuemin={0} aria-valuemax={100}><b style={{ width: `${Math.min(100, (valor / (max || 1)) * 100)}%`, background: color }} /></span>;
 }
+
+// Línea con área (series diarias: visitas, alcance, seguidores…), con detalle al pasar el ratón.
+export function Linea({ datos, color = 'var(--acento)', alto = 190, formato = (v) => v.toLocaleString('es-ES') }) {
+  const [h, setH] = useState(null); const [ref, W] = useAncho(700);
+  if (!datos?.length) return null;
+  const pad = 34; const vals = datos.map((d) => d.valor); const mx = Math.max(1, ...vals); const mn = Math.min(...vals) * (Math.min(...vals) > mx * 0.6 ? 0.92 : 0);
+  const x = (i) => pad + (i / Math.max(1, datos.length - 1)) * (W - pad - 6); const y = (v) => 8 + (1 - (v - mn) / Math.max(1, mx - mn)) * (alto - 16);
+  const pts = datos.map((d, i) => `${x(i)},${y(d.valor)}`).join(' ');
+  const id = `gl${Math.round(mx)}${datos.length}`;
+  return (
+    <div className="g-barras" ref={ref}>
+      <svg width={W} height={alto + 22} viewBox={`0 0 ${W} ${alto + 22}`} role="img" aria-label="Evolución" onMouseLeave={() => setH(null)}
+        onMouseMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); const i = Math.round(((e.clientX - r.left - pad) / (W - pad - 6)) * (datos.length - 1)); setH(Math.max(0, Math.min(datos.length - 1, i))); }}>
+        <defs><linearGradient id={id} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={color} stopOpacity=".22" /><stop offset="1" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+        {[0, 0.5, 1].map((k) => { const v = mn + (mx - mn) * k; return <g key={k}><line x1={pad} x2={W} y1={y(v)} y2={y(v)} className="g-rej" /><text x={0} y={y(v) + 4} className="g-eje">{Math.round(v).toLocaleString('es-ES')}</text></g>; })}
+        <polygon points={`${x(0)},${alto} ${pts} ${x(datos.length - 1)},${alto}`} fill={`url(#${id})`} />
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+        {h != null && <g><line x1={x(h)} x2={x(h)} y1={4} y2={alto} className="g-rej" /><circle cx={x(h)} cy={y(datos[h].valor)} r="5" fill={color} stroke="#fff" strokeWidth="2" /></g>}
+        {[0, Math.floor(datos.length / 2), datos.length - 1].map((i) => <text key={i} x={x(i)} y={alto + 17} textAnchor={i === 0 ? 'start' : i === datos.length - 1 ? 'end' : 'middle'} className="g-eje">{fDia(new Date(datos[i].fecha))}</text>)}
+      </svg>
+      {h != null && <div className="g-tip"><b>{fDia(new Date(datos[h].fecha))}</b><span>{formato(datos[h].valor)}</span></div>}
+    </div>
+  );
+}

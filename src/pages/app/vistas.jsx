@@ -7,7 +7,9 @@ import { api, pendiente, variacion } from './datos';
 import { HERRAMIENTAS } from './conexiones';
 import { BarrasDia, Donut, Calor, Sparkline, Medidor } from './graficos';
 import { Avatar, Tarjeta, Puntos } from './ui';
-import { estadoDe, fmt, hora, hace, diaLargo, duracion, CAMPOS } from './formato';
+import { LogoHerramienta } from './marcas';
+import { estadoDe, fmt, hora, hace, diaLargo, duracion, CAMPOS, SECCION_DE } from './formato';
+import { AjustesDepto } from './departamentos';
 const Oficina3D = lazy(() => import('../../components/oficina/Oficina3D'));
 
 
@@ -42,7 +44,7 @@ function Pendiente({ e, o }) {
           {conTexto && !abierto && <button className="btn btn--sec btn--sm" onClick={() => setAbierto(true)}>Revisar</button>}
           {conTexto && abierto && <button className="btn btn--sec btn--sm" onClick={copiar}><Copy size={14} /> Copiar</button>}
           {e.tipo === 'pendiente' ? (<>
-            <button className="btn btn--pri btn--sm" onClick={() => decidir('aprobar')}><Check size={14} /> Aprobar</button>
+            <button className="btn btn--pri btn--sm" onClick={() => decidir('aprobar')}>{e.detalle?.accion === 'seguimiento' ? <><Send size={14} /> Enviar</> : <><Check size={14} /> Aprobar</>}</button>
             <button className="btn btn--fan btn--sm" onClick={() => decidir('descartar')}>Descartar</button>
           </>) : <button className="btn btn--pri btn--sm" onClick={() => decidir('hecho')}><Check size={14} /> Hecho</button>}
           {st && <small className="muted">{st}</small>}
@@ -73,23 +75,16 @@ function Agente({ depto, o, onClick }) {
 }
 
 function FichaAgente({ depto, o, cerrar }) {
-  const dep = o.deptos.find((d) => d.depto === depto); const info = DEPTO[depto]; const aj = dep?.ajustes || {};
+  const dep = o.deptos.find((d) => d.depto === depto); const info = DEPTO[depto];
   const u = o.uso[depto] || {}; const evs = o.eventos.filter((e) => e.depto === depto && e.tipo !== 'sistema').slice(0, 8);
-  async function ajustar(c) {
-    const nuevo = { ...aj, ...c };
-    o.setEstado((s) => ({ ...s, deptos: s.deptos.map((x) => (x.depto === depto ? { ...x, ajustes: nuevo } : x)) }));
-    if (!o.demo) await supabase.from('of_departamentos').update({ ajustes: nuevo }).eq('negocio_id', o.negocio.id).eq('depto', depto);
-  }
   return (
     <div className="panel-l" role="dialog" aria-modal="true" aria-label={info.nombre} onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
       <aside className="panel-l__c">
         <header><Avatar depto={depto} size={44} /><div><b>{info.nombre}</b><span className="muted">{fmt(u.unidades_mes)} de {fmt(dep?.cupo_n)} {info.cupo.unidad} este mes</span></div><button className="ico" onClick={cerrar} aria-label="Cerrar"><X size={18} /></button></header>
         <p>{info.que}</p>
-        <ul className="lista-check">{info.hace.map((h) => <li key={h}><Check size={15} />{h}</li>)}</ul>
-        <div className="ajustes">
-          <label className="sw"><input type="checkbox" checked={!!aj.revisar} onChange={(e) => ajustar({ revisar: e.target.checked })} /><span /><div><b>Quiero revisarlo antes</b><small>Te enseña lo que va a publicar o responder y espera tu «Aprobar».</small></div></label>
-          <label className="sw"><input type="checkbox" checked={!!aj.pausado} onChange={(e) => ajustar({ pausado: e.target.checked })} /><span /><div><b>Pausar</b><small>No hará nada hasta que lo reactives.</small></div></label>
-        </div>
+        {SECCION_DE[depto] && <button className="btn btn--sec btn--sm centro-izq" onClick={() => o.ir(SECCION_DE[depto])}>Ir a {DEPTO[depto].corto} <ArrowRight size={14} /></button>}
+        <h3>Cómo trabaja</h3>
+        <AjustesDepto o={o} depto={depto} />
         <h3>Lo último que ha hecho</h3>
         <ol className="feed">{evs.length ? evs.map((e) => <Evento key={e.id} e={e} />) : <p className="muted">Todavía nada.</p>}</ol>
       </aside>
@@ -174,7 +169,7 @@ function PuestaEnMarcha({ o }) {
   ];
   if (pasos.every((p) => p.ok)) return null;
   return (
-    <Tarjeta titulo="Pon en marcha tu oficina" extra={<span className="muted">{pasos.filter((p) => p.ok).length} de 3</span>} className="arranque">
+    <Tarjeta titulo="Pon en marcha tu oficina" extra={<button className="enlace" onClick={() => o.ir('ayuda')}>Ver el tutorial y los vídeos</button>} className="arranque">
       <ol className="pasos">{pasos.map((p, i) => (
         <li key={p.t} className={p.ok ? 'is-ok' : ''}><span className="pasos__n">{p.ok ? <Check size={14} strokeWidth={3} /> : i + 1}</span><div><b>{p.t}</b><small>{p.d}</small></div>
           {!p.ok && <button className="btn btn--pri btn--sm" onClick={() => o.ir(p.ir, null, p.ancla)}>Empezar <ArrowRight size={14} /></button>}</li>
@@ -349,7 +344,7 @@ export function Estadisticas({ o, dias, setDias }) {
 }
 
 // ---------- Enseñar ----------
-function Probar({ o }) {
+export function Probar({ o }) {
   const [msgs, setMsgs] = useState([{ de: 'agente', texto: `¡Hola! Soy el agente de Atención de ${o.negocio.nombre}. Escríbeme como si fueras un cliente.` }]);
   const [t, setT] = useState(''); const [esc, setEsc] = useState(false);
   const [sesion] = useState(() => `prueba${Math.random().toString(36).slice(2, 12)}`);
@@ -453,7 +448,7 @@ export function Conexiones({ o, aviso }) {
           const c = de(h.id); const on = c?.estado === 'conectada'; const u = usa(h);
           return (
             <article key={h.id} className={`tool ${on ? 'is-on' : ''}`}>
-              <span className="tool__logo" style={{ background: h.color }}>{h.letra}</span>
+              <LogoHerramienta id={h.id} size={44} />
               <div className="tool__c"><b>{h.nombre}</b><span>{h.que}</span><small>{u.length ? `La usa${u.length > 1 ? 'n' : ''}: ${u.map((d) => DEPTO[d].corto).join(', ')}` : 'Opcional'}</small></div>
               <div className="tool__a">{on ? (<><span className="ok-t"><Check size={14} strokeWidth={3} />{c.cuenta || 'Conectado'}</span><button className="enlace enlace--gris" onClick={() => quitar(h)}>Desconectar</button></>)
                 : <button className="btn btn--pri btn--sm" disabled={ocupado === h.id} onClick={() => conectar(h)}>{ocupado === h.id ? 'Conectando…' : 'Conectar'}</button>}</div>
@@ -468,7 +463,7 @@ export function Conexiones({ o, aviso }) {
             <header><b>{modal.ayuda ? 'Te ayudamos a conectarlo' : modal.guia ? `Conectar ${modal.h.nombre}` : modal.h.nombre}</b><button className="ico" onClick={() => setModal(null)} aria-label="Cerrar"><X size={18} /></button></header>
             {modal.guia ? (<>
               <div className="guia">
-                <div className="guia__logo"><span className="tool__logo" style={{ background: modal.h.color }}>{modal.h.letra}</span><ArrowRight size={18} className="muted" /><span className="tool__logo" style={{ background: 'var(--acento)' }}>IA</span></div>
+                <div className="guia__logo"><LogoHerramienta id={modal.h.id} size={52} /><ArrowRight size={18} className="muted" /><span className="tool__logo" style={{ background: 'var(--acento)' }}>IA</span></div>
                 <ol className="guia__pasos">
                   <li><b>Lo que necesitas</b><span>{modal.h.requisito}</span></li>
                   <li><b>Qué podrán hacer tus agentes</b><span>{modal.h.permisos}. Nada más, y lo puedes desconectar cuando quieras.</span></li>
