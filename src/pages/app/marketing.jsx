@@ -195,7 +195,9 @@ const ESTADOS_V = [['guion', 'Guion para revisar'], ['montaje', 'En montaje'], [
 function VozBoton({ o, voz, sel, elegir }) {
   const [st, setSt] = useState(''); const audio = useRef(null);
   async function oir(e) {
-    e.stopPropagation(); if (o.demo) { setSt('Suena en tu oficina'); return; }
+    e.stopPropagation();
+    if (voz[3]) { try { audio.current?.pause(); audio.current = new Audio(voz[3]); await audio.current.play(); } catch { setSt('No disponible'); } return; }
+    if (o.demo) { setSt('Suena en tu oficina'); return; }
     setSt('…'); try { const { url } = await api('video', { op: 'muestra', voz: voz[0] }); audio.current = new Audio(url); await audio.current.play(); setSt(''); } catch (er) { setSt(er.message.includes('activ') ? 'Se está activando' : 'No disponible'); }
   }
   return (
@@ -206,7 +208,14 @@ function VozBoton({ o, voz, sel, elegir }) {
   );
 }
 
-function DetalleVideo({ o, v, cerrar }) {
+// Voces disponibles: las de ElevenLabs de la cuenta (con su muestra) o, si no hay, las estándar.
+function useVoces(o) {
+  const [lista, setLista] = useState(VOCES);
+  useEffect(() => { if (o.demo) return; api('video', { op: 'voces' }).then((r) => { if (r.voces?.length) setLista(r.voces.map((x) => [x.id, x.nombre, x.detalle || 'ElevenLabs', x.muestra])); }).catch(() => {}); }, [o.demo]);
+  return lista;
+}
+
+function DetalleVideo({ o, v, cerrar, voces }) {
   const [vozSel, setVoz] = useState(v.voz || 'nova'); const [st, setSt] = useState(''); const [audio, setAudio] = useState(null);
   useEffect(() => { if (!o.demo && v.audio_path) api('video', { op: 'audio', id: v.id }).then((r) => setAudio(r.url)).catch(() => {}); }, [v.id, v.audio_path, o.demo]);
   async function aprobar() {
@@ -225,7 +234,7 @@ function DetalleVideo({ o, v, cerrar }) {
         {audio && <audio controls src={audio} className="vd__audio" />}
         {v.estado === 'guion' && (<>
           <h3>Elige la voz</h3>
-          <div className="vz-grid">{VOCES.map((x) => <VozBoton key={x[0]} o={o} voz={x} sel={vozSel === x[0]} elegir={setVoz} />)}</div>
+          <div className="vz-grid">{voces.map((x) => <VozBoton key={x[0]} o={o} voz={x} sel={vozSel === x[0]} elegir={setVoz} />)}</div>
           <button className="btn btn--pri btn--ancho" onClick={aprobar}><Check size={16} /> Aprobar guion y grabar la voz</button>
         </>)}
         {st && <p className="tuto-st">{st}</p>}
@@ -237,7 +246,7 @@ function DetalleVideo({ o, v, cerrar }) {
 
 export function Videos({ o, abrir }) {
   const aj = ajustesDe('redes', o.deptos.find((d) => d.depto === 'redes')?.ajustes);
-  const [tema, setTema] = useState(''); const [st, setSt] = useState(''); const [ver, setVer] = useState(abrir || null);
+  const [tema, setTema] = useState(''); const [st, setSt] = useState(''); const [ver, setVer] = useState(abrir || null); const voces = useVoces(o);
   async function pedir(e) {
     e.preventDefault(); if (!tema.trim()) return; setSt('Tu agente está escribiendo el guion…');
     try { const v = o.demo ? (await new Promise((r) => setTimeout(r, 1200)), { id: uid('v'), titulo: tema, estado: 'guion', voz: aj.voz || 'nova', creado: new Date().toISOString(), guion: { gancho: `¿Sabías esto sobre ${tema.toLowerCase()}?`, escenas: [] } }) : (await api('video', { op: 'nuevo', tema })).video;
@@ -259,7 +268,7 @@ export function Videos({ o, abrir }) {
             {col.map((x) => (
               <button key={x.id} className="vd-card" onClick={() => setVer(x.id)}>
                 <span className={`vd-card__img is-${x.estilo || 'dinamico'}`}><Clapperboard size={20} /><em>9:16</em></span>
-                <b>{x.titulo}</b><small><Mic size={12} /> {VOCES.find((y) => y[0] === x.voz)?.[1] || 'Nova'} · {hace(x.creado)}</small>
+                <b>{x.titulo}</b><small><Mic size={12} /> {voces.find((y) => y[0] === x.voz)?.[1] || VOCES.find((y) => y[0] === x.voz)?.[1] || 'Voz'} · {hace(x.creado)}</small>
               </button>
             ))}{!col.length && <p className="muted vd-vacio">—</p>}
           </section>
@@ -267,14 +276,14 @@ export function Videos({ o, abrir }) {
       })}</div>
       <div className="fila fila--1-1">
         <Caja icono={Mic} titulo="Tu voz" sub="La voz en off de tus vídeos. Pulsa el altavoz para escucharla.">
-          <div className="vz-grid">{VOCES.map((x) => <VozBoton key={x[0]} o={o} voz={x} sel={(aj.voz || 'nova') === x[0]} elegir={(id) => ajustar({ voz: id })} />)}</div>
+          <div className="vz-grid">{voces.map((x) => <VozBoton key={x[0]} o={o} voz={x} sel={(aj.voz || voces[0][0]) === x[0]} elegir={(id) => ajustar({ voz: id })} />)}</div>
         </Caja>
         <Caja icono={Video} titulo="Tu estilo" sub="Cómo quieres que sean tus vídeos">
           <div className="es-grid">{ESTILOS.map(([k, t, d]) => <button key={k} className={`es ${(aj.estilo_video || 'dinamico') === k ? 'is-on' : ''}`} onClick={() => ajustar({ estilo_video: k })}><span className={`es__m is-${k}`} /><b>{t}</b><small>{d}</small></button>)}</div>
           <button className="enlace" onClick={() => o.ir('material')}><FolderOpen size={14} /> Sube tus fotos y vídeos para que los usemos</button>
         </Caja>
       </div>
-      {v && <DetalleVideo key={v.id} o={o} v={v} cerrar={() => setVer(null)} />}
+      {v && <DetalleVideo key={v.id} o={o} v={v} voces={voces} cerrar={() => setVer(null)} />}
     </div>
   );
 }
