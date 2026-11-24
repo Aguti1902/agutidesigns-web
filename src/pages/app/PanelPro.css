@@ -326,7 +326,7 @@
 .if-prev__btn { justify-self: start; margin-top: 14px; background: #0047ff; color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .88rem; }
 
 /* ---------- responsive ---------- */
-@media (max-width: 1280px) { .pc-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1180px) { .pc-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 1180px) { .cv { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); } .cv-p { display: none; } }
 @media (max-width: 1100px) { .vd-col { grid-template-columns: repeat(2, minmax(0, 1fr)); } .top__btn { display: none; } }
 @media (max-width: 900px) {
