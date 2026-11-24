@@ -9,7 +9,7 @@ import {
 import { responderCliente, generar } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF } from '../../src/data/oficinaSaas.js';
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
-import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, buscarCompetidores, hayPlaces, enviarInforme } from '../_marketing.js';
+import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
 
 const json = (res, c, o) => res.status(c).json(o);
@@ -522,7 +522,9 @@ async function equipo(req, res, neg) {
 
 async function video(req, res, neg) {
   const { op, id, tema, voz: vozId, estilo, guion } = cuerpo(req);
+  if (op === 'voces') return json(res, 200, { proveedor: hayEleven() ? 'elevenlabs' : 'openai', voces: (await vocesEleven().catch(() => null)) || null });
   if (op === 'muestra') {
+    if (hayEleven() && !VOCES.includes(vozId)) { const v = (await vocesEleven().catch(() => null) || []).find((x) => x.id === vozId); return json(res, 200, { url: v?.muestra || null }); }
     const v = VOCES.includes(vozId) ? vozId : 'nova'; const ruta = `_muestras/${v}.mp3`;
     const base = process.env.VITE_OFICINA_SUPABASE_URL; const clave = process.env.OFICINA_SUPABASE_SERVICE_ROLE_KEY;
     const ya = await fetch(`${base}/storage/v1/object/info/oficina-material/${ruta}`, { headers: { Authorization: `Bearer ${clave}`, apikey: clave } });

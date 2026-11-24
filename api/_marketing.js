@@ -121,18 +121,45 @@ export async function guionVideo(neg, tema, ajustes = {}) {
 Divide en 4-6 escenas: para cada una, lo que dice la voz en off (frases cortas), el texto en pantalla y qué se ve (usa material típico del negocio: local, equipo, servicios, antes y después). Sin inventar precios ni ofertas.
 JSON: {"titulo":"...","gancho":"...","escenas":[{"voz":"...","texto":"...","imagen":"..."}],"cierre":"llamada a la acción","texto_post":"...con hashtags"}` } });
   if (!o?.titulo) return null;
-  const [v] = await sb('of_videos', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, titulo: o.titulo, guion: o, estado: 'guion', voz: ajustes.voz || 'nova', estilo: ajustes.estilo || null }] });
+  const [v] = await sb('of_videos', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, titulo: o.titulo, guion: o, estado: 'guion', voz: ajustes.voz || VOZ_DEFECTO(), estilo: ajustes.estilo || null }] });
   await actividad(neg.id, 'redes', `Guion de vídeo listo: «${o.titulo}». Revísalo y elige la voz`, 'pendiente', { accion: 'video', video: v.id, titulo: o.titulo });
   return v;
 }
 
-// Voz en off con OpenAI (gpt-4o-mini-tts). Devuelve el MP3.
-export async function voz(texto, vozId = 'nova', instrucciones = '') {
+// Voz en off: ElevenLabs si está configurado (ELEVENLABS_API_KEY) y la voz es suya; si no, OpenAI (gpt-4o-mini-tts). Devuelve el MP3.
+const esVozEleven = (v) => /^[A-Za-z0-9]{18,24}$/.test(String(v || ''));
+export const hayEleven = () => Boolean(process.env.ELEVENLABS_API_KEY);
+export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || 'htFfPSZGJwjBv1CL0aMD' : 'nova');
+export async function voz(texto, vozId = VOZ_DEFECTO(), instrucciones = '') {
+  if (hayEleven() && (esVozEleven(vozId) || !VOCES.includes(vozId))) {
+    const id = esVozEleven(vozId) ? vozId : VOZ_DEFECTO();
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${id}?output_format=mp3_44100_128`, { method: 'POST',
+      headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: String(texto).slice(0, 4500), model_id: process.env.ELEVENLABS_MODEL || 'eleven_v4', voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0, use_speaker_boost: true } }) });
+    if (!r.ok) throw new Error(`elevenlabs ${r.status}`);
+    return Buffer.from(await r.arrayBuffer());
+  }
   if (!process.env.OPENAI_API_KEY) throw new Error('sin_voz');
   const r = await fetch('https://api.openai.com/v1/audio/speech', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: 'gpt-4o-mini-tts', voice: VOCES.includes(vozId) ? vozId : 'nova', input: String(texto).slice(0, 3500), instructions: `Habla en castellano de España, natural y cercano. ${instrucciones}`.trim(), response_format: 'mp3' }) });
   if (!r.ok) throw new Error(`voz ${r.status}`);
   return Buffer.from(await r.arrayBuffer());
+}
+
+// Voces de ElevenLabs de la cuenta (con su muestra), primero las de España. Se guardan 1 h en memoria.
+let cacheVoces = null;
+export async function vocesEleven() {
+  if (!hayEleven()) return null;
+  if (cacheVoces && cacheVoces.t > Date.now() - 36e5) return cacheVoces.lista;
+  const r = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY } });
+  if (!r.ok) return null;
+  const j = await r.json();
+  const esp = (v) => /spain|castil|españ|peninsular/i.test(JSON.stringify(v.labels || {}) + (v.description || '') + JSON.stringify(v.verified_languages || []));
+  const lista = (j.voices || []).filter((v) => v.preview_url).map((v) => ({ id: v.voice_id, nombre: v.name.split(/[-–(]/)[0].trim(),
+    detalle: [v.labels?.gender === 'female' ? 'Mujer' : v.labels?.gender === 'male' ? 'Hombre' : null, v.labels?.age, v.labels?.accent, v.labels?.descriptive || v.labels?.description].filter(Boolean).join(' · '),
+    muestra: v.preview_url, espana: esp(v) })).sort((a, b) => Number(b.espana) - Number(a.espana)).slice(0, 24);
+  cacheVoces = { t: Date.now(), lista };
+  return lista;
 }
 
 export async function subirArchivo(ruta, buffer, tipo) {
