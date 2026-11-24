@@ -33,3 +33,6 @@ export const CAMPOS = [
   ['precios', 'Servicios y precios', 'Corte 18 € · Tinte desde 35 €…', true], ['tono', 'Cómo hablas con tus clientes', 'Cercano, de tú, con algún emoji'],
   ['instrucciones', 'Lo que nunca deben hacer o decir', 'No dar descuentos. No confirmar citas sin mirar la agenda…', true],
 ];
+
+// Sección del panel de cada departamento.
+export const SECCION_DE = { citas: 'agenda', ventas: 'clientes', redes: 'publicaciones', google: 'resenas', contenido: 'articulos', atencion: 'conversaciones' };

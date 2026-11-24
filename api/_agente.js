@@ -31,6 +31,14 @@ export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = fals
   throw new Error('sin_ia');
 }
 
+// «2026-12-03T17:00» en hora de Madrid → ISO UTC (tiene en cuenta el horario de verano).
+export function fechaMadrid(local) {
+  const aprox = new Date(`${local}:00Z`);
+  const enMadrid = new Date(aprox.toLocaleString('en-US', { timeZone: 'Europe/Madrid' }));
+  const enUtc = new Date(aprox.toLocaleString('en-US', { timeZone: 'UTC' }));
+  return new Date(aprox.getTime() - (enMadrid - enUtc)).toISOString();
+}
+
 export function leerJson(t) {
   const m = String(t || '').match(/\{[\s\S]*\}/);
   try { return m ? JSON.parse(m[0]) : null; } catch { return null; }
@@ -95,7 +103,9 @@ REGLAS:
 - No confirmes citas ni horas concretas: recoge el día y la hora que prefiere y di que se lo confirmáis enseguida (marca pasar_a_humano con motivo "cita").
 - Si pide hablar con una persona, se queja, pide un descuento o es un tema delicado, sé amable y marca pasar_a_humano.
 - No digas que eres una IA salvo que te lo pregunten; si te lo preguntan, di la verdad: eres el asistente virtual del negocio.
-Devuelve SOLO un JSON: {"respuesta": "...", "pasar_a_humano": true|false, "motivo": "cita|presupuesto|queja|persona|duda|otro|", "tema": "precios|horarios|servicios|ubicación|citas|presupuesto|otros", "nombre_cliente": "nombre si lo ha dicho o vacío"}`;
+Devuelve SOLO un JSON: {"respuesta": "...", "pasar_a_humano": true|false, "motivo": "cita|presupuesto|queja|persona|duda|otro|", "tema": "precios|horarios|servicios|ubicación|citas|presupuesto|otros", "nombre_cliente": "nombre si lo ha dicho o vacío",
+ "cita": {"servicio": "qué quiere o vacío", "cuando": "día y hora que pide, en sus palabras", "fecha_iso": "YYYY-MM-DDTHH:MM si se puede saber con seguridad, si no vacío"} o null si no pide cita,
+ "interes": "si pide presupuesto o muestra interés de compra: qué le interesa en pocas palabras; si no, vacío"}`;
   const t0 = Date.now();
   let ia;
   try { ia = await llamarIA({ sistema, mensajes, maxTokens: 400, json: true }); }
@@ -115,6 +125,18 @@ Devuelve SOLO un JSON: {"respuesta": "...", "pasar_a_humano": true|false, "motiv
   if (o.pasar_a_humano) cambios.necesita = o.motivo || 'duda';
   await sb(`of_conversaciones?id=eq.${conversacion.id}`, { metodo: 'PATCH', cuerpo: cambios });
   if (primera) await actividad(negocio.id, depto, `Ha contestado a ${quien2} por ${nombreCanal}${o.tema && o.tema !== 'otros' ? ` (${o.tema})` : ''}`, 'hecho', { canal, ms, tema: o.tema || 'otros', conversacion: conversacion.id });
+  // Citas y clientes potenciales: quedan registrados para la Agenda y el embudo de Ventas.
+  if (o.cita && (o.cita.cuando || o.cita.servicio)) {
+    const yaCita = await uno(`of_citas?conversacion_id=eq.${conversacion.id}&estado=eq.pendiente&select=id`);
+    const fecha = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(o.cita.fecha_iso || '') ? fechaMadrid(o.cita.fecha_iso.slice(0, 16)) : null;
+    const fila = { nombre: nombre || null, contacto: conversacion.contacto, canal, servicio: String(o.cita.servicio || '').slice(0, 160) || null, cuando_texto: String(o.cita.cuando || '').slice(0, 160) || null, fecha, actualizado: new Date().toISOString() };
+    if (yaCita) await sb(`of_citas?id=eq.${yaCita.id}`, { metodo: 'PATCH', cuerpo: fila });
+    else await sb('of_citas', { metodo: 'POST', cuerpo: [{ ...fila, negocio_id: negocio.id, conversacion_id: conversacion.id }] });
+  }
+  if (o.interes || o.tema === 'presupuesto' || o.motivo === 'presupuesto') {
+    await sb('of_leads?on_conflict=conversacion_id', { metodo: 'POST', prefer: 'resolution=merge-duplicates',
+      cuerpo: [{ negocio_id: negocio.id, conversacion_id: conversacion.id, nombre: nombre || null, contacto: conversacion.contacto, canal, interes: String(o.interes || 'Pide presupuesto').slice(0, 200), actualizado: new Date().toISOString() }] }).catch(() => {});
+  }
   if (o.pasar_a_humano) {
     const motivo = { cita: 'quiere cita', presupuesto: 'pide presupuesto', queja: 'tiene una queja', persona: 'quiere hablar contigo', duda: 'pregunta algo que tus agentes no saben' }[o.motivo] || 'necesita que le contestes tú';
     await actividad(negocio.id, o.motivo === 'cita' ? 'citas' : o.motivo === 'presupuesto' ? 'ventas' : depto, `${quien2} ${motivo}. Último mensaje: «${mensajes[mensajes.length - 1]?.content.slice(0, 140) || ''}»`, 'aviso', { conversacion: conversacion.id, motivo: o.motivo });
