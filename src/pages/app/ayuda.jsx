@@ -88,7 +88,7 @@ export function Tutorial({ o, cerrar }) {
           {id === 'hola' && (<>
             <p className="tuto__k">Primeros pasos · 5 minutos</p>
             <h1>¡Bienvenido a tu oficina, {o.negocio.nombre}!</h1>
-            <p className="tuto__lead">Te acompañamos en 4 pasos para que tus agentes empiecen a trabajar hoy mismo. Mira este vídeo de un minuto y empezamos.</p>
+            <p className="tuto__lead">Te acompañamos en 4 pasos para que tus agentes empiecen a trabajar hoy mismo. Mira este vídeo corto y empezamos.</p>
             <VideoEnLinea id="bienvenida" o={o} />
             <h2>Tu equipo</h2>
             <ul className="tuto-eq">{mis.map((d) => <li key={d} style={{ '--c': DEPTO[d].color }}><Avatar depto={d} size={38} /><div><b>{DEPTO[d].nombre}</b><span>{DEPTO[d].que}</span></div></li>)}</ul>
