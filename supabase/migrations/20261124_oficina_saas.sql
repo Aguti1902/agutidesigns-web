@@ -217,3 +217,14 @@ grant select, insert, delete on public.of_conocimiento to authenticated;
 
 -- ---------- Tiempo real para el panel ----------
 alter publication supabase_realtime add table public.of_agentes, public.of_conversaciones, public.of_mensajes;
+
+-- ---------- Permisos explícitos (no depender de los privilegios por defecto del proyecto) ----------
+grant usage on schema public to authenticated, service_role;
+grant select on public.of_negocios, public.of_departamentos, public.of_consumo, public.of_actividad,
+  public.of_agentes, public.of_conversaciones, public.of_mensajes to authenticated;
+grant all on public.of_negocios, public.of_departamentos, public.of_consumo, public.of_actividad, public.of_conexiones,
+  public.of_agentes, public.of_conversaciones, public.of_mensajes, public.of_conocimiento to service_role;
+grant select on public.of_uso_mes to service_role;
+grant usage, select on all sequences in schema public to service_role;
+grant execute on function public.of_saldo(uuid, text) to service_role;
+grant execute on function public.of_es_mio(uuid) to authenticated, service_role;
