@@ -26,6 +26,8 @@ const Onboarding = lazy(() => import('./pages/Onboarding.jsx'));
 const NichoLanding = lazy(() => import('./pages/NichoLanding.jsx'));
 const DisenoWebIndex = lazy(() => import('./pages/DisenoWebIndex.jsx'));
 const Casos = lazy(() => import('./pages/Casos.jsx'));
+const PanelOficina = lazy(() => import('./pages/app/Panel.jsx'));
+const BienvenidaOficina = lazy(() => import('./pages/app/Bienvenida.jsx'));
 import './index.css';
 import './styles/site.css';
 
@@ -41,6 +43,9 @@ createRoot(document.getElementById('root')).render(
           <Route path="/calculadora" element={<CalculadoraLanding />} />
           <Route path="/clinicas-dentales" element={<ClinicasDentales />} />
           <Route path="/oficina-ia" element={<OficinaIA />} />
+          <Route path="/app" element={<PanelOficina />} />
+          <Route path="/app/bienvenida" element={<BienvenidaOficina />} />
+          <Route path="/app/:vista" element={<PanelOficina />} />
           <Route path="/clinicas-dentales/consulta" element={<ClinicasConsulta />} />
           <Route path="/casos" element={<Casos />} />
           <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />

@@ -1,0 +1,230 @@
+-- Oficina de IA en modo SaaS: negocios, departamentos contratados, consumo de IA y actividad en vivo.
+-- Proyecto propio de la oficina (Supabase de info@agutidesigns.io). Todas las tablas llevan el prefijo of_.
+
+create table if not exists public.of_negocios (
+  id              uuid primary key default gen_random_uuid(),
+  created_at      timestamptz not null default now(),
+  nombre          text not null,
+  owner_email     text not null,
+  sector          text,
+  telefono        text,
+  direccion       text,
+  horarios        text,
+  precios         text,
+  tono            text,
+  instrucciones   text,
+  onboarding      jsonb not null default '{}'::jsonb,
+  estado          text not null default 'activo' check (estado in ('activo','impago','pausado','cancelado')),
+  importe_mes     integer,
+  stripe_customer     text,
+  stripe_subscription text unique,
+  stripe_session      text unique
+);
+create index if not exists of_negocios_owner on public.of_negocios (lower(owner_email));
+
+create table if not exists public.of_departamentos (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  depto       text not null,
+  activo      boolean not null default true,
+  cupo_n      integer not null,
+  tokens_mes  bigint not null,
+  unique (negocio_id, depto)
+);
+
+-- Cada llamada a la IA deja aquí su gasto. El motor de agentes comprueba el saldo ANTES de llamar.
+create table if not exists public.of_consumo (
+  id          bigserial primary key,
+  creado      timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  depto       text not null,
+  modelo      text,
+  tokens_in   integer not null default 0,
+  tokens_out  integer not null default 0,
+  coste_usd   numeric(10,5) not null default 0,
+  unidades    integer not null default 0  -- conversaciones, citas, posts… lo que cuenta para el cupo visible
+);
+create index if not exists of_consumo_mes on public.of_consumo (negocio_id, depto, creado);
+
+-- Lo que hacen los agentes, para el feed y la oficina 3D en directo.
+create table if not exists public.of_actividad (
+  id          bigserial primary key,
+  creado      timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  depto       text not null,
+  tipo        text not null default 'hecho' check (tipo in ('hecho','aviso','pendiente','sistema')),
+  texto       text not null,
+  detalle     jsonb
+);
+create index if not exists of_actividad_feed on public.of_actividad (negocio_id, creado desc);
+
+-- Uso del mes en curso por departamento.
+create or replace view public.of_uso_mes with (security_invoker = true) as
+select d.negocio_id, d.depto, d.cupo_n, d.tokens_mes,
+       coalesce(sum(c.unidades), 0)::int                    as unidades_mes,
+       coalesce(sum(c.tokens_in + c.tokens_out), 0)::bigint as tokens_usados,
+       coalesce(sum(c.tokens_in + c.tokens_out) filter (where c.creado >= date_trunc('day', now())), 0)::bigint as tokens_hoy
+from public.of_departamentos d
+left join public.of_consumo c
+  on c.negocio_id = d.negocio_id and c.depto = d.depto and c.creado >= date_trunc('month', now())
+group by d.negocio_id, d.depto, d.cupo_n, d.tokens_mes;
+
+-- Saldo que usa el motor de agentes (service role) antes de cada llamada: mensual y diario (mes / 15).
+create or replace function public.of_saldo(p_negocio uuid, p_depto text)
+returns table (puede boolean, tokens_restantes bigint, tokens_hoy_restantes bigint, pct numeric)
+language sql stable security definer set search_path = public as $$
+  select (n.estado = 'activo' and d.activo
+          and u.tokens_usados < u.tokens_mes and u.tokens_hoy < u.tokens_mes / 15) as puede,
+         greatest(u.tokens_mes - u.tokens_usados, 0),
+         greatest(u.tokens_mes / 15 - u.tokens_hoy, 0),
+         round(u.tokens_usados::numeric / nullif(u.tokens_mes, 0), 3)
+  from public.of_uso_mes u
+  join public.of_departamentos d on d.negocio_id = u.negocio_id and d.depto = u.depto
+  join public.of_negocios n on n.id = u.negocio_id
+  where u.negocio_id = p_negocio and u.depto = p_depto;
+$$;
+revoke all on function public.of_saldo(uuid, text) from public, anon, authenticated;
+
+-- Seguridad: cada cliente solo ve su negocio (por el correo con el que entra).
+alter table public.of_negocios      enable row level security;
+alter table public.of_departamentos enable row level security;
+alter table public.of_consumo       enable row level security;
+alter table public.of_actividad     enable row level security;
+
+create or replace function public.of_es_mio(p_negocio uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.of_negocios n
+                 where n.id = p_negocio and lower(n.owner_email) = lower(auth.jwt() ->> 'email'));
+$$;
+
+create policy of_negocios_leer on public.of_negocios for select to authenticated
+  using (lower(owner_email) = lower(auth.jwt() ->> 'email'));
+create policy of_negocios_editar on public.of_negocios for update to authenticated
+  using (lower(owner_email) = lower(auth.jwt() ->> 'email'))
+  with check (lower(owner_email) = lower(auth.jwt() ->> 'email'));
+create policy of_departamentos_leer on public.of_departamentos for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_consumo_leer       on public.of_consumo       for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_actividad_leer     on public.of_actividad     for select to authenticated using (public.of_es_mio(negocio_id));
+
+-- El cliente solo puede editar los datos de su negocio, nunca estado, importe ni Stripe.
+revoke insert, update, delete on public.of_negocios from anon, authenticated;
+grant update (sector, telefono, direccion, horarios, precios, tono, instrucciones, onboarding) on public.of_negocios to authenticated;
+revoke insert, update, delete on public.of_departamentos, public.of_consumo, public.of_actividad from anon, authenticated;
+revoke all on public.of_negocios, public.of_departamentos, public.of_consumo, public.of_actividad from anon;
+grant select on public.of_uso_mes to authenticated;
+
+-- Feed en directo
+alter publication supabase_realtime add table public.of_actividad;
+
+
+-- ---------- Ajustes por departamento ----------
+alter table public.of_departamentos add column if not exists ajustes jsonb not null default '{}'::jsonb;
+create policy of_departamentos_ajustar on public.of_departamentos for update to authenticated
+  using (public.of_es_mio(negocio_id)) with check (public.of_es_mio(negocio_id));
+grant update (ajustes) on public.of_departamentos to authenticated;
+
+-- ---------- Bandeja «Te necesitan»: avisos y tareas pendientes se resuelven ----------
+alter table public.of_actividad add column if not exists resuelto boolean not null default false;
+alter table public.of_actividad add column if not exists respuesta text;
+create index if not exists of_actividad_pendientes on public.of_actividad (negocio_id) where tipo in ('aviso','pendiente') and not resuelto;
+
+-- ---------- Conexiones de herramientas (tokens cifrados, nunca legibles desde el navegador) ----------
+create table if not exists public.of_conexiones (
+  id              uuid primary key default gen_random_uuid(),
+  created_at      timestamptz not null default now(),
+  negocio_id      uuid not null references public.of_negocios(id) on delete cascade,
+  herramienta     text not null,
+  proveedor       text not null,
+  estado          text not null default 'conectada' check (estado in ('conectada','caducada','error')),
+  cuenta          text,
+  externo_id      text,
+  token_cifrado   text,
+  refresh_cifrado text,
+  expira          timestamptz,
+  scopes          text,
+  unique (negocio_id, herramienta)
+);
+create index if not exists of_conexiones_externo on public.of_conexiones (herramienta, externo_id);
+alter table public.of_conexiones enable row level security;
+create policy of_conexiones_leer on public.of_conexiones for select to authenticated using (public.of_es_mio(negocio_id));
+revoke all on public.of_conexiones from anon, authenticated;
+grant select (id, created_at, negocio_id, herramienta, proveedor, estado, cuenta) on public.of_conexiones to authenticated;
+
+-- ---------- Estado en directo de cada agente ----------
+create table if not exists public.of_agentes (
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  depto       text not null,
+  estado      text not null default 'disponible',
+  tarea       text,
+  actualizado timestamptz not null default now(),
+  primary key (negocio_id, depto)
+);
+alter table public.of_agentes enable row level security;
+create policy of_agentes_leer on public.of_agentes for select to authenticated using (public.of_es_mio(negocio_id));
+revoke insert, update, delete on public.of_agentes from anon, authenticated;
+
+-- ---------- Conversaciones con clientes (chat web y WhatsApp) ----------
+create table if not exists public.of_conversaciones (
+  id          uuid primary key default gen_random_uuid(),
+  creado      timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  canal       text not null check (canal in ('web','whatsapp')),
+  contacto    text not null,
+  nombre      text,
+  estado      text not null default 'agente' check (estado in ('agente','humano','cerrada')),
+  necesita    text,
+  tema        text,
+  leido       boolean not null default false,
+  seguimiento timestamptz,
+  ultimo      timestamptz not null default now(),
+  unique (negocio_id, canal, contacto)
+);
+create index if not exists of_conversaciones_lista on public.of_conversaciones (negocio_id, ultimo desc);
+create table if not exists public.of_mensajes (
+  id              bigserial primary key,
+  creado          timestamptz not null default now(),
+  conversacion_id uuid not null references public.of_conversaciones(id) on delete cascade,
+  negocio_id      uuid not null references public.of_negocios(id) on delete cascade,
+  de              text not null check (de in ('cliente','agente','humano')),
+  texto           text not null,
+  externo_id      text unique
+);
+create index if not exists of_mensajes_conv on public.of_mensajes (conversacion_id, creado);
+alter table public.of_conversaciones enable row level security;
+alter table public.of_mensajes enable row level security;
+create policy of_conversaciones_leer on public.of_conversaciones for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_mensajes_leer on public.of_mensajes for select to authenticated using (public.of_es_mio(negocio_id));
+revoke insert, update, delete on public.of_conversaciones, public.of_mensajes from anon, authenticated;
+revoke all on public.of_conversaciones, public.of_mensajes from anon;
+
+-- ---------- Lo que el dueño enseña a sus agentes ----------
+create table if not exists public.of_conocimiento (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  negocio_id  uuid not null references public.of_negocios(id) on delete cascade,
+  tipo        text not null check (tipo in ('faq','nota')),
+  pregunta    text,
+  respuesta   text not null check (char_length(respuesta) <= 2000),
+  hasta       date
+);
+alter table public.of_conocimiento enable row level security;
+create policy of_conocimiento_leer   on public.of_conocimiento for select to authenticated using (public.of_es_mio(negocio_id));
+create policy of_conocimiento_crear  on public.of_conocimiento for insert to authenticated with check (public.of_es_mio(negocio_id));
+create policy of_conocimiento_borrar on public.of_conocimiento for delete to authenticated using (public.of_es_mio(negocio_id));
+revoke all on public.of_conocimiento from anon;
+grant select, insert, delete on public.of_conocimiento to authenticated;
+
+-- ---------- Tiempo real para el panel ----------
+alter publication supabase_realtime add table public.of_agentes, public.of_conversaciones, public.of_mensajes;
+
+-- ---------- Permisos explícitos (no depender de los privilegios por defecto del proyecto) ----------
+grant usage on schema public to authenticated, service_role;
+grant select on public.of_negocios, public.of_departamentos, public.of_consumo, public.of_actividad,
+  public.of_agentes, public.of_conversaciones, public.of_mensajes to authenticated;
+grant all on public.of_negocios, public.of_departamentos, public.of_consumo, public.of_actividad, public.of_conexiones,
+  public.of_agentes, public.of_conversaciones, public.of_mensajes, public.of_conocimiento to service_role;
+grant select on public.of_uso_mes to service_role;
+grant usage, select on all sequences in schema public to service_role;
+grant execute on function public.of_saldo(uuid, text) to service_role;
+grant execute on function public.of_es_mio(uuid) to authenticated, service_role;

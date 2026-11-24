@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './Oficina3D.css';
-import { AGENTES } from './agentes';
+import { AGENTES as AGENTES_WEB } from './agentes';
 
 
 
@@ -24,28 +24,32 @@ function etiqueta(texto, color) {
   return s;
 }
 
-function pantallaPanel() {
+function pantallaPanel(AGENTES, titulo = 'Panel de agentes') {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 640;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   const pintar = (estado) => {
     const g = c.getContext('2d');
     g.fillStyle = '#0b1230'; g.fillRect(0, 0, 1024, 640);
-    g.fillStyle = '#ffffff'; g.font = '700 46px Inter, system-ui, sans-serif'; g.fillText('Panel de agentes', 48, 78);
+    g.fillStyle = '#ffffff'; g.font = '700 46px Inter, system-ui, sans-serif'; g.fillText(titulo, 48, 78);
     g.fillStyle = '#3ccf8e'; g.beginPath(); g.arc(905, 64, 10, 0, Math.PI * 2); g.fill();
     g.font = '600 26px Inter, system-ui, sans-serif'; g.fillText('En marcha', 760, 74);
     AGENTES.forEach((a, i) => {
-      const y = 130 + i * 82;
+      const y = 130 + i * (AGENTES.length > 6 ? 70 : 82);
       g.fillStyle = 'rgba(255,255,255,0.06)'; g.beginPath(); g.roundRect(40, y, 944, 66, 16); g.fill();
       g.fillStyle = a.color; g.beginPath(); g.arc(78, y + 33, 12, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#ffffff'; g.font = '600 28px Inter, system-ui, sans-serif'; g.fillText(a.nombre, 104, y + 43);
-      g.fillStyle = 'rgba(255,255,255,0.65)'; g.font = '400 24px Inter, system-ui, sans-serif'; g.fillText(a.tareas[estado[i]], 340, y + 42);
+      g.fillStyle = 'rgba(255,255,255,0.65)'; g.font = '400 24px Inter, system-ui, sans-serif'; g.fillText(String(a.vivo || a.tareas[estado[i]]).slice(0, 52), 340, y + 42);
     });
     t.needsUpdate = true;
   };
   return { textura: t, pintar };
 }
 
-export default function Oficina3D({ onSelect, seleccionado }) {
+// agentes: los departamentos que se muestran (por defecto los seis de la web). apiRef: si se pasa, recibe
+// { aviso(i, texto) } para lanzar un aviso real desde la mesa i al panel (panel del cliente en directo).
+export default function Oficina3D({ onSelect, seleccionado, agentes, apiRef, titulo, auto = true }) {
+  const AGENTES = agentes?.length ? agentes : AGENTES_WEB;
+  const clave = AGENTES.map((a) => a.id).join(',');
   const ref = useRef(null);
   const selRef = useRef(seleccionado);
   const [fallo, setFallo] = useState(false);
@@ -87,7 +91,7 @@ export default function Oficina3D({ onSelect, seleccionado }) {
     const alfombra = new THREE.Mesh(new THREE.CircleGeometry(3.2, 64), mat('#e8eeff')); alfombra.rotation.x = -Math.PI / 2; alfombra.position.y = 0.012; alfombra.receiveShadow = true; scene.add(alfombra);
 
     // la pantalla del panel, en el centro
-    const panel = pantallaPanel();
+    const panel = pantallaPanel(AGENTES, titulo);
     const estado = AGENTES.map(() => 0); panel.pintar(estado);
     const tot = new THREE.Group(); scene.add(tot);
     caja(0.3, 2.2, 0.3, '#c9ced9', 0, 1.1, -0.3, tot);
@@ -140,6 +144,7 @@ export default function Oficina3D({ onSelect, seleccionado }) {
     // avisos que viajan de una mesa al panel
     const avisos = [];
     const geoAviso = new THREE.SphereGeometry(0.12, 16, 12);
+    if (apiRef) apiRef.current = { aviso: (i, texto) => { if (i < 0 || i >= AGENTES.length) return; if (texto) AGENTES[i].vivo = texto; lanzar(i); } };
     function lanzar(i) {
       const m = mesas[i], a = AGENTES[i];
       const p0 = new THREE.Vector3(); m.brillo.getWorldPosition(p0);
@@ -182,7 +187,7 @@ export default function Oficina3D({ onSelect, seleccionado }) {
         m.sel.material.opacity += ((s ? 0.9 : 0) - m.sel.material.opacity) * 0.15;
         m.et.scale.setScalar(1); m.et.scale.set(s ? 3.8 : 3.2, s ? 0.95 : 0.8, 1);
       });
-      if (!reduce && ahora - ultimoAviso > 1300) { ultimoAviso = ahora; lanzar(Math.floor(Math.random() * AGENTES.length)); }
+      if (auto && !reduce && ahora - ultimoAviso > 1300) { ultimoAviso = ahora; lanzar(Math.floor(Math.random() * AGENTES.length)); }
       for (let k = avisos.length - 1; k >= 0; k--) {
         const a = avisos[k], u = (ahora - a.t0) / 1600;
         if (u >= 1) { scene.remove(a.mesh); a.mesh.material.dispose(); avisos.splice(k, 1); estado[a.i] = (estado[a.i] + 1) % 3; continue; }
@@ -202,7 +207,8 @@ export default function Oficina3D({ onSelect, seleccionado }) {
       scene.traverse((o) => { o.geometry?.dispose?.(); if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.map?.dispose?.(); m.dispose(); }); } });
       renderer.dispose(); el.removeChild(renderer.domElement);
     };
-  }, [onSelect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSelect, clave]);
 
   if (fallo) return <div className="o3-fallo">Tu navegador no puede mostrar la oficina en 3D. Pide una demo y te la enseñamos en directo.</div>;
   return (

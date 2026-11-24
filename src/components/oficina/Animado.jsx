@@ -1,3 +1,4 @@
+import { PRECIO_SUELTO } from '../../data/oficinaSaas';
 // Piezas animadas de la landing «Oficina de IA» (estilo presentación de producto):
 // aparición al hacer scroll, frase que se ilumina palabra a palabra, tarjetas que se apilan,
 // comparativa honesta y botón flotante. Todo respeta «reducir movimiento».
@@ -150,8 +151,8 @@ export function Cierre() {
       <div className="ag-wrap cierre__in">
         <p className="cierre__k">Última duda</p>
         <h2 className="cierre__h">¿Sigue siendo<br /><span>un no?</span></h2>
-        <p className="cierre__p">Te enseñamos la oficina de Agutidesigns funcionando y vemos tu caso en 30 minutos. Si en tu empresa no tiene sentido, te lo diremos.</p>
-        <a href="#propuesta" className="ag-btn ag-btn--primary cierre__btn">Pide una demo <ArrowRight size={18} /></a>
+        <p className="cierre__p">Empieza con un solo departamento por {PRECIO_SUELTO} € al mes, sin permanencia. Si no te compensa, te das de baja desde tu panel.</p>
+        <a href="#precios" className="ag-btn ag-btn--primary cierre__btn">Monta tu oficina <ArrowRight size={18} /></a>
       </div>
     </section>
   );
@@ -162,7 +163,7 @@ export function BotonFlotante() {
   const [ver, setVer] = useState(false);
   useEffect(() => {
     const on = () => {
-      const lead = document.getElementById('propuesta');
+      const lead = document.getElementById('precios');
       const enLead = lead && lead.getBoundingClientRect().top < window.innerHeight * 0.9;
       setVer(window.scrollY > window.innerHeight * 0.9 && !enLead);
     };
@@ -171,8 +172,8 @@ export function BotonFlotante() {
   }, []);
   return (
     <div className={`flota ${ver ? 'is-on' : ''}`} aria-hidden={!ver}>
-      <span className="flota__t"><span className="flota__x">Oficina de IA · </span>desde 290 €/mes</span>
-      <a href="#propuesta" className="ag-btn ag-btn--primary ag-btn--sm" tabIndex={ver ? 0 : -1}>Pide una demo</a>
+      <span className="flota__t"><span className="flota__x">Oficina de IA · </span>desde {PRECIO_SUELTO} €/mes</span>
+      <a href="#precios" className="ag-btn ag-btn--primary ag-btn--sm" tabIndex={ver ? 0 : -1}>Monta tu oficina</a>
     </div>
   );
 }

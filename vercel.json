@@ -67,5 +67,11 @@
     "api/kit-descarga.js": {
       "includeFiles": "privado/**"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/oficina/cron",
+      "schedule": "0 7 * * *"
+    }
+  ]
 }
