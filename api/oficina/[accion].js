@@ -76,7 +76,8 @@ async function acceso(req, res) {
 // ---------------- cuenta del cliente ----------------
 async function portal(req, res, neg) {
   if (!neg.stripe_customer) return json(res, 404, { error: 'Sin suscripción' });
-  const p = await stripe('billing_portal/sessions', { metodo: 'POST', datos: { customer: neg.stripe_customer, return_url: `${origen(req)}/app/ajustes` } });
+  const p = await stripe('billing_portal/sessions', { metodo: 'POST', datos: { customer: neg.stripe_customer, return_url: `${origen(req)}/app/ajustes`,
+    configuration: process.env.STRIPE_OFICINA_PORTAL || 'bpc_1UfMQwFjBSJ299OpPt1ZdCAO' } });
   return json(res, 200, { url: p.url });
 }
 
