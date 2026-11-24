@@ -56,7 +56,7 @@ export function VideoModal({ id, cerrar }) {
     <div className="modal modal--video" role="dialog" aria-modal="true" aria-label={v.t} onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
       <div className="modal__c">
         <header><b>{v.t}</b><button className="ico" onClick={cerrar} aria-label="Cerrar"><X size={18} /></button></header>
-        <video ref={ref} src={v.src} poster={v.poster} controls autoPlay playsInline muted className="video" />
+        <video ref={ref} src={v.src} poster={v.poster} controls autoPlay playsInline className="video" />
         <p className="muted">{v.d}</p>
       </div>
     </div>
