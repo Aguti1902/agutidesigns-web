@@ -1,8 +1,8 @@
 // Vistas del panel de la Oficina de IA. Lenguaje llano, una acción clara por bloque.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, CircleHelp, Copy, ExternalLink, MessageCircle, Pause, Play, Plus, Search, Send, Trash2, UserRound, X } from 'lucide-react';
+import { ArrowRight, Check, CircleHelp, Copy, ExternalLink, Gift, Globe, MessageCircle, Pause, Play, Plus, Search, Send, Trash2, UserRound, X } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
-import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina } from '../../data/oficinaSaas';
+import { DEPARTAMENTOS, DEPTO, AVISO_CUPO, precioOficina, precioAnual, webIncluida, WEB_DESDE } from '../../data/oficinaSaas';
 import { api, pendiente, variacion } from './datos';
 import { HERRAMIENTAS } from './conexiones';
 import { BarrasDia, Donut, Calor, Sparkline, Medidor } from './graficos';
@@ -119,6 +119,48 @@ function Oficina3DViva({ o }) {
   return <div className="of3d"><Suspense fallback={<div className="o3-lienzo" />}><Oficina3D agentes={agentes} apiRef={api3d} titulo={o.negocio.nombre.slice(0, 22)} auto={false} /></Suspense></div>;
 }
 
+// ---------- Prueba gratis y web incluida ----------
+function Prueba({ o }) {
+  const fin = o.negocio.prueba_hasta && new Date(o.negocio.prueba_hasta);
+  if (!fin || fin < new Date(o.ahora)) return null;
+  const dias = Math.max(1, Math.ceil((fin - o.ahora) / 864e5));
+  return (
+    <p className="banda-prueba"><Gift size={17} /><span><b>Te {dias === 1 ? 'queda 1 día' : `quedan ${dias} días`} de prueba gratis</b> (hasta el {fin.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}). Mientras tanto cada departamento trabaja con el 25 % de su cupo. No se te cobra nada hasta ese día.</span>
+      <button className="enlace" onClick={() => o.ir('ajustes')}>Ver mi plan</button></p>
+  );
+}
+
+export function WebIncluida({ o, compacta }) {
+  const [tiene, setTiene] = useState(true); const [url, setUrl] = useState(''); const [que, setQue] = useState(''); const [st, setSt] = useState('');
+  const e = o.negocio.web_estado;
+  async function enviar(ev) {
+    ev.preventDefault(); setSt('Enviando…');
+    try { if (!o.demo) await api('web', { tiene, url, que }); o.setEstado((x) => ({ ...x, negocio: { ...x.negocio, web_estado: 'solicitada', web_detalle: { tiene, url, que } } })); setSt(''); }
+    catch (err) { setSt(err.message); }
+  }
+  if (compacta) {
+    return (
+      <Tarjeta titulo="Tu web está incluida" extra={<Globe size={18} className="muted" />}>
+        <p className="muted">Tu plan anual incluye el diseño de tu web, o el rediseño de la que ya tienes. Cuéntanos qué necesitas y nos ponemos con ella.</p>
+        <button className="btn btn--pri centro-izq" onClick={() => o.ir('ajustes', null, 'web')}>Pedir mi web <ArrowRight size={15} /></button>
+      </Tarjeta>
+    );
+  }
+  return (
+    <Tarjeta titulo="Tu web" id="web" extra={<span className="chip">{{ pendiente: 'Sin pedir', solicitada: 'Pedida', en_curso: 'En marcha', entregada: 'Entregada' }[e] || ''}</span>}>
+      {e === 'pendiente' ? (
+        <form className="form1" onSubmit={enviar}>
+          <p className="muted">Tu plan anual incluye el diseño de tu web, o el rediseño de la que ya tienes. Cuéntanos lo básico y te escribimos en menos de 48 h laborables.</p>
+          <div className="seg"><button type="button" aria-pressed={tiene} onClick={() => setTiene(true)}>Ya tengo web</button><button type="button" aria-pressed={!tiene} onClick={() => setTiene(false)}>No tengo web</button></div>
+          {tiene && <label className="campo"><span>Dirección de tu web</span><input value={url} onChange={(x) => setUrl(x.target.value)} placeholder="https://tuweb.com" /></label>}
+          <label className="campo"><span>¿Qué te gustaría?</span><textarea rows={4} value={que} onChange={(x) => setQue(x.target.value)} placeholder="Qué secciones quieres, webs que te gustan, colores, si quieres reservas online…" /></label>
+          <div className="fila-btn"><button className="btn btn--pri">Pedir mi web</button>{st && <span className="muted">{st}</span>}</div>
+        </form>
+      ) : <p className="muted">{e === 'solicitada' ? 'Ya lo tenemos. Te escribimos en menos de 48 h laborables para empezar.' : e === 'en_curso' ? 'Estamos trabajando en tu web.' : 'Tu web está entregada. Si necesitas algún cambio, escríbenos.'}</p>}
+    </Tarjeta>
+  );
+}
+
 // ---------- Inicio ----------
 function PuestaEnMarcha({ o }) {
   const datos = CAMPOS.slice(0, 5).every(([k]) => String(o.negocio[k] || '').trim());
@@ -150,7 +192,9 @@ export function Inicio({ o }) {
         <h1>{saludo()}, {o.negocio.nombre}</h1>
         <p>{h.total ? <>Hoy tus agentes han hecho <b>{fmt(h.total)} tareas</b> y te han ahorrado unos <b>{duracion(h.minutos)}</b>.</> : 'Hoy todavía no ha habido trabajo. En cuanto entre algo, lo verás aquí al momento.'}{pend > 0 && <> Tienes <b>{pend} {pend === 1 ? 'cosa' : 'cosas'}</b> esperándote.</>}</p>
       </header>
+      <Prueba o={o} />
       <PuestaEnMarcha o={o} />
+      {o.negocio.web_incluida && o.negocio.web_estado === 'pendiente' && <WebIncluida o={o} compacta />}
       {pend > 0 && <Tarjeta titulo="Te necesitan" extra={<span className="chip chip--aviso">{pend}</span>}><Bandeja o={o} max={4} />{pend > 4 && <button className="enlace" onClick={() => o.ir('actividad', null, 'tuyo')}>Ver las {pend} <ArrowRight size={14} /></button>}</Tarjeta>}
       <section>
         <div className="sec-h"><h2>Tu equipo, ahora mismo</h2><span className="vivo"><i />En directo</span></div>
@@ -443,13 +487,14 @@ export function Conexiones({ o, aviso }) {
 // ---------- Ajustes ----------
 export function Ajustes({ o }) {
   const [sel, setSel] = useState(o.deptos.map((d) => d.depto)); const [st, setSt] = useState(''); const [conf, setConf] = useState(false);
+  const anual = o.negocio.periodo === 'anio'; const precio = (k) => (anual ? precioAnual(k) : precioOficina(k)); const ud = anual ? '€/año' : '€/mes';
   const actual = o.deptos.map((d) => d.depto); const cambia = sel.length !== actual.length || sel.some((x) => !actual.includes(x));
   const toggle = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   async function aplicar() {
     setSt('Guardando…');
     try {
       if (!o.demo) await api('plan', { deptos: sel });
-      o.setEstado((s) => ({ ...s, negocio: { ...s.negocio, importe_mes: precioOficina(sel.length) }, deptos: sel.map((d) => s.deptos.find((x) => x.depto === d) || { depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: {} }) }));
+      o.setEstado((s) => ({ ...s, negocio: { ...s.negocio, importe_mes: anual ? Math.round(precioAnual(sel.length) / 12) : precioOficina(sel.length), web_incluida: s.negocio.web_incluida || webIncluida(s.negocio.periodo, sel.length), web_estado: s.negocio.web_estado || (webIncluida(s.negocio.periodo, sel.length) ? 'pendiente' : null) }, deptos: sel.map((d) => s.deptos.find((x) => x.depto === d) || { depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: {} }) }));
       setSt('Listo. Tu oficina ya está actualizada.'); setConf(false);
     } catch (err) { setSt(err.message); }
   }
@@ -461,19 +506,20 @@ export function Ajustes({ o }) {
           <li key={d.id}><label className="dep-op"><input type="checkbox" checked={sel.includes(d.id)} onChange={() => toggle(d.id)} /><Avatar depto={d.id} size={34} /><div><b>{d.nombre}</b><small>{fmt(d.cupo.n)} {d.cupo.unidad} al mes</small></div><span className="dep-op__x"><Check size={14} strokeWidth={3} /></span></label></li>
         ))}</ul>
         <div className="plan-pie">
-          <p><b>{precioOficina(sel.length || 1)} €/mes</b> <span className="muted">· {sel.length} departamento{sel.length === 1 ? '' : 's'} · sin IVA</span></p>
-          {cambia && sel.length > 0 && (conf ? <span className="fila-btn"><span className="muted">¿Confirmas el cambio a {precioOficina(sel.length)} €/mes?</span><button className="btn btn--pri btn--sm" onClick={aplicar}>Sí, cambiar</button><button className="btn btn--fan btn--sm" onClick={() => setConf(false)}>No</button></span>
+          <p><b>{precio(sel.length || 1)} {ud}</b> <span className="muted">· {sel.length} departamento{sel.length === 1 ? '' : 's'} · sin IVA{anual && !o.negocio.web_incluida && sel.length < WEB_DESDE ? ` · con ${WEB_DESDE} o más, tu web va incluida` : ''}</span></p>
+          {cambia && sel.length > 0 && (conf ? <span className="fila-btn"><span className="muted">¿Confirmas el cambio a {precio(sel.length)} {ud}? Se prorratea lo que ya has pagado.</span><button className="btn btn--pri btn--sm" onClick={aplicar}>Sí, cambiar</button><button className="btn btn--fan btn--sm" onClick={() => setConf(false)}>No</button></span>
             : <button className="btn btn--pri" onClick={() => setConf(true)}>Guardar cambios</button>)}
         </div>
         {st && <p className="muted">{st}</p>}
       </Tarjeta>
+      {o.negocio.web_incluida && <WebIncluida o={o} />}
       <div className="fila fila--1-1">
         <Tarjeta titulo="Consumo de este mes">
           <div className="cupos">{o.deptos.map((d) => { const u = o.uso[d.depto] || {}; const p = Math.min(1, Math.max(u.pct || 0, (u.unidades_mes || 0) / (d.cupo_n || 1))); return <div key={d.depto}><span>{DEPTO[d.depto].corto}<b>{fmt(u.unidades_mes)} / {fmt(d.cupo_n)}</b></span><Medidor valor={p} color={p >= AVISO_CUPO ? 'var(--aviso)' : DEPTO[d.depto].color} /></div>; })}</div>
           <p className="muted nota">Te avisamos al llegar al 80 %. Nunca te cobramos de más sin que lo sepas.</p>
         </Tarjeta>
         <Tarjeta titulo="Facturación y cuenta">
-          <p>Plan actual: <b>{o.negocio.importe_mes ?? precioOficina(o.deptos.length)} €/mes</b></p>
+          <p>Plan {anual ? 'anual' : 'mensual'}: <b>{anual ? `${precioAnual(o.deptos.length)} €/año` : `${o.negocio.importe_mes ?? precioOficina(o.deptos.length)} €/mes`}</b>{o.negocio.prueba_hasta && new Date(o.negocio.prueba_hasta) > new Date(o.ahora) ? <span className="muted"> · prueba gratis hasta el {new Date(o.negocio.prueba_hasta).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</span> : null}</p>
           <p className="muted">{o.demo ? 'demo@agutidesigns.io' : o.sesion?.user?.email}</p>
           <div className="fila-btn"><button className="btn btn--sec" onClick={portal} disabled={o.demo}><ExternalLink size={15} /> Facturas, tarjeta y baja</button>{!o.demo && <button className="btn btn--fan" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>}</div>
         </Tarjeta>

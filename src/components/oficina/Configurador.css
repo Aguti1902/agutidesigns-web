@@ -46,3 +46,11 @@
 .cf-pie { margin: 28px 0 0; max-width: 760px; color: #8f9bc6; font-size: .9rem; line-height: 1.6; }
 @media (max-width: 980px) { .cf-grid { grid-template-columns: 1fr; } .cf-caja { position: static; } }
 @media (max-width: 620px) { .cf-lista { grid-template-columns: 1fr; } .cf-dep { padding: 16px; } }
+
+.cf-periodo { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--ag-paper); }
+.cf-periodo button { border: 0; background: none; font: inherit; font-size: .9rem; font-weight: 600; color: var(--ag-muted); padding: 9px 8px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.cf-periodo button[aria-pressed="true"] { background: #fff; color: var(--ag-ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.cf-periodo em { font-style: normal; font-size: .72rem; font-weight: 800; color: #0a7a3e; background: #e4f7ec; padding: 2px 6px; border-radius: 99px; }
+.cf-extra { margin: 0; display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; border-radius: 12px; background: #eef3ff; color: var(--ag-ink); font-size: .88rem; line-height: 1.45; }
+.cf-extra svg { flex: none; color: #0047ff; margin-top: 2px; }
+.cf-extra--suave { background: var(--ag-paper); color: var(--ag-ink-2); }

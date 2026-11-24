@@ -32,6 +32,7 @@ export default function Bienvenida() {
             <li><Check size={15} /> Entra en tu panel con el enlace del correo</li>
             <li><Check size={15} /> Cuéntales a tus agentes cómo es tu negocio (3 minutos)</li>
             <li><Check size={15} /> Conecta tus cuentas y mira a tus agentes trabajar</li>
+            <li><Check size={15} /> Si has elegido el plan mensual, tienes 7 días gratis: no se te cobra nada hasta el día 8</li>
           </ul>
         </>)}
         {st.fase === 'error' && (<>
