@@ -4,7 +4,7 @@
 import crypto from 'node:crypto';
 import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, DEPTO, origen, esUuid, actividad, estadoAgente,
-  negocioDeSesion, altaDesdeSesion, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
+  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
 
@@ -61,6 +61,16 @@ async function webhook(req, res) {
     if (ev.type === 'invoice.payment_failed' && o.subscription) await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.subscription)}`, { metodo: 'PATCH', cuerpo: { estado: 'impago' } });
     return json(res, 200, { ok: true });
   } catch (e) { console.error('[webhook]', e.message); return json(res, 500, {}); }
+}
+
+// Pedir enlace de acceso: solo se envía si existe una oficina con ese correo (la respuesta es la misma en ambos casos).
+async function acceso(req, res) {
+  if (req.method !== 'POST' || !hayBase()) return json(res, 405, {});
+  const email = String(cuerpo(req).email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, 400, { error: 'Revisa tu correo.' });
+  const neg = await uno(`of_negocios?owner_email=eq.${encodeURIComponent(email)}&estado=neq.cancelado&select=nombre&order=created_at.desc&limit=1`);
+  if (neg) await enviarAcceso(email, origen(req), neg.nombre);
+  return json(res, 200, { ok: true });
 }
 
 // ---------------- cuenta del cliente ----------------
@@ -365,7 +375,7 @@ async function cron(req, res) {
 }
 
 // ---------------- enrutador ----------------
-const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron };
+const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso };
 const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea };
 
 export default async function handler(req, res) {

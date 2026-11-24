@@ -36,15 +36,15 @@ function Entrar() {
   const [email, setEmail] = useState(''); const [st, setSt] = useState(''); const [err, setErr] = useState('');
   async function enviar(e) {
     e.preventDefault(); setErr(''); setSt('enviando');
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { emailRedirectTo: `${window.location.origin}/app`, shouldCreateUser: true } });
-    if (error) { setErr('No hemos podido enviarte el enlace. Revisa el correo e inténtalo otra vez.'); setSt(''); } else setSt('enviado');
+    const r = await fetch('/api/oficina/acceso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim().toLowerCase() }) }).catch(() => null);
+    if (!r?.ok) { setErr('No hemos podido enviarte el enlace. Revisa el correo e inténtalo otra vez.'); setSt(''); } else setSt('enviado');
   }
   return (
     <main className="acceso">
       <a href="/" className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
       <div className="acceso__c">
         <h1>Entra en tu oficina</h1>
-        {st === 'enviado' ? <p className="acceso__ok"><Mail size={18} /> Te hemos enviado un enlace a <b>{email}</b>. Ábrelo para entrar.</p> : (
+        {st === 'enviado' ? <p className="acceso__ok"><Mail size={18} /><span>Si <b>{email}</b> tiene una oficina, te acabamos de enviar el enlace para entrar. Mira también en spam.</span></p> : (
           <form onSubmit={enviar}>
             <p className="muted">Te mandamos un enlace a tu correo. Sin contraseñas.</p>
             <label className="campo"><span>Tu correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
@@ -68,7 +68,22 @@ const SIM = [
   ['redes', 'Escribiendo el post del viernes', 'Ha programado el post del viernes en Instagram', {}],
 ];
 
+// /app/entrar?t=… : valida el enlace del correo y abre el panel.
+function useEnlaceAcceso() {
+  const [st, setSt] = useState(() => (window.location.pathname === '/app/entrar' ? 'validando' : ''));
+  useEffect(() => {
+    if (st !== 'validando') return;
+    const t = new URLSearchParams(window.location.search).get('t');
+    if (!t) { setSt('error'); return; } // eslint-disable-line react-hooks/set-state-in-effect
+    supabase.auth.verifyOtp({ token_hash: t, type: 'magiclink' }).then(({ error }) => {
+      if (error) setSt('error'); else { window.history.replaceState(null, '', '/app'); setSt(''); }
+    });
+  }, [st]);
+  return st;
+}
+
 export default function Panel() {
+  const accesoSt = useEnlaceAcceso();
   const qs = new URLSearchParams(window.location.search); const demo = qs.has('demo');
   const { vista: v } = useParams(); const vista = VISTAS.some((x) => x.id === v) ? v : 'inicio';
   const nav = useNavigate();
@@ -97,7 +112,8 @@ export default function Panel() {
   }, [demo, setEstado]);
 
   const { cargando, sesion, negocio } = estado;
-  if (cargando) return <main className="acceso"><span className="spin" /></main>;
+  if (accesoSt === 'validando' || cargando) return <main className="acceso"><span className="spin" /></main>;
+  if (accesoSt === 'error') return <main className="acceso"><div className="acceso__c"><h1>Este enlace ya no vale</h1><p className="muted">Los enlaces caducan en una hora y solo sirven una vez. Pide uno nuevo y entras en un momento.</p><a className="btn btn--pri" href="/app">Pedir un enlace nuevo</a></div></main>;
   if (!demo && !sesion) return <Entrar />;
   if (!demo && !negocio) {
     return (

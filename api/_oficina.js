@@ -61,12 +61,34 @@ export async function negocioDeSesion(req) {
   if (!u?.email) return null;
   return uno(`of_negocios?owner_email=eq.${encodeURIComponent(String(u.email).toLowerCase())}&select=*&order=created_at.desc&limit=1`);
 }
-export async function enviarAcceso(email, base) {
-  const r = await fetch(`${sbUrl()}/auth/v1/otp?redirect_to=${encodeURIComponent(`${base}/app`)}`, {
-    method: 'POST', headers: { apikey: anonKey() || sbKey(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, create_user: true }),
+// Enlace de acceso al panel: lo genera Supabase (admin) y lo enviamos nosotros con Resend.
+// Así no depende del SMTP ni de las URL de redirección configuradas en Supabase.
+async function authAdmin(ruta, cuerpo) {
+  const r = await fetch(`${sbUrl()}/auth/v1/admin/${ruta}`, { method: 'POST', headers: { apikey: sbKey(), Authorization: `Bearer ${sbKey()}`, 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+  return { ok: r.ok, status: r.status, datos: await r.json().catch(() => ({})) };
+}
+export async function enviarAcceso(email, base, nombre) {
+  const mail = String(email || '').trim().toLowerCase();
+  await authAdmin('users', { email: mail, email_confirm: true }); // si ya existe, Supabase responde 422 y seguimos
+  const { ok, datos } = await authAdmin('generate_link', { type: 'magiclink', email: mail });
+  const hash = datos?.hashed_token || datos?.properties?.hashed_token;
+  if (!ok || !hash) { console.error('[acceso] generate_link', datos?.msg || datos?.error_description || ''); return false; }
+  const enlace = `${base}/app/entrar?t=${encodeURIComponent(hash)}`;
+  if (!process.env.RESEND_API_KEY) { console.error('[acceso] falta RESEND_API_KEY'); return false; }
+  const { Resend } = await import('resend');
+  const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: mail,
+    subject: nombre ? `Entra en la oficina de IA de ${nombre}` : 'Tu enlace para entrar en tu oficina de IA',
+    html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#0d1020">
+      <img src="${base}/images/logoazul.png" alt="Agutidesigns" height="28" style="height:28px">
+      <h1 style="font-size:22px;margin:28px 0 8px">Entra en tu oficina de IA</h1>
+      <p style="color:#3b3f52;line-height:1.55;margin:0 0 24px">Pulsa el botón para entrar en tu panel${nombre ? ` de ${nombre}` : ''}. El enlace caduca en una hora y solo funciona una vez.</p>
+      <a href="${enlace}" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:13px 22px;border-radius:10px">Entrar en mi oficina</a>
+      <p style="color:#6c7086;font-size:13px;line-height:1.5;margin:28px 0 0">Si no has pedido este enlace, ignora este correo.</p></div>`,
+    text: `Entra en tu oficina de IA: ${enlace}\nEl enlace caduca en una hora.`,
   });
-  if (!r.ok) console.error('[acceso]', r.status, (await r.text()).slice(0, 160));
+  if (error) { console.error('[acceso] resend', error.message); return false; }
+  return true;
 }
 
 // ---------- alta tras el pago (idempotente: la llaman la vuelta de Stripe y el webhook) ----------
@@ -86,7 +108,7 @@ export async function altaDesdeSesion(s, base) {
     await sb('of_agentes?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=ignore-duplicates',
       cuerpo: ids.map((d) => ({ negocio_id: neg.id, depto: d, estado: 'preparando', tarea: 'Esperando a que completes la puesta en marcha' })) });
     await actividad(neg.id, ids[0], 'Tu oficina de IA está creada. Cuéntale a tus agentes cómo es tu negocio y conecta tus herramientas para que empiecen a trabajar.', 'sistema');
-    await enviarAcceso(email, base);
+    await enviarAcceso(email, base, neg.nombre);
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import('resend');
       await new Resend(process.env.RESEND_API_KEY).emails.send({
