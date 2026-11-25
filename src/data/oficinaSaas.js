@@ -31,7 +31,7 @@ export const DEPARTAMENTOS = [
     id: 'atencion', nombre: 'Atención al cliente', corto: 'Atención', color: '#0047ff',
     que: 'Contesta a tus clientes por WhatsApp y por el chat de tu web: precios, horarios, servicios y dudas. Si alguien quiere hablar contigo, te avisa.',
     hace: ['Responde al momento, también de noche', 'Usa tus precios y horarios, nunca se los inventa', 'Te avisa cuando un cliente quiere hablar contigo'],
-    cupo: { n: 500, unidad: 'conversaciones' }, tokensMes: 4_000_000,
+    cupo: { n: 500, unidad: 'conversaciones' }, tokensMes: 8_000_000,
     tareas: ['Contestando a un cliente por WhatsApp', 'Pasando los horarios de esta semana', 'Avisándote: un cliente quiere hablar contigo'],
     conexiones: ['WhatsApp Business', 'Chat de tu web'],
   },

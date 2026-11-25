@@ -2,7 +2,7 @@
 // siempre a la vista (base, IVA y lo que se paga hoy). Acepta ?deptos=a,b&plan=anio para llegar preseleccionado.
 import { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Gift, Globe, Lock, ShieldCheck, Sparkles } from 'lucide-react';
-import { Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
+import { MessageCircle, Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
 import useSeo from '../hooks/useSeo';
 import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_PRUEBA, WEB_DESDE, webIncluida, impuestos, IVA, IRPF } from '../data/oficinaSaas';
 import './Contratar.css';
@@ -146,6 +146,7 @@ export default function Contratar() {
             <li><ShieldCheck size={16} /> Pago con Stripe. No guardamos tu tarjeta.</li>
             <li><Check size={16} /> {anual ? 'Factura con IVA y retención a nombre de tu empresa.' : 'Sin permanencia. Factura con IVA y retención cada mes.'}</li>
             <li><Check size={16} /> Equipo humano en Cornellà para ayudarte a ponerla en marcha.</li>
+            <li><MessageCircle size={16} /> Los mensajes de WhatsApp van a tu propia cuenta de WhatsApp Business: Meta te da 1.000 respuestas gratis al mes y, si pasas de ahí, te las cobra directamente a ti (unos 0,02 € cada una).</li>
           </ul>
         </aside>
       </main>

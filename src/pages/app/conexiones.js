@@ -2,7 +2,7 @@
 // 'snippet' = se instala pegando un código; 'clave' = se conecta con usuario y contraseña de aplicación.
 export const HERRAMIENTAS = [
   { id: 'whatsapp', nombre: 'WhatsApp Business', proveedor: 'meta', color: '#25d366', letra: 'W', deptos: ['atencion', 'citas', 'ventas'],
-    requisito: 'Una cuenta de WhatsApp Business (la app gratuita vale) y acceso al Facebook de tu negocio', permisos: 'Leer y enviar mensajes de WhatsApp de tu negocio', tiempo: '5 minutos (Meta puede tardar hasta 48 h en verificar el número)',
+    requisito: 'Una cuenta de WhatsApp Business (la app gratuita vale), acceso al Facebook de tu negocio y una tarjeta en tu cuenta de Meta: las primeras 1.000 respuestas al mes son gratis y, si pasas de ahí, Meta te cobra unos 0,02 € por mensaje', permisos: 'Leer y enviar mensajes de WhatsApp de tu negocio', tiempo: '5 minutos (Meta puede tardar hasta 48 h en verificar el número)',
     que: 'Tus agentes contestan y dan cita por el WhatsApp de tu negocio.' },
   { id: 'google_business', nombre: 'Perfil de Empresa de Google', proveedor: 'google', color: '#4285f4', letra: 'G', deptos: ['google'],
     requisito: 'Ser propietario o administrador de tu ficha de Google', permisos: 'Leer y responder reseñas, publicar novedades', tiempo: '1 minuto',

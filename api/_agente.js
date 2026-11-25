@@ -3,19 +3,34 @@
 import { sb, rpc, uno, actividad, estadoAgente, consumo, DEPTO } from './_oficina.js';
 import { instruccionesDe } from '../src/data/oficinaAjustes.js';
 
-const TARIFA = { anthropic: { i: 1, o: 5 }, openai: { i: 0.15, o: 0.6 } }; // USD por millón de tokens (aprox.)
+// USD por millón de tokens: entrada, salida, escritura y lectura de caché (precios de la tarifa pública).
+const TARIFAS = {
+  'claude-haiku-5-5': { i: 0.10, o: 0.50, cw: 0.125, cr: 0.01 },
+  'claude-haiku-4-5': { i: 1, o: 5, cw: 1.25, cr: 0.10 },
+  openai: { i: 0.15, o: 0.6 },
+};
+const tarifaDe = (modelo) => TARIFAS[Object.keys(TARIFAS).find((k) => String(modelo).startsWith(k))] || TARIFAS['claude-haiku-4-5'];
+const MODELO = () => process.env.OFICINA_MODELO || 'claude-haiku-5-5';
+const RESERVA = 'claude-haiku-4-5-20251001';
+
+async function llamarClaude(modelo, { sistema, mensajes, maxTokens }) {
+  // El contexto del negocio va en caché: en una conversación se repite en cada mensaje y así cuesta 10 veces menos.
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: modelo, max_tokens: maxTokens, system: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }], messages: mensajes }),
+  });
+}
 
 export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = false }) {
   if (process.env.ANTHROPIC_API_KEY) {
-    const modelo = process.env.OFICINA_MODELO || 'claude-haiku-4-5-20251001';
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: modelo, max_tokens: maxTokens, system: sistema, messages: mensajes }),
-    });
-    const j = await r.json();
+    let modelo = MODELO(); let r = await llamarClaude(modelo, { sistema, mensajes, maxTokens }); let j = await r.json();
+    // Si el modelo elegido no está disponible en la cuenta, se usa el de reserva (más caro, pero el margen sigue protegido por presupuesto).
+    if (!r.ok && (r.status === 404 || /model/i.test(j?.error?.message || '')) && modelo !== RESERVA) { modelo = RESERVA; r = await llamarClaude(modelo, { sistema, mensajes, maxTokens }); j = await r.json(); }
     if (!r.ok) throw new Error(`anthropic ${r.status}: ${j?.error?.message || ''}`);
-    const tin = j.usage?.input_tokens || 0; const tout = j.usage?.output_tokens || 0;
-    return { texto: (j.content || []).map((c) => c.text || '').join(''), tin, tout, modelo, coste: (tin * TARIFA.anthropic.i + tout * TARIFA.anthropic.o) / 1e6 };
+    const u = j.usage || {}; const t = tarifaDe(modelo);
+    const tin = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); const tout = u.output_tokens || 0;
+    const coste = ((u.input_tokens || 0) * t.i + (u.cache_creation_input_tokens || 0) * t.cw + (u.cache_read_input_tokens || 0) * t.cr + tout * t.o) / 1e6;
+    return { texto: (j.content || []).map((c) => c.text || '').join(''), tin, tout, modelo, coste };
   }
   if (process.env.OPENAI_API_KEY) {
     const modelo = process.env.OFICINA_MODELO_OPENAI || process.env.OPENAI_MODEL || 'gpt-4o-mini';
@@ -27,7 +42,7 @@ export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = fals
     const j = await r.json();
     if (!r.ok) throw new Error(`openai ${r.status}: ${j?.error?.message || ''}`);
     const tin = j.usage?.prompt_tokens || 0; const tout = j.usage?.completion_tokens || 0;
-    return { texto: j.choices?.[0]?.message?.content || '', tin, tout, modelo, coste: (tin * TARIFA.openai.i + tout * TARIFA.openai.o) / 1e6 };
+    return { texto: j.choices?.[0]?.message?.content || '', tin, tout, modelo, coste: (tin * TARIFAS.openai.i + tout * TARIFAS.openai.o) / 1e6 };
   }
   throw new Error('sin_ia');
 }
