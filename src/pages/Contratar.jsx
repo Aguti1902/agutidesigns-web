@@ -90,7 +90,7 @@ export default function Contratar() {
           </>)}
           {paso === 2 && (<>
             <h1>¿Cómo prefieres pagar?</h1>
-            <p className="ct-lead">Sin permanencia en el mensual. En el anual pagas una vez y te ahorras el 20 %.</p>
+            <p className="ct-lead">Sin permanencia en el mensual. En el anual pagas una vez y, desde 2 departamentos, te ahorras el 20 %.</p>
             <div className="ct-planes">
               <button type="button" className={`ct-plan ${!anual ? 'is-on' : ''}`} aria-pressed={!anual} onClick={() => setPlan('mes')}>
                 <span className="ct-plan__k">Mensual</span>
@@ -101,7 +101,7 @@ export default function Contratar() {
               <button type="button" className={`ct-plan ${anual ? 'is-on' : ''}`} aria-pressed={anual} onClick={() => setPlan('anio')}>
                 <span className="ct-plan__k">Anual <em>Ahorras {eur(ahorroAnual)}</em></span>
                 <b>{eur(Math.round(precioAnual(n) / 12))}<small>/mes + IVA</small></b>
-                <ul><li><Check size={15} /> 20 % de descuento</li><li className={n >= WEB_DESDE ? '' : 'off'}><Globe size={15} /> {n >= WEB_DESDE ? 'Diseño o rediseño de tu web incluido' : `Web incluida a partir de ${WEB_DESDE} departamentos`}</li><li><Check size={15} /> Un solo pago al año</li></ul>
+                <ul><li className={n >= 2 ? '' : 'off'}><Check size={15} /> {n >= 2 ? '20 % de descuento' : 'Descuento del 20 % desde 2 departamentos'}</li><li className={n >= WEB_DESDE ? '' : 'off'}><Globe size={15} /> {n >= WEB_DESDE ? 'Diseño o rediseño de tu web incluido' : `Web incluida a partir de ${WEB_DESDE} departamentos`}</li><li><Check size={15} /> Un solo pago al año</li></ul>
                 <span className="ct-plan__pie">{eur(precioAnual(n))} al año + IVA</span>
               </button>
             </div>

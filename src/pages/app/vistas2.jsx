@@ -324,7 +324,7 @@ export function SugerenciaMejora({ o }) {
   let s = null;
   if (!tiene('citas') && pidenCita) s = { depto: 'citas', t: `${pidenCita} cliente${pidenCita > 1 ? 's han' : ' ha'} pedido cita últimamente`, d: 'Con Citas y reservas tu agente les da hora y les manda el recordatorio.' };
   else if (!tiene('google')) s = { depto: 'google', t: 'Que no se te escape ninguna reseña', d: 'Con Google y reseñas tu agente las responde todas y mantiene viva tu ficha.' };
-  else if (o.negocio.periodo !== 'anio') s = { anual: true, t: `Ahorra ${precioOficina(o.deptos.length) * 12 - precioAnual(o.deptos.length)} € al año`, d: `Pásate al plan anual${o.deptos.length >= WEB_DESDE ? ' y llévate tu web hecha' : ''}.` };
+  else if (o.negocio.periodo !== 'anio' && o.deptos.length >= 2) s = { anual: true, t: `Ahorra ${precioOficina(o.deptos.length) * 12 - precioAnual(o.deptos.length)} € al año`, d: `Pásate al plan anual${o.deptos.length >= WEB_DESDE ? ' y llévate tu web hecha' : ''}.` };
   if (!s) return null;
   return (
     <div className="sugerencia" style={{ '--c': s.depto ? DEPTO[s.depto].color : 'var(--acento)' }}>
@@ -426,7 +426,7 @@ export function Plan({ o }) {
         </Tarjeta>
         {!anual ? (
           <Tarjeta titulo="Plan anual" className="upsell">
-            <p><b>Ahorra {ahorro} € al año</b> pagando una vez al año (20 % de descuento).{o.deptos.length >= WEB_DESDE ? <> Y <b>te diseñamos tu web</b> o rediseñamos la que tienes.</> : <> Con {WEB_DESDE} departamentos o más, tu web va incluida.</>}</p>
+            <p>{ahorro > 0 ? <><b>Ahorra {ahorro} € al año</b> pagando una vez al año (20 % de descuento).</> : <>Paga una vez al año. Con 2 departamentos o más, además, <b>te ahorras el 20 %</b>.</>}{o.deptos.length >= WEB_DESDE ? <> Y <b>te diseñamos tu web</b> o rediseñamos la que tienes.</> : <> Con {WEB_DESDE} departamentos o más, tu web va incluida.</>}</p>
             {confAnual ? <div className="fila-btn"><span className="muted">Se cobran {precioAnual(o.deptos.length)} € + IVA − IRPF hoy (descontando lo que no hayas usado de este mes).</span><button className="btn btn--pri btn--sm" onClick={pasarAnual}>Confirmar</button><button className="btn btn--fan btn--sm" onClick={() => setConfAnual(false)}>No</button></div>
               : <button className="btn btn--pri centro-izq" onClick={() => setConfAnual(true)}>Pasarme al anual <ArrowRight size={15} /></button>}
           </Tarjeta>

@@ -30,7 +30,7 @@ export default function Configurador() {
         <div className="cf-head">
           <p className="cf-k">Monta tu oficina</p>
           <h2 className="cf-h">Elige tus departamentos.<br /><span>Paga solo por lo que usas.</span></h2>
-          <p className="cf-lead">Sin puesta en marcha y con la IA incluida. Pruébalo {DIAS_PRUEBA} días gratis en el plan mensual, o ahorra un 20 % con el anual y llévate tu web hecha.</p>
+          <p className="cf-lead">Sin puesta en marcha y con la IA incluida. Pruébalo {DIAS_PRUEBA} días gratis en el plan mensual, o ahorra un 20 % con el anual desde 2 departamentos y llévate tu web hecha.</p>
         </div>
         <div className="cf-grid">
           <ul className="cf-lista" role="group" aria-label="Departamentos">

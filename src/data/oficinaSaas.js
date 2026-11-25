@@ -2,13 +2,15 @@
 // Todo lo que se vende sale de aquí (configurador de /oficina-ia, checkout y panel /app).
 // PRECIOS PROPUESTOS, pendientes de aprobar por Alejandro. Sin IVA.
 
-export const PRECIO_POR_CANTIDAD = { 1: 49, 2: 89, 3: 129, 4: 169, 5: 199, 6: 229 };
+export const PRECIO_POR_CANTIDAD = { 1: 79, 2: 99, 3: 129, 4: 169, 5: 199, 6: 229 };
 export const precioOficina = (n) => PRECIO_POR_CANTIDAD[Math.max(1, Math.min(6, n))] || 0;
 export const PRECIO_SUELTO = PRECIO_POR_CANTIDAD[1];
 
-// Plan anual: 20 % de descuento, pago por adelantado. Incluye diseño o rediseño de la web desde 3 departamentos.
+// Plan anual: 20 % de descuento desde 2 departamentos (con 1 no lleva descuento, para mantener el margen), pago por adelantado.
+// Incluye diseño o rediseño de la web desde 3 departamentos.
 export const DESCUENTO_ANUAL = 0.2;
-export const precioAnual = (n) => Math.round(precioOficina(n) * 12 * (1 - DESCUENTO_ANUAL));
+export const descuentoAnual = (n) => (n >= 2 ? DESCUENTO_ANUAL : 0);
+export const precioAnual = (n) => Math.round(precioOficina(n) * 12 * (1 - descuentoAnual(n)));
 export const WEB_DESDE = 3;
 export const webIncluida = (periodo, n) => periodo === 'anio' && n >= WEB_DESDE;
 // Plan mensual: 7 días de prueba (se pide tarjeta, no se cobra hasta el día 8) con el 25 % del cupo.
@@ -53,9 +55,9 @@ export const DEPARTAMENTOS = [
   },
   {
     id: 'redes', nombre: 'Redes sociales', corto: 'Redes', color: '#ec6746',
-    que: 'Planifica el mes, escribe los textos con tu tono y programa las publicaciones en Instagram, Facebook y TikTok.',
-    hace: ['Calendario de publicaciones del mes', 'Textos con tu tono y tus hashtags', 'Tú apruebas antes de que salga, si quieres'],
-    cupo: { n: 30, unidad: 'publicaciones' }, tokensMes: 1_500_000,
+    que: 'Diseña y publica tus historias de Instagram cada día, posts con carrusel y reels o TikToks con voz y subtítulos, con tu tono y tus fotos.',
+    hace: ['60 historias, 24 posts o carruseles y 8 reels o TikToks al mes', 'Diseño, textos y vídeos con tu marca y tu tono', 'Tú apruebas antes de que salga, si quieres'],
+    cupo: { n: 92, unidad: 'piezas', detalle: '60 historias, 24 posts o carruseles y 8 reels o TikToks' }, tokensMes: 3_000_000,
     tareas: ['Escribiendo el post del viernes', 'Programando 3 publicaciones', 'Preparando el calendario del mes'],
     conexiones: ['Instagram', 'Facebook', 'TikTok'],
   },

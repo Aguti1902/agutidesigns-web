@@ -5,6 +5,7 @@ import { instruccionesDe } from '../src/data/oficinaAjustes.js';
 
 // USD por millón de tokens: entrada, salida, escritura y lectura de caché (precios de la tarifa pública).
 const TARIFAS = {
+  'claude-opus-5-5': { i: 4, o: 20, cw: 5, cr: 0.20 },
   'claude-haiku-5-5': { i: 0.10, o: 0.50, cw: 0.125, cr: 0.01 },
   'claude-haiku-4-5': { i: 1, o: 5, cw: 1.25, cr: 0.10 },
   openai: { i: 0.15, o: 0.6 },
@@ -21,9 +22,12 @@ async function llamarClaude(modelo, { sistema, mensajes, maxTokens }) {
   });
 }
 
-export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = false }) {
+// El diseño de Redes (historias, posts, carruseles y guiones de vídeo) usa Opus 5.5; el resto, Haiku.
+export const MODELO_REDES = () => process.env.OFICINA_MODELO_REDES || 'claude-opus-5-5';
+
+export async function llamarIA({ sistema, mensajes, maxTokens = 600, json = false, modelo: modeloPedido }) {
   if (process.env.ANTHROPIC_API_KEY) {
-    let modelo = MODELO(); let r = await llamarClaude(modelo, { sistema, mensajes, maxTokens }); let j = await r.json();
+    let modelo = modeloPedido || MODELO(); let r = await llamarClaude(modelo, { sistema, mensajes, maxTokens }); let j = await r.json();
     // Si el modelo elegido no está disponible en la cuenta, se usa el de reserva (más caro, pero el margen sigue protegido por presupuesto).
     if (!r.ok && (r.status === 404 || /model/i.test(j?.error?.message || '')) && modelo !== RESERVA) { modelo = RESERVA; r = await llamarClaude(modelo, { sistema, mensajes, maxTokens }); j = await r.json(); }
     if (!r.ok) throw new Error(`anthropic ${r.status}: ${j?.error?.message || ''}`);
@@ -177,7 +181,7 @@ export async function generar({ negocio, depto, encargo, maxTokens = 900 }) {
   await estadoAgente(negocio.id, depto, 'trabajando', encargo.tarea);
   try {
     const ia = await llamarIA({ sistema: `Trabajas en el departamento de ${DEPTO[depto].nombre} de este negocio local.\n${await fichaNegocio(negocio)}\n${instruccionesDe(depto, estado.ajustes)}\nNunca inventes precios, ofertas, datos ni testimonios que no estén arriba. Devuelve SOLO el JSON que se te pide.`,
-      mensajes: [{ role: 'user', content: encargo.prompt }], maxTokens, json: true });
+      mensajes: [{ role: 'user', content: encargo.prompt }], maxTokens, json: true, ...(depto === 'redes' ? { modelo: MODELO_REDES() } : {}) });
     await consumo(negocio.id, depto, { ...ia, unidades: encargo.unidades ?? 1 });
     return { ...leerJson(ia.texto), ajustes: estado.ajustes };
   } finally { await estadoAgente(negocio.id, depto, 'disponible', encargo.fin || 'Esperando la siguiente tarea'); }
