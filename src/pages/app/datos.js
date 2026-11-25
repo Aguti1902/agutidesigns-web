@@ -54,7 +54,7 @@ const CHARLAS = [
 function generarDemo() {
   let s = 1902; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   const ahora = Date.now(); const ev = []; let id = 1;
-  const porDia = { atencion: 15, citas: 6, ventas: 3, redes: 0.9, google: 1.4, contenido: 0.12 };
+  const porDia = { atencion: 15, citas: 6, ventas: 3, redes: 2.6, google: 1.4, contenido: 0.12 };
   const horaAt = () => { const x = r(); return x < 0.42 ? 9 + r() * 5 : x < 0.84 ? 16 + r() * 5 : x < 0.95 ? 21 + r() * 3 : 7 + r() * 2; };
   for (let d = 59; d >= 0; d--) {
     const base = new Date(ahora - d * DIA); base.setHours(0, 0, 0, 0);
@@ -64,13 +64,14 @@ function generarDemo() {
       for (let k = 0; k < n; k++) {
         const t = base.getTime() + (dep === 'atencion' ? horaAt() : 9 + r() * 11) * 36e5; if (t > ahora) continue;
         const raros = TEXTOS[dep].filter((x) => x[0] !== 'hecho'); const normales = TEXTOS[dep].filter((x) => x[0] === 'hecho');
-        const lista = raros.length && r() < (dep === 'redes' ? 0.3 : 0.05) ? raros : normales; const pick = lista[Math.floor(r() * lista.length)];
+        const lista = raros.length && r() < (dep === 'redes' ? 0.12 : 0.05) ? raros : normales; let pick = lista[Math.floor(r() * lista.length)];
         const canal = r() < 0.72 ? 'WhatsApp' : 'el chat de la web';
         const detalle = dep === 'atencion' ? { canal: canal === 'WhatsApp' ? 'whatsapp' : 'web', ms: Math.round(2500 + r() * 6000), tema: pick[2] }
           : dep === 'google' ? (pick[0] === 'pendiente' ? { accion: 'responder_resena', estrellas: 3, original: 'El corte bien, pero tuve que esperar casi media hora aunque tenía cita.', texto: 'Hola, gracias por contárnoslo y perdona la espera: no es lo normal y lo estamos revisando para que no vuelva a pasar. Nos alegra que te gustara el corte, ¡esperamos verte pronto!' }
             : { estrellas: r() < 0.85 ? 5 : 4, texto: '¡Muchas gracias por tu reseña! Nos alegra mucho que salieras contenta. ¡Te esperamos pronto! 💇‍♀️' })
           : dep === 'redes' && pick[0] === 'pendiente' ? { accion: 'publicar', texto: 'De castaño apagado a un rubio miel luminoso ✨ ¿Te animas a darle luz a tu pelo esta temporada? Pide tu cita por WhatsApp. #Cornellà #mechas #peluqueria' }
           : dep === 'ventas' ? { resultado: pick[1].includes('aceptado') ? 'ganado' : 'abierto' } : {};
+        if (dep === 'redes' && pick[0] === 'hecho') { const f = ['historia', 'historia', 'post', 'historia', 'historia', 'carrusel', 'historia', 'historia', 'post', 'historia', 'historia'][id % 11]; detalle.formato = f; pick = ['hecho', { historia: 'Ha subido una historia a Instagram', post: 'Ha publicado un post en Instagram', carrusel: 'Ha publicado un carrusel en Instagram' }[f]]; }
         ev.push({ id: id++, depto: dep, tipo: pick[0], creado: new Date(t).toISOString(), resuelto: d > 1, texto: pick[1].replace('{n}', NOMBRES[Math.floor(r() * NOMBRES.length)]).replace('{c}', canal), detalle });
       }
     }
@@ -107,6 +108,8 @@ function demoMarketing(ahora) {
   const chat = [
     { id: 1, de: 'tu', texto: '¿Qué habéis hecho hoy?', creado: new Date(ahora - 50 * 60e3).toISOString() },
     { id: 2, de: 'equipo', texto: 'Hoy hemos atendido a 14 clientes por WhatsApp y el chat, recogido 3 citas (2 te esperan para confirmar) y respondido 2 reseñas de 5 ★. Tienes un post y un guion de vídeo listos para revisar.', creado: new Date(ahora - 49 * 60e3).toISOString() },
+    { id: 3, de: 'tu', depto: 'redes', texto: '¿Qué se publica esta semana?', creado: new Date(ahora - 30 * 60e3).toISOString() },
+    { id: 4, de: 'equipo', depto: 'redes', texto: 'Esta semana tengo preparadas 15 historias, 6 posts (2 son carruseles) y 2 reels. Te he dejado el carrusel de «5 claves para que tus mechas duren más» y una historia de huecos libres para que les des el visto bueno.', creado: new Date(ahora - 29 * 60e3).toISOString() },
   ];
   return { metricas, videos, material, competidores, chat };
 }
@@ -116,7 +119,7 @@ export function estadoDemo() {
   const mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
   const uso = {};
   for (const d of DEMO_DEPTOS) { const u = eventos.filter((e) => e.depto === d && new Date(e.creado) >= mes).length; uso[d] = { unidades_mes: u, cupo: DEPTO[d].cupo.n, pct: Math.min(0.95, (u / DEPTO[d].cupo.n) * 0.9) }; }
-  uso.redes = { unidades_mes: 27, cupo: DEPTO.redes.cupo.n, pct: 0.9 }; // en la demo, Redes está cerca de su límite para enseñar la ampliación
+  uso.redes = { unidades_mes: 78, cupo: DEPTO.redes.cupo.n, pct: 0.85 }; // en la demo, Redes está cerca de su límite para enseñar la ampliación
   const conversaciones = CHARLAS.map(([nombre, canal, msgs, necesita], i) => ({
     id: `c${i}`, canal, nombre, contacto: canal === 'whatsapp' ? `34600${100000 + i}` : `web${i}`, estado: 'agente', necesita, leido: i > 1, tema: necesita || 'otros',
     ultimo: new Date(ahora - (i * 23 + 4) * 60000).toISOString(),
@@ -148,6 +151,10 @@ export function estadoDemo() {
       detalle: { accion: 'articulo', titulo: 'Balayage en Cornellà: precio, duración y cuidados', resumen: 'Todo lo que preguntan nuestras clientas antes de hacerse un balayage, explicado claro.', texto: '## ¿Qué es el balayage?\nEs una técnica de coloración a mano alzada que crea un degradado natural…\n\n## ¿Cuánto dura?\nEntre 2 y 3 horas según el largo…\n\n## Cuidados después\nChampú sin sulfatos y una mascarilla a la semana…' } },
     { id: 'p-post', depto: 'redes', tipo: 'pendiente', creado: new Date(ahora - 2 * 36e5).toISOString(), resuelto: false, texto: 'Post listo para el viernes: «Antes y después: rubio miel». Revísalo y apruébalo',
       detalle: { accion: 'publicar', red: 'instagram', dia: 'viernes', idea_imagen: 'Foto del antes y después de Laura con luz natural', texto: 'De castaño apagado a un rubio miel luminoso ✨ ¿Te animas a darle luz a tu pelo esta temporada? Pide tu cita por WhatsApp. #Cornellà #mechas #peluqueria' } },
+    { id: 'p-his', depto: 'redes', tipo: 'pendiente', creado: new Date(ahora - 1 * 36e5).toISOString(), resuelto: false, texto: 'Historia lista: «Huecos libres esta tarde». Revísala y apruébala',
+      detalle: { accion: 'publicar', formato: 'historia', red: 'instagram', titulo: 'Huecos libres esta tarde', idea_imagen: 'Foto del salón vacío con luz de tarde y sticker de «Reservar»', texto: '¡Nos quedan 2 huecos hoy a las 17:30 y 18:15! Escríbenos por WhatsApp y te lo guardamos 💛' } },
+    { id: 'p-car', depto: 'redes', tipo: 'pendiente', creado: new Date(ahora - 4 * 36e5).toISOString(), resuelto: false, texto: 'Carrusel listo: «5 claves para que tus mechas duren más». Revísalo y apruébalo',
+      detalle: { accion: 'publicar', formato: 'carrusel', red: 'instagram', dia: 'martes', titulo: '5 claves para que tus mechas duren más', diapositivas: [{ titulo: '5 claves para que tus mechas duren más' }, { titulo: 'Agua tibia, nunca caliente' }, { titulo: 'Champú sin sulfatos' }, { titulo: 'Protector antes del calor' }, { titulo: 'Matiz cada 15 días' }, { titulo: 'Pide tu cita por WhatsApp' }], texto: '¿Tus mechas se apagan enseguida? Guarda este carrusel y cuéntanos cuál de estos trucos no conocías 👇 #mechas #Cornellà' } },
     { id: 'p-vid', depto: 'redes', tipo: 'pendiente', creado: new Date(ahora - 5 * 36e5).toISOString(), resuelto: false, texto: 'Guion de vídeo listo: «3 errores que estropean tus mechas». Revísalo y elige la voz', detalle: { accion: 'video', video: 'v1', titulo: '3 errores que estropean tus mechas' } },
     { id: 'p-seg', depto: 'ventas', tipo: 'pendiente', creado: new Date(ahora - 7 * 36e5).toISOString(), resuelto: false, texto: 'Paula pidió presupuesto hace más de 2 días y no ha vuelto a escribir. Te he dejado el mensaje de seguimiento listo',
       detalle: { accion: 'seguimiento', conversacion: 'c2', texto: '¡Hola Paula! ¿Pudiste mirar el presupuesto del pack novia? Si quieres, te reservamos la prueba un sábado por la mañana 😊' } },

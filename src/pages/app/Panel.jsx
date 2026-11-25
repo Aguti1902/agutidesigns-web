@@ -3,7 +3,7 @@
 // /app?demo=1 enseña un negocio de ejemplo con actividad simulada.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Activity, BarChart3, Bell, BookOpen, Box, CalendarCheck, CalendarPlus, Clapperboard, CreditCard, FolderOpen, Handshake, Home, Inbox, LayoutGrid, LogOut, Mail, Megaphone, Menu, MessageCircle, MessagesSquare, PenLine, Plug, Plus, Receipt, Search, Settings, Star, TrendingUp, X, LifeBuoy } from 'lucide-react';
+import { Activity, BarChart3, Database, Bell, BookOpen, Box, CalendarCheck, CalendarPlus, Clapperboard, CreditCard, FolderOpen, Handshake, Home, Inbox, LayoutGrid, LogOut, Mail, Megaphone, Menu, MessageCircle, MessagesSquare, PenLine, Plug, Plus, Receipt, Search, Settings, Star, TrendingUp, X, LifeBuoy } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
 import useSeo from '../../hooks/useSeo';
 import { DEPTO } from '../../data/oficinaSaas';
@@ -11,8 +11,9 @@ import { useOficina, estadisticas, pendiente } from './datos';
 import { HERRAMIENTA } from './conexiones';
 import { Actividad, Ensenar, Conexiones } from './vistas';
 import { Inicio, TeNecesitan, Conversaciones, Departamentos, Oficina } from './pantallas';
-import { ChatEquipo, Analitica, Seo, Videos, Material, Informes } from './marketing';
-import { Agenda, Clientes, Publicaciones, Articulos, Resenas, Mejora, Plan, Facturas, Avisos, SugerenciaMejora } from './vistas2';
+import { Analitica, Videos, Material, Informes } from './marketing';
+import { ChatEquipo, Seo, Publicaciones, Articulos, Resenas, Crm } from './consola';
+import { Agenda, Clientes, Mejora, Plan, Facturas, Avisos, SugerenciaMejora } from './vistas2';
 import { CabeceraDepto } from './departamentos';
 import { Tutorial, Ayuda } from './ayuda';
 import { AvisosCupo } from './ampliar';
@@ -20,6 +21,7 @@ import { CAMPOS } from './formato';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
 import './PanelPro.css';
+import './Consola.css';
 
 // Menú por grupos. `depto`: solo aparece activo si ese departamento está contratado (si no, se ofrece como mejora).
 const GRUPOS = [
@@ -32,13 +34,16 @@ const GRUPOS = [
   { t: 'Tu equipo', items: [
     { id: 'equipo', t: 'Departamentos', I: LayoutGrid },
     { id: 'oficina', t: 'Oficina 3D', I: Box },
-    { id: 'agenda', t: 'Agenda', I: CalendarCheck, depto: 'citas' },
-    { id: 'clientes', t: 'Clientes potenciales', I: Handshake, depto: 'ventas' },
     { id: 'publicaciones', t: 'Publicaciones', I: Megaphone, depto: 'redes' },
     { id: 'videos', t: 'Vídeos', I: Clapperboard, depto: 'redes' },
     { id: 'resenas', t: 'Reseñas', I: Star, depto: 'google' },
     { id: 'articulos', t: 'Blog', I: PenLine, depto: 'contenido' },
     { id: 'seo', t: 'SEO y competencia', I: TrendingUp, depto: ['contenido', 'google'] },
+  ] },
+  { t: 'Clientes', items: [
+    { id: 'crm', t: 'Tu CRM', I: Database },
+    { id: 'agenda', t: 'Agenda', I: CalendarCheck, depto: 'citas' },
+    { id: 'clientes', t: 'Clientes potenciales', I: Handshake, depto: 'ventas' },
   ] },
   { t: 'Resultados', items: [
     { id: 'analitica', t: 'Analítica', I: BarChart3 },
@@ -85,7 +90,7 @@ function Buscador({ o }) {
 const SUB = {
   agenda: 'Las citas que piden tus clientes. Confírmalas con un clic y se les avisa solo.',
   clientes: 'Quién te ha pedido presupuesto y en qué punto está cada uno.',
-  publicaciones: 'Los posts que prepara tu agente de Redes. Revisa, aprueba o pide uno nuevo.',
+  publicaciones: 'Historias, posts y carruseles que prepara tu agente de Redes. Tú apruebas y se publican solos.',
   resenas: 'Tus reseñas de Google y lo que les ha respondido tu agente.',
   articulos: 'Los artículos para tu web que escribe tu agente de Contenido.',
   plan: 'Tu plan, tus departamentos y tu consumo del mes.',
@@ -269,6 +274,7 @@ export default function Panel() {
           {vistaReal === 'equipo' && <Departamentos o={o} />}
           {vistaReal === 'oficina' && <Oficina o={o} />}
           {vistaReal === 'actividad' && <Actividad o={o} inicial={extra.filtro === 'tuyo' ? 'tuyo' : undefined} />}
+          {vistaReal === 'crm' && <Crm o={o} />}
           {vistaReal === 'agenda' && <Agenda o={o} />}
           {vistaReal === 'clientes' && <Clientes o={o} />}
           {vistaReal === 'publicaciones' && <Publicaciones o={o} />}

@@ -76,7 +76,7 @@ export async function actualizarMetricas(neg) {
 }
 
 // ---------- chat con el equipo ----------
-export async function asistente(neg, texto, { hablado = false } = {}) {
+export async function asistente(neg, texto, { hablado = false, depto = null } = {}) {
   const desde = new Date(Date.now() - 7 * 864e5).toISOString();
   const [deps, ev, citas, leads, pend, hist] = await Promise.all([
     sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`),
@@ -84,9 +84,10 @@ export async function asistente(neg, texto, { hablado = false } = {}) {
     sb(`of_citas?negocio_id=eq.${neg.id}&estado=in.(pendiente,confirmada)&select=nombre,servicio,fecha,estado&order=fecha.asc&limit=30`),
     sb(`of_leads?negocio_id=eq.${neg.id}&etapa=in.(nuevo,contactado,presupuesto)&select=nombre,interes,importe,etapa&limit=20`),
     sb(`of_actividad?negocio_id=eq.${neg.id}&tipo=in.(aviso,pendiente)&resuelto=eq.false&select=depto,texto&limit=20`),
-    sb(`of_chat?negocio_id=eq.${neg.id}&select=de,texto&order=creado.desc&limit=10`),
+    sb(`of_chat?negocio_id=eq.${neg.id}&depto=${depto ? `eq.${depto}` : 'is.null'}&select=de,texto&order=creado.desc&limit=10`),
   ]);
   const mis = deps.map((d) => d.depto);
+  if (depto && !mis.includes(depto)) depto = null;
   const f = (d) => (d ? new Date(d).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' }) : 'sin hora');
   const contexto = [
     `DEPARTAMENTOS CONTRATADOS: ${mis.map((d) => DEPTO[d].nombre).join(', ')}`,
@@ -97,7 +98,10 @@ export async function asistente(neg, texto, { hablado = false } = {}) {
   ].join('\n\n');
   const mensajes = [...hist.reverse().map((m) => ({ role: m.de === 'tu' ? 'user' : 'assistant', content: m.texto })), { role: 'user', content: texto }];
   while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
-  const sistema = `Eres el equipo de agentes de la oficina de IA de este negocio y hablas con su dueño. Habla en plural («hemos», «tenemos»), cercano, claro y breve (máximo 6 frases o una lista corta).
+  const quien = depto
+    ? `Eres el agente del departamento de ${DEPTO[depto].nombre} de la oficina de IA de este negocio y hablas con su dueño. Habla en primera persona («he», «tengo»), cercano, claro y breve (máximo 6 frases o una lista corta). Céntrate en tu departamento (${DEPTO[depto].que}); si te preguntan algo de otro departamento, contesta lo que sepas por los datos y sugiere hablar con ese compañero.`
+    : 'Eres el equipo de agentes de la oficina de IA de este negocio y hablas con su dueño. Habla en plural («hemos», «tenemos»), cercano, claro y breve (máximo 6 frases o una lista corta).';
+  const sistema = `${quien}
 ${await fichaNegocio(neg)}
 
 DATOS REALES DE LA OFICINA (no inventes nada que no esté aquí; si no lo sabes, dilo):
@@ -106,11 +110,11 @@ ${contexto}
 ${hablado ? 'ESTÁS EN UNA LLAMADA DE VOZ: contesta como al teléfono, natural y muy breve (1 a 3 frases cortas), sin listas, sin emojis, sin símbolos ni enlaces. Di las horas y cifras como se dicen en voz alta.\n' : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
 Devuelve SOLO JSON: {"respuesta":"...", "accion": null | {"tipo":"post|articulo|video", "tema":"..."}}`;
   const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 220 : 500, json: true });
-  if (mis[0]) await consumo(neg.id, mis[0], { ...ia, unidades: 0 });
+  if (depto || mis[0]) await consumo(neg.id, depto || mis[0], { ...ia, unidades: 0 });
   const o = leerJson(ia.texto) || { respuesta: ia.texto };
   const permitida = { post: 'redes', video: 'redes', articulo: 'contenido' }[o.accion?.tipo];
   const accion = permitida && mis.includes(permitida) && o.accion?.tema ? o.accion : null;
-  await sb('of_chat', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, de: 'tu', texto: String(texto).slice(0, 2000) }, { negocio_id: neg.id, de: 'equipo', texto: String(o.respuesta || '').slice(0, 3000), detalle: accion ? { accion } : {} }] });
+  await sb('of_chat', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, depto, de: 'tu', texto: String(texto).slice(0, 2000) }, { negocio_id: neg.id, depto, de: 'equipo', texto: String(o.respuesta || '').slice(0, 3000), detalle: accion ? { accion } : {} }] });
   return { respuesta: o.respuesta, accion };
 }
 
