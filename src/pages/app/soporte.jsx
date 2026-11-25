@@ -2,7 +2,7 @@
 // Vídeos tutoriales y Escríbenos (mensaje al equipo con su historial).
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, CreditCard, GraduationCap, Mail, MessageCircle, PlayCircle, Plug, Rocket, Search, Send, Sparkles, User,
+  ArrowLeft, ArrowRight, BookOpen, CircleHelp as HelpIcon, Check, CreditCard, GraduationCap, Mail, MessageCircle, PlayCircle, Plug, Rocket, Search, Send, Sparkles, User,
 } from 'lucide-react';
 import { DEPTO, BOLSA_EXTRA } from '../../data/oficinaSaas';
 import { api } from './datos';
@@ -10,6 +10,7 @@ import { hace } from './formato';
 import { supabase } from '../../lib/oficinaSupabase';
 import { VideoModal, VideoTarjeta } from './departamentos';
 import { ORDEN_VIDEOS } from './videos';
+import { PREGUNTAS } from './preguntas';
 
 // Cada artículo: título, texto en párrafos y, si toca, a qué parte del panel lleva.
 const COLECCIONES = [
@@ -49,6 +50,12 @@ const COLECCIONES = [
 ];
 const TODOS = COLECCIONES.flatMap((c) => c.arts.map((a) => ({ ...a, col: c })));
 
+function Faq({ lista, abierta, setAbierta }) {
+  return <div className="ay-faq">{lista.map(([, q, r]) => (
+    <details key={q} open={abierta === q} onToggle={(e) => { if (e.currentTarget.open) setAbierta(q); }}><summary>{q}</summary><p>{r}</p></details>
+  ))}</div>;
+}
+
 function Cab({ titulo, sub, extra, volver }) {
   return (
     <header className="pc-cab">
@@ -58,9 +65,10 @@ function Cab({ titulo, sub, extra, volver }) {
 }
 
 export function CentroAyuda({ o, ir, abrirTutorial, abrirPerfil }) {
-  const [q, setQ] = useState(''); const [col, setCol] = useState(null); const [art, setArt] = useState(null);
+  const [q, setQ] = useState(''); const [col, setCol] = useState(null); const [art, setArt] = useState(null); const [filtro, setFiltro] = useState('todas'); const [abierta, setAbierta] = useState(null);
   const x = q.trim().toLowerCase();
   const res = useMemo(() => (x ? TODOS.filter((a) => `${a.t} ${a.p.join(' ')}`.toLowerCase().includes(x)) : []), [x]);
+  const resQ = useMemo(() => (x ? PREGUNTAS.filter(([, a, b]) => `${a} ${b}`.toLowerCase().includes(x)) : []), [x]);
   if (art) {
     const a = TODOS.find((y) => y.id === art);
     return (
@@ -78,7 +86,8 @@ export function CentroAyuda({ o, ir, abrirTutorial, abrirPerfil }) {
     return (
       <div className="vista">
         <Cab titulo={c.t} sub={c.d} volver={() => setCol(null)} />
-        <section className="cx"><ul className="ay-lista">{c.arts.map((a) => <li key={a.id}><button onClick={() => setArt(a.id)}><span>{a.t}</span><ArrowRight size={14} /></button></li>)}</ul></section>
+        <section className="cx"><header className="cx__h"><h2>Guías</h2><small>{c.arts.length}</small></header><ul className="ay-lista">{c.arts.map((a) => <li key={a.id}><button onClick={() => setArt(a.id)}><span>{a.t}</span><ArrowRight size={14} /></button></li>)}</ul></section>
+        <section className="cx"><header className="cx__h"><h2>Preguntas frecuentes</h2><small>{PREGUNTAS.filter((y) => y[0] === c.id).length}</small></header><Faq lista={PREGUNTAS.filter((y) => y[0] === c.id)} abierta={abierta} setAbierta={setAbierta} /></section>
       </div>
     );
   }
@@ -87,14 +96,15 @@ export function CentroAyuda({ o, ir, abrirTutorial, abrirPerfil }) {
       <Cab titulo="Centro de ayuda" sub="Guías cortas sobre cada parte de tu oficina." />
       <label className="ay-busca"><Search size={17} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Busca: WhatsApp, cupo, carrusel, factura…" aria-label="Buscar en la ayuda" /></label>
       {x ? (
-        <section className="cx"><header className="cx__h"><h2>{res.length} resultado{res.length === 1 ? '' : 's'}</h2></header>
-          {res.length ? <ul className="ay-lista">{res.map((a) => <li key={a.id}><button onClick={() => setArt(a.id)}><span>{a.t}<small>{a.col.t}</small></span><ArrowRight size={14} /></button></li>)}</ul>
-            : <div className="cx-vacio">No hay artículos con «{q}». <button className="btn btn--sec btn--sm" onClick={() => ir('soporte')}>Pregúntanos</button></div>}
-        </section>
+        <>
+          {res.length > 0 && <section className="cx"><header className="cx__h"><h2>Guías</h2><small>{res.length}</small></header><ul className="ay-lista">{res.map((a) => <li key={a.id}><button onClick={() => setArt(a.id)}><span>{a.t}<small>{a.col.t}</small></span><ArrowRight size={14} /></button></li>)}</ul></section>}
+          {resQ.length > 0 && <section className="cx"><header className="cx__h"><h2>Preguntas frecuentes</h2><small>{resQ.length}</small></header><Faq lista={resQ} abierta={abierta} setAbierta={setAbierta} /></section>}
+          {!res.length && !resQ.length && <section className="cx"><div className="cx-vacio">No hay nada con «{q}». <button className="btn btn--sec btn--sm" onClick={() => ir('soporte')}>Pregúntanos</button></div></section>}
+        </>
       ) : (<>
         <div className="cfg">{COLECCIONES.map((c) => (
           <button key={c.id} type="button" className="cfg__c" onClick={() => setCol(c.id)}>
-            <span className="cfg__i"><c.I size={18} /></span><span><b>{c.t}</b><small>{c.d} · {c.arts.length} artículos</small></span><ArrowRight size={15} />
+            <span className="cfg__i"><c.I size={18} /></span><span><b>{c.t}</b><small>{c.d} · {c.arts.length + PREGUNTAS.filter((y) => y[0] === c.id).length} respuestas</small></span><ArrowRight size={15} />
           </button>
         ))}</div>
         <div className="ay-atajos">
@@ -102,6 +112,11 @@ export function CentroAyuda({ o, ir, abrirTutorial, abrirPerfil }) {
           <button className="cfg__c" onClick={abrirTutorial}><span className="cfg__i"><GraduationCap size={18} /></span><span><b>Tutorial guiado</b><small>El recorrido de bienvenida, paso a paso. 5 minutos.</small></span><ArrowRight size={15} /></button>
           <button className="cfg__c" onClick={() => ir('soporte')}><span className="cfg__i"><MessageCircle size={18} /></span><span><b>Escríbenos</b><small>Te contesta una persona del equipo.</small></span><ArrowRight size={15} /></button>
         </div>
+        <section className="cx">
+          <header className="cx__h"><HelpIcon /><h2>Preguntas frecuentes</h2><small>{PREGUNTAS.length}</small></header>
+          <div className="cx-tabs ay-filtros">{[['todas', 'Todas'], ...COLECCIONES.map((c) => [c.id, c.t])].map(([k, t]) => <button key={k} aria-selected={filtro === k} onClick={() => setFiltro(k)}>{t}<em>{k === 'todas' ? PREGUNTAS.length : PREGUNTAS.filter((y) => y[0] === k).length}</em></button>)}</div>
+          <Faq lista={filtro === 'todas' ? PREGUNTAS : PREGUNTAS.filter((y) => y[0] === filtro)} abierta={abierta} setAbierta={setAbierta} />
+        </section>
       </>)}
     </div>
   );
