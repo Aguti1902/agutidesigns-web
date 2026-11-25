@@ -230,7 +230,7 @@ export default function Panel() {
     <div className={`app app--pro ${tema.clase} ${menu ? 'menu-on' : ''}`}>
       {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
       <aside className="lado">
-        <div className="lado__top"><a href="/" className="lado__logo"><img src={tema.oscuro ? '/images/logo-blanco.png' : '/images/logo-negro.png'} alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
+        <div className="lado__top"><a href="/" className="lado__logo"><img src={tema.oscuro ? '/images/logo-blanco.png' : '/images/logoazul.png'} alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
         <MenuNegocio o={o} ir={ir} faltan={faltanDatos} />
         <nav aria-label="Secciones">
           {GRUPOS.filter((g) => !g.oculto).map((g) => {
