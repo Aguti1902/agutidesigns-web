@@ -30,6 +30,25 @@ function madridNow(){ const s=new Date().toLocaleString('en-US',{timeZone:'Europ
 function makeCanvasTex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); draw&&draw(g,w,h); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=4; return {c,g,t}; }
 /* rejilla para caminar sin atravesar muebles */
 const GRID={x0:-16,z0:-11,cs:0.5,w:64,h:44};
+/* Texturas de suelo y pared hechas a mano (sin archivos): el cliente elige el acabado. */
+function sombra(hex,k){ const n=parseInt(String(hex).replace('#',''),16); const f=(c)=>Math.max(0,Math.min(255,Math.round(c*k))); return `rgb(${f(n>>16&255)},${f(n>>8&255)},${f(n&255)})`; }
+function ruido(g,w,h,n,a){ for(let i=0;i<n;i++){ g.fillStyle=`rgba(${Math.random()<.5?'0,0,0':'255,255,255'},${Math.random()*a})`; g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,1+Math.random()*2); } }
+function texAcabado(tipo,color,rx,ry){
+  if(!tipo||tipo==='liso') return null;
+  const {t}=makeCanvasTex(512,512,(g,w,h)=>{ g.fillStyle=color; g.fillRect(0,0,w,h);
+    if(tipo==='parquet'){ for(let y=0;y<h;y+=32){ let x=-((y/32)%2)*90; while(x<w){ const L=150+Math.random()*120; g.fillStyle=sombra(color,0.86+Math.random()*0.22); g.fillRect(x+1,y+1,L-2,30); g.strokeStyle='rgba(0,0,0,.05)'; for(let k=0;k<4;k++){ g.beginPath(); const yy=y+5+Math.random()*22; g.moveTo(x+4,yy); g.bezierCurveTo(x+L*.3,yy+3,x+L*.6,yy-3,x+L-4,yy); g.stroke(); } x+=L; } } }
+    else if(tipo==='baldosa'){ const n=4, c=w/n; for(let i=0;i<n;i++) for(let j=0;j<n;j++){ g.fillStyle=sombra(color,0.94+Math.random()*0.1); g.fillRect(i*c+3,j*c+3,c-6,c-6); } ruido(g,w,h,900,.05); }
+    else if(tipo==='ajedrez'){ const n=4, c=w/n; for(let i=0;i<n;i++) for(let j=0;j<n;j++){ g.fillStyle=(i+j)%2?sombra(color,0.55):color; g.fillRect(i*c,j*c,c,c); } }
+    else if(tipo==='marmol'){ g.fillStyle=sombra(color,1.04); g.fillRect(0,0,w,h); g.lineWidth=1.4; for(let k=0;k<14;k++){ g.strokeStyle=`rgba(90,90,100,${0.08+Math.random()*0.14})`; g.beginPath(); let x=Math.random()*w, y=0; g.moveTo(x,y); while(y<h){ x+=(Math.random()-.5)*60; y+=20+Math.random()*30; g.lineTo(x,y); } g.stroke(); } g.strokeStyle='rgba(0,0,0,.08)'; g.strokeRect(1,1,w-2,h-2); }
+    else if(tipo==='hormigon'){ ruido(g,w,h,9000,.07); g.strokeStyle='rgba(0,0,0,.10)'; g.lineWidth=2; g.strokeRect(1,1,w-2,h-2); for(const [x,y] of [[60,60],[452,60],[60,452],[452,452]]){ g.fillStyle='rgba(0,0,0,.14)'; g.beginPath(); g.arc(x,y,5,0,7); g.fill(); } }
+    else if(tipo==='moqueta'){ ruido(g,w,h,22000,.09); }
+    else if(tipo==='ladrillo'){ const bh=40, bw=110; for(let y=0;y<h;y+=bh){ const o=(y/bh)%2?bw/2:0; for(let x=-o;x<w;x+=bw){ g.fillStyle=sombra(color,0.82+Math.random()*0.3); g.fillRect(x+3,y+3,bw-6,bh-6); } } ruido(g,w,h,3000,.08); }
+    else if(tipo==='madera'){ for(let x=0;x<w;x+=64){ g.fillStyle=sombra(color,0.85+Math.random()*0.25); g.fillRect(x+1,0,62,h); g.strokeStyle='rgba(0,0,0,.06)'; for(let k=0;k<5;k++){ g.beginPath(); const xx=x+6+Math.random()*50; g.moveTo(xx,0); g.bezierCurveTo(xx+6,h*.3,xx-6,h*.6,xx,h); g.stroke(); } } }
+    else if(tipo==='paneles'){ for(let x=0;x<w;x+=128) for(let y=0;y<h;y+=256){ g.fillStyle=sombra(color,0.95+Math.random()*0.08); g.fillRect(x+4,y+4,120,248); g.strokeStyle='rgba(255,255,255,.08)'; g.strokeRect(x+10,y+10,108,236); } }
+    else if(tipo==='rayas'){ for(let x=0;x<w;x+=64){ g.fillStyle=sombra(color,0.88); g.fillRect(x,0,32,h); } }
+  });
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rx,ry); return t;
+}
 function gIdx(x,z){ const i=Math.floor((x-GRID.x0)/GRID.cs), j=Math.floor((z-GRID.z0)/GRID.cs); return (i<0||j<0||i>=GRID.w||j>=GRID.h)?-1:j*GRID.w+i; }
 function gBlock(x0,z0,x1,z1,pad=0.12){ for(let x=Math.min(x0,x1)-pad;x<=Math.max(x0,x1)+pad;x+=GRID.cs/2) for(let z=Math.min(z0,z1)-pad;z<=Math.max(z0,z1)+pad;z+=GRID.cs/2){ const k=gIdx(x,z); if(k>=0) OF.block[k]=1; } }
 function gFree(x,z){ const k=gIdx(x,z); return k>=0&&!OF.block[k]; }
@@ -81,7 +100,7 @@ function etiquetaSuelo(H,texto,color,x,z,w,ry=0){
   pl.rotation.x=-Math.PI/2; pl.rotation.z=ry; pl.position.set(x,0.05,z); H.scene.add(pl);
 }
 function logoPared(H,x,y,z,ry,ancho,color){
-  const img=new Image(); img.onload=()=>{ const r=img.naturalHeight/img.naturalWidth; const {t}=makeCanvasTex(1024,Math.round(1024*r),(g,w,h)=>{ g.drawImage(img,0,0,w,h); g.globalCompositeOperation='source-in'; g.fillStyle=color; g.fillRect(0,0,w,h); });
+  const img=new Image(); img.onload=()=>{ const r=img.naturalHeight/img.naturalWidth; const {t}=makeCanvasTex(1024,Math.round(1024*r),(g,w,h)=>{ g.drawImage(img,0,0,w,h); if(color){ g.globalCompositeOperation='source-in'; g.fillStyle=color; g.fillRect(0,0,w,h); } });
     const p=new THREE.Mesh(new THREE.PlaneGeometry(ancho,ancho*r),new THREE.MeshBasicMaterial({map:t,transparent:true})); p.position.set(x,y,z); p.rotation.y=ry; H.scene.add(p); }; img.src=MARCA.logo;
 }
 function textoPared(H,texto,color,x,y,z,ry,ancho,font='600 34px "JetBrains Mono",monospace'){
@@ -248,22 +267,36 @@ function initOffice(host){
   const mFloor=M(hx(C.suelo,0xe9ecf3),{roughness:.55}), mSlab=M(hx(C.pared,0x0b1433)), mWall=M(hx(C.pared,0x0b1433),{roughness:.9}), mWall2=M(hx(C.pared2,0x101c48),{roughness:.9}), mBlue=M(hx(C.acento,0x0047ff),{roughness:.45}), mWhite=M(0xf6f8fc,{roughness:.4}),
     mDark=M(0x1a2244,{roughness:.6,metalness:.3}), mBlack=M(0x0a0d18,{roughness:.4,metalness:.2}), mWood=M(0xc9a27a,{roughness:.6}), mLime=M(hx(C.detalle,0xe5fc63),{roughness:.6}), mGreen=M(0x2bbf86,{roughness:.8}), mGreen2=M(0x16804f,{roughness:.8}),
     mGlass=new THREE.MeshStandardMaterial({color:0xb9d0ff,roughness:.05,metalness:.1,transparent:true,opacity:.22,depthWrite:false}), mFrame=M(0x1a2244,{metalness:.5,roughness:.3});
+  const E=MARCA.estructura||{};
+  const tS=texAcabado(E.suelo,C.suelo||'#e9ecf3',8,5.5); if(tS){ mFloor.map=tS; mFloor.color.setHex(0xffffff); }
+  const tP=texAcabado(E.pared,C.pared||'#0b1433',10,1.6); if(tP){ mWall.map=tP; mWall.color.setHex(0xffffff); mWall2.map=tP; mWall2.color.setHex(0xf2f2f2); }
+  if(E.mesas==='madera') mWhite.color.setHex(0xc9a27a); else if(E.mesas==='negra') mWhite.color.setHex(0x2a2d36); else if(E.mesas==='color') mWhite.color.setHex(hx(C.acento,0x0047ff));
   OF.mats={mDark,mWhite};
   const H={scene,M,box,cyl,mats:{mFloor,mSlab,mWall,mWall2,mBlue,mWhite,mDark,mBlack,mWood,mLime,mGreen,mGreen2,mGlass,mFrame}};
   if(MARCA.tema&&CONSTRUCTORES[MARCA.tema]){ CONSTRUCTORES[MARCA.tema](H); } else {
   // suelo, paredes
   box(32.4,0.5,22.4,mSlab,0,-0.27,0); const fl=box(32,0.06,22,mFloor,0,0,0); fl.castShadow=false;
   box(32.4,0.08,0.06,mBlue,0,0.02,11.22,scene,false); box(0.06,0.08,22.4,mBlue,16.22,0.02,0,scene,false);
-  box(32.4,5,0.3,mWall,0,2.5,-11.2); box(0.3,5,22.4,mWall2,-16.2,2.5,0);
+  const WH={baja:4.2,normal:5,alta:6.6}[E.altura]||5; OF.WH=WH;
+  box(32.4,WH,0.3,mWall,0,WH/2,-11.2); box(0.3,WH,22.4,mWall2,-16.2,WH/2,0);
+  if(E.paredDcha){ box(0.3,WH,22.4,mWall2,16.35,WH/2,0); }
+  if(E.zocalo!==false){ box(32.4,0.32,0.06,mDark,0,0.16,-11.04,scene,false); box(0.06,0.32,22.4,mDark,-16.04,0.16,0,scene,false); }
+  if(E.techo){ // conductos vistos a lo largo de las paredes (estilo industrial), sin tapar la vista
+    const mTubo=M(0x9aa0a8,{metalness:.7,roughness:.35}); const t1=cyl(0.22,0.22,32,mTubo,0,WH-0.45,-10.7,scene,14); t1.rotation.z=Math.PI/2; const t2=cyl(0.22,0.22,22,mTubo,-15.7,WH-0.45,0,scene,14); t2.rotation.x=Math.PI/2;
+    const t3=cyl(0.1,0.1,32,mTubo,0,WH-0.95,-10.85,scene,10); t3.rotation.z=Math.PI/2; for(let x=-14;x<=14;x+=4) box(0.14,0.5,0.6,mDark,x,WH-0.55,-10.85,scene,false); }
   box(32.4,0.14,0.05,mBlue,0,0.55,-11.03,scene,false); box(0.05,0.14,22.4,mBlue,-16.03,0.55,0,scene,false);
   gBlock(-16.5,-11.6,16.5,-10.75,0); gBlock(-16.6,-11.5,-15.75,11.5,0); gBlock(-16.5,10.8,16.5,11.6,0); gBlock(15.8,-11.5,16.6,11.5,0);
   // ventanas
-  OF.windows=[]; for(const z of [-1.0,3.2,7.4]){ const w=new THREE.Mesh(new THREE.PlaneGeometry(3,2.4),new THREE.MeshBasicMaterial({color:0x9cc4ff})); w.position.set(-16.03,2.6,z); w.rotation.y=Math.PI/2; scene.add(w); OF.windows.push(w);
-    box(0.08,0.08,3.2,mDark,-16,1.38,z,scene,false); box(0.08,0.08,3.2,mDark,-16,3.82,z,scene,false); box(0.08,2.4,0.06,mDark,-16,2.6,z,scene,false); }
+  OF.windows=[]; const nV=E.ventanas==null?3:Math.max(0,Math.min(5,+E.ventanas)); const vz=nV===3&&!E.ventanal?[-1.0,3.2,7.4]:Array.from({length:nV},(_,i)=>-8.6+(i+0.5)*(19.2/nV));
+  const vw=E.ventanal?Math.min(3.6,19.2/Math.max(1,nV)-0.4):3, vh=E.ventanal?WH-0.9:2.4, vy=E.ventanal?0.45+vh/2:2.6;
+  for(const z of vz){ const w=new THREE.Mesh(new THREE.PlaneGeometry(vw,vh),new THREE.MeshBasicMaterial({color:0x9cc4ff})); w.position.set(-16.03,vy,z); w.rotation.y=Math.PI/2; scene.add(w); OF.windows.push(w);
+    box(0.08,0.08,vw+0.2,mDark,-16,vy-vh/2-0.02,z,scene,false); box(0.08,0.08,vw+0.2,mDark,-16,vy+vh/2+0.02,z,scene,false); box(0.08,vh,0.06,mDark,-16,vy,z,scene,false);
+    if(E.ventanal){ box(0.08,vh,0.06,mDark,-16,vy,z-vw/2,scene,false); box(0.08,vh,0.06,mDark,-16,vy,z+vw/2,scene,false); } }
+  if(E.ventanasFondo){ for(const x of [-12.5,-6.2]){ const w=new THREE.Mesh(new THREE.PlaneGeometry(3,2.0),new THREE.MeshBasicMaterial({color:0x9cc4ff})); w.position.set(x,WH-1.5,-11.03); scene.add(w); OF.windows.push(w); box(3.2,0.08,0.08,mDark,x,WH-2.52,-11.0,scene,false); box(3.2,0.08,0.08,mDark,x,WH-0.48,-11.0,scene,false); } }
   // zonas de departamento
   const ZONES={direccion:[-15.6,-6.1,-10.6,-3.0],ventas:[-15.6,-2.6,-2.2,10.6],marketing:[-5.6,4.6,-10.6,-3.0],clientes:[-1.6,6.6,-2.2,4.0],finanzas:[-1.6,6.6,4.6,10.6]};
   OF.zones=ZONES;
-  DEPTS.forEach(d=>{ const [x0,x1,z0,z1]=ZONES[d.id]; const rug=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),new THREE.MeshStandardMaterial({color:d.hex,roughness:.95,transparent:true,opacity:.14,depthWrite:false}));
+  if(E.zonas!==false) DEPTS.forEach(d=>{ const [x0,x1,z0,z1]=ZONES[d.id]; const rug=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),new THREE.MeshStandardMaterial({color:d.hex,roughness:.95,transparent:true,opacity:.14,depthWrite:false}));
     rug.rotation.x=-Math.PI/2; rug.position.set((x0+x1)/2,0.036,(z0+z1)/2); rug.receiveShadow=true; scene.add(rug);
     const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(x1-x0,z1-z0)),new THREE.LineBasicMaterial({color:d.hex,transparent:true,opacity:.7})); edge.rotation.x=-Math.PI/2; edge.position.set((x0+x1)/2,0.04,(z0+z1)/2); scene.add(edge);
     const lab=makeCanvasTex(1024,128,(g,w,h)=>{ g.fillStyle=d.color; g.font='800 84px Archivo,Arial'; g.textBaseline='middle'; g.fillText((MARCA.deptos[d.id]||d.name).toUpperCase(),6,h/2+4); });
@@ -281,7 +314,7 @@ function initOffice(host){
     if(Math.random()<0.4) cyl(0.05,0.045,0.12,Math.random()<0.5?mLime:mBlue,-0.8,0.86,0.05,g,10);
     if(Math.random()<0.3){ cyl(0.09,0.07,0.16,mWhite,0.85,0.88,-0.25,g,10); const pl=new THREE.Mesh(new THREE.IcosahedronGeometry(0.17,0),mGreen); pl.position.set(0.85,1.07,-0.25); pl.castShadow=true; g.add(pl); }
     const ch=new THREE.Group(); ch.position.set(0,0,0.95); g.add(ch);
-    const dc=DEPTS.find(d=>d.id===DEPT_OF[id]); const seatMat=M(dc?dc.hex:0x0047ff,{roughness:.5});
+    const dc=DEPTS.find(d=>d.id===DEPT_OF[id]); const seatMat=E.sillas==='marca'?mBlue:E.sillas==='negro'?mBlack:E.sillas==='blanco'?M(0xf2f2f2,{roughness:.5}):M(dc?dc.hex:0x0047ff,{roughness:.5});
     box(0.62,0.08,0.58,seatMat,0,0.47,0,ch); box(0.62,0.62,0.07,mWall,0,0.85,0.3,ch); cyl(0.035,0.035,0.4,mDark,0,0.25,0,ch,8); cyl(0.28,0.28,0.04,mDark,0,0.04,0,ch,10);
     const sz=face==='s'?z-0.82:z+0.82; gBlock(x-W/2,z-0.55,x+W/2,z+0.55);
     OF.desks[id]={x,z,screen:s,seat:{x,z:sz,ry:face==='s'?0:Math.PI}}; };
@@ -290,16 +323,17 @@ function initOffice(host){
   OF.workMat=new THREE.MeshBasicMaterial({map:OF.workTex.t}); OF.idleMat=new THREE.MeshBasicMaterial({map:OF.idleTex.t});
   OF.code=Array.from({length:22},()=>({w:20+Math.random()*150,i:Math.floor(Math.random()*4),c:['#7aa0ff','#e5fc63','#3ee0a1','#ffffff','#ff8f7e'][Math.floor(Math.random()*5)]}));
   // Dirección: despacho de cristal del CEO + 3 mesas
-  const glassWall=(x0,z0,x1,z1,door)=>{ const len=Math.hypot(x1-x0,z1-z0), along=x0===x1?'z':'x';
+  const mTabique=E.despachos==='pared'?M(hx(C.pared2||C.pared,0x101c48),{roughness:.9}):E.despachos==='madera'?M(0xb98b5e,{roughness:.6}):mGlass;
+  const glassWall=(x0,z0,x1,z1,door)=>{ if(E.despachos==='ninguno') return; const len=Math.hypot(x1-x0,z1-z0), along=x0===x1?'z':'x';
     const segs=door?[[0,door[0]],[door[1],len]]:[[0,len]];
     segs.forEach(([a,b])=>{ if(b-a<0.05) return; const mid=(a+b)/2, L=b-a; const cx=along==='x'?x0+mid:x0, cz=along==='z'?z0+mid:z0;
-      const m=new THREE.Mesh(new THREE.BoxGeometry(along==='x'?L:0.05,2.6,along==='z'?L:0.05),mGlass); m.position.set(cx,1.3,cz); scene.add(m);
+      const m=new THREE.Mesh(new THREE.BoxGeometry(along==='x'?L:0.05,2.6,along==='z'?L:0.05),mTabique); if(mTabique!==mGlass){ m.castShadow=true; m.receiveShadow=true; } m.position.set(cx,1.3,cz); scene.add(m);
       box(along==='x'?L:0.08,0.08,along==='z'?L:0.08,mFrame,cx,2.62,cz,scene,false);
       if(along==='x') gBlock(x0+a,z0-0.05,x0+b,z0+0.05,0.08); else gBlock(x0-0.05,z0+a,x0+0.05,z0+b,0.08); }); };
   glassWall(-15.6,-6.0,-10.4,-6.0,[2.8,4.0]); glassWall(-10.4,-10.6,-10.4,-6.0);
   desk('ceo',-13.0,-8.5,'s',true);
   const plaque=makeCanvasTex(512,96,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='800 54px Archivo,Arial'; g.textBaseline='middle'; g.fillText(MARCA.placa,8,h/2+3); });
-  const pq=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.41),new THREE.MeshBasicMaterial({map:plaque.t,transparent:true})); pq.position.set(-14.3,2.2,-5.96); scene.add(pq);
+  const pq=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.41),new THREE.MeshBasicMaterial({map:plaque.t,transparent:true})); pq.position.set(-14.3,2.2,-5.96); if(E.despachos!=='ninguno') scene.add(pq);
   box(2.2,0.8,0.5,mWall,-14.6,0.4,-10.4); const award=cyl(0.12,0.16,0.3,mLime,-14.6,0.95,-10.4,scene,10);
   desk('resumen',-14.2,-4.2); desk('semanal',-11.6,-4.2); desk('analista',-9.0,-4.2);
   // Ventas (7)
@@ -312,8 +346,12 @@ function initOffice(host){
   box(0.05,0.9,0.05,mDark,-1.0,0.45,0,stand); box(0.05,0.9,0.05,mDark,1.0,0.45,0,stand); gBlock(-6.4,8.2,-4.0,9.0);
   // Marketing (4) + logo
   [['contenido',-3.6,-9.0],['seo',-1.0,-9.0],['publicador',-3.6,-5.0],['ads',-1.0,-5.0]].forEach(([id,x,z])=>desk(id,x,z));
-  const logoImg=new Image(); logoImg.onload=()=>{ const {t}=makeCanvasTex(1024,282,(g,w,h)=>{ g.drawImage(logoImg,0,0,w,h); g.globalCompositeOperation='source-in'; g.fillStyle='#ffffff'; g.fillRect(0,0,w,h); });
-    const p=new THREE.Mesh(new THREE.PlaneGeometry(8,8*282/1024),new THREE.MeshBasicMaterial({map:t,transparent:true})); p.position.set(1.4,3.55,-11.03); scene.add(p); }; logoImg.src=MARCA.logo;
+  const LW={S:5,M:8,L:10.5}[MARCA.logoTam]||8, logoTinte=MARCA.logoColor==='original'?null:MARCA.logoColor||'#ffffff';
+  const logoImg=new Image(); logoImg.crossOrigin='anonymous'; logoImg.onload=()=>{ const r=Math.min(0.6,(logoImg.naturalHeight||282)/(logoImg.naturalWidth||1024)); const ch=Math.round(1024*r); const {t}=makeCanvasTex(1024,ch,(g,w,h)=>{ const k=Math.min(w/logoImg.naturalWidth,h/logoImg.naturalHeight); const dw=logoImg.naturalWidth*k, dh=logoImg.naturalHeight*k; g.drawImage(logoImg,MARCA.logoTam?(w-dw)/2:0,(h-dh)/2,dw,dh); if(logoTinte){ g.globalCompositeOperation='source-in'; g.fillStyle=logoTinte; g.fillRect(0,0,w,h); } });
+    const mk=(lw)=>new THREE.Mesh(new THREE.PlaneGeometry(lw,lw*ch/1024),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));
+    if(MARCA.logoPared!==false){ const p=mk(LW); p.position.set(1.4,WH===5&&LW===8?3.55:Math.min(WH-0.35-LW*ch/2048,3.0+LW*ch/2048),-11.03); scene.add(p); }
+    if(MARCA.logoSuelo){ const p=mk(3.6); p.rotation.x=-Math.PI/2; p.position.set(-4.0,0.05,2.3); scene.add(p); }
+    if(MARCA.logoRecepcion&&OF.recepcion){ const p=mk(2.4); p.position.set(OF.recepcion.x,0.62,OF.recepcion.z+0.46); scene.add(p); } }; logoImg.src=MARCA.logo;
   const tagTex=makeCanvasTex(1024,64,(g,w,h)=>{ g.fillStyle='#e5fc63'; g.font='600 34px "JetBrains Mono",monospace'; g.textBaseline='middle'; g.fillText(MARCA.lema,8,h/2); });
   const tag=new THREE.Mesh(new THREE.PlaneGeometry(8,0.5),new THREE.MeshBasicMaterial({map:tagTex.t,transparent:true})); tag.position.set(1.4,2.25,-11.03); scene.add(tag);
   // Clientes y producción (2) + Finanzas (2)
@@ -329,6 +367,26 @@ function initOffice(host){
   const scr=new THREE.Mesh(new THREE.PlaneGeometry(6.05,3.3),new THREE.MeshBasicMaterial({map:OF.wall.t})); scr.position.set(12.2,2.6,-10.91); scene.add(scr);
   const glow=new THREE.PointLight(0x2f6bff,Math.PI,12,1); glow.position.set(12.2,3,-9); scene.add(glow);
   const MU={plantas:true,sofa:true,pingpong:true,cocina:true,agua:true,cuadros:false,estanteria:false,...(MARCA.muebles||{})};
+  // Recepción con mostrador
+  if(MU.recepcion){ const rx=1.9, rz=9.7; OF.recepcion={x:rx,z:rz}; box(3.2,1.05,0.8,mWall2,rx,0.53,rz); box(3.4,0.06,0.95,mWood,rx,1.08,rz); box(3.2,0.06,0.04,mLime,rx,0.2,rz+0.42,scene,false);
+    box(0.5,0.32,0.04,mBlack,rx-0.6,1.28,rz-0.1); cyl(0.06,0.05,0.14,mBlue,rx+0.9,1.18,rz,scene,10); gBlock(rx-1.7,rz-0.5,rx+1.7,rz+0.5); }
+  // Futbolín
+  if(MU.futbolin){ const fx=12.0, fz=0.9; box(1.5,0.22,0.8,M(0x2d7a3e,{roughness:.6}),fx,0.86,fz); box(1.6,0.12,0.9,mWood,fx,0.72,fz); [[-0.7,-0.35],[0.7,-0.35],[-0.7,0.35],[0.7,0.35]].forEach(([a,b])=>box(0.08,0.68,0.08,mDark,fx+a,0.34,fz+b));
+    for(let i=0;i<6;i++) cyl(0.015,0.015,1.3,M(0xd7d9de,{metalness:.8,roughness:.3}),fx-0.62+i*0.25,0.99,fz,scene,6).rotation.x=Math.PI/2; gBlock(fx-0.85,fz-0.5,fx+0.85,fz+0.5); }
+  // Máquina de café y snacks
+  if(MU.vending){ const vx=15.45, vz=2.7; box(0.8,1.9,0.8,mBlack,vx,0.95,vz); const sc=new THREE.Mesh(new THREE.PlaneGeometry(0.6,1.0),new THREE.MeshBasicMaterial({color:hx(C.acento,0x0047ff)})); sc.position.set(vx-0.41,1.2,vz); sc.rotation.y=-Math.PI/2; scene.add(sc); box(0.04,0.1,0.5,mLime,vx-0.41,1.85,vz,scene,false); gBlock(vx-0.45,vz-0.45,vx+0.45,vz+0.45); }
+  // Árbol grande de interior
+  if(MU.arbol){ const tx=7.6, tz=1.0; cyl(0.55,0.45,0.6,mWall2,tx,0.3,tz,scene,14); cyl(0.08,0.12,1.8,mWood,tx,1.5,tz,scene,8); [[0,2.6,0,0.95],[0.45,2.2,0.3,0.6],[-0.4,2.3,-0.3,0.65],[0.1,3.05,-0.2,0.55]].forEach(([dx,y,dz,r],i)=>{ const f=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),i%2?mGreen2:mGreen); f.position.set(tx+dx,y,tz+dz); f.castShadow=true; scene.add(f); }); gBlock(tx-0.6,tz-0.6,tx+0.6,tz+0.6); }
+  // Columnas
+  if(E.columnas){ [[-4.6,-1.6],[7.8,-1.5],[7.8,6.8],[-4.6,9.4]].forEach(([x,z])=>{ box(0.6,WH,0.6,mWall2,x,WH/2,z); box(0.64,0.3,0.64,mDark,x,0.15,z,scene,false); gBlock(x-0.32,z-0.32,x+0.32,z+0.32,0.04); }); }
+  // Lámparas colgantes
+  if(E.lamparas){ const mLamp=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.5,metalness:.4}), mBul=new THREE.MeshBasicMaterial({color:0xfff2c8});
+    [[-11.6,0.0],[-11.6,4.6],[-7.7,2.3],[-2.3,-7.0],[1.9,3.3],[12.2,-7.5],[-13.0,-8.5]].forEach(([x,z])=>{ cyl(0.012,0.012,WH-3.0,mDark,x,(WH+3.0)/2,z,scene,4); const sh=cyl(0.04,0.38,0.32,mLamp,x,2.85,z,scene,16); sh.castShadow=false; const b=new THREE.Mesh(new THREE.SphereGeometry(0.11,10,8),mBul); b.position.set(x,2.68,z); scene.add(b); });
+    const l1=new THREE.PointLight(0xffd9a0,0.7*Math.PI,14,1.4); l1.position.set(-9.5,2.6,2.3); scene.add(l1); const l2=new THREE.PointLight(0xffd9a0,0.6*Math.PI,12,1.4); l2.position.set(1.0,2.6,-1.5); scene.add(l2); }
+  // Letrero de neón con la frase del cliente
+  if(MARCA.neon){ const col=MARCA.neonColor||MARCA.acentoCss||'#ff3df0'; const nt=makeCanvasTex(1024,160,(g,w,h)=>{ g.font='700 92px "Outfit",Archivo,Inter,Arial'; g.textAlign='center'; g.textBaseline='middle'; let tam=92; while(g.measureText(MARCA.neon).width>980&&tam>40){ tam-=6; g.font=`700 ${tam}px "Outfit",Archivo,Inter,Arial`; } g.shadowColor=col; g.shadowBlur=28; g.fillStyle=col; g.fillText(MARCA.neon,w/2,h/2); g.shadowBlur=10; g.fillStyle='#ffffff'; g.globalAlpha=.55; g.fillText(MARCA.neon,w/2,h/2); });
+    const nm=new THREE.Mesh(new THREE.PlaneGeometry(5.6,0.875),new THREE.MeshBasicMaterial({map:nt.t,transparent:true,depthWrite:false})); nm.position.set(-8.2,Math.min(WH-0.6,4.25),-11.02); scene.add(nm);
+    const nl=new THREE.PointLight(new THREE.Color(col).getHex(),0.5*Math.PI,7,1.5); nl.position.set(-8.2,3.8,-10.2); scene.add(nl); }
   // Cocina
   if(MU.cocina){ box(0.75,0.9,4.2,mWhite,15.4,0.45,-0.6); box(0.8,0.06,4.2,mDark,15.4,0.92,-0.6); box(0.45,0.62,0.5,mBlack,15.45,1.26,-1.8); cyl(0.05,0.05,0.1,mLime,15.2,1.0,-1.8,scene,8); box(0.45,0.5,0.5,mBlue,15.45,1.2,0.4); gBlock(15.0,-2.7,15.9,1.5); }
   const water=[9.0,1.9]; if(MU.agua){ box(0.5,1.0,0.5,mWhite,water[0],0.5,water[1]); cyl(0.2,0.2,0.5,M(0x9cc4ff,{transparent:true,opacity:.5}),water[0],1.25,water[1]); gBlock(8.7,1.6,9.3,2.2); }
@@ -348,7 +406,8 @@ function initOffice(host){
   // Plantas
   const plant=(x,z,s=1)=>{ cyl(0.24*s,0.18*s,0.5*s,mWhite,x,0.25*s,z,scene,12); const f=new THREE.Mesh(new THREE.IcosahedronGeometry(0.5*s,0),mGreen); f.position.set(x,0.85*s,z); f.castShadow=true; scene.add(f); const f2=new THREE.Mesh(new THREE.IcosahedronGeometry(0.36*s,0),mGreen2); f2.position.set(x+0.15*s,1.25*s,z-0.05); f2.castShadow=true; scene.add(f2); gBlock(x-0.3*s,z-0.3*s,x+0.3*s,z+0.3*s,0.02); };
   if(MU.plantas){ plant(-6.8,-10.4); plant(-15.4,10.4,1.1); plant(15.5,10.6,1.2); plant(7.4,10.4,.9); plant(5.4,-10.4,.9); plant(15.5,-3.8,.8); plant(-6.6,-3.6,.8); plant(7.4,-4.0,.9); }
-  if(MU.cuadros){ [[-12,0x0047ff],[-8.2,0xff6b5a],[-4.4,0xe5fc63]].forEach(([x,c])=>{ box(2.2,1.5,0.06,mBlack,x,2.9,-11.02,scene,false); box(1.95,1.25,0.02,M(c,{roughness:.8}),x,2.9,-10.98,scene,false); }); }
+  if(MU.cuadros){ const fotos=MARCA.fotos||[]; [[-12,0x0047ff],[-8.2,0xff6b5a],[-4.4,0xe5fc63]].forEach(([x,c],i)=>{ box(2.2,1.5,0.06,mBlack,x,2.9,-11.02,scene,false); const lam=box(1.95,1.25,0.02,M(c,{roughness:.8}),x,2.9,-10.98,scene,false);
+    if(fotos[i]){ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ const {t}=makeCanvasTex(512,328,(g,w,h)=>{ const k=Math.max(w/im.naturalWidth,h/im.naturalHeight); g.drawImage(im,(w-im.naturalWidth*k)/2,(h-im.naturalHeight*k)/2,im.naturalWidth*k,im.naturalHeight*k); }); lam.material=new THREE.MeshBasicMaterial({map:t}); }; im.src=fotos[i]; } }); }
   if(MU.estanteria){ box(0.4,2.4,3.2,mWood,-15.7,1.2,-1.0+9.6,scene); [0.6,1.2,1.8].forEach(y=>box(0.42,0.04,3.2,mDark,-15.7,y,8.6,scene,false)); gBlock(-16,7,-15.4,10.2); }
   // Puntos de interés
   OF.pois=[
@@ -517,7 +576,7 @@ function updateWall(){
     g.fillStyle='#8d9ac4'; g.font='500 22px Inter,Arial'; g.fillText((MARCA.deptos[d.id]||d.name).split(' ')[0],x+20,480); });
   t.needsUpdate=true; }
 function dayLight(){ const n=madridNow(), h=n.getHours()+n.getMinutes()/60; const day=h>=7.5&&h<19.5, dusk=(h>=19.5&&h<21)||(h>=6.5&&h<7.5);
-  const col=day?(MARCA.ventana||0x9cc4ff):dusk?0x5a5fc0:0x101a4a; OF.windows.forEach(w=>w.material.color.setHex(col)); OF.hemi.intensity=(day?0.85:0.6)*Math.PI; OF.sun.intensity=(day?1.15:0.6)*Math.PI; OF.sun.color.setHex(day?0xffffff:0x9db8ff); }
+  const col=day?(MARCA.ventana||0x9cc4ff):dusk?0x5a5fc0:0x101a4a; OF.windows.forEach(w=>w.material.color.setHex(col)); OF.hemi.intensity=(day?0.85:0.6)*Math.PI; OF.sun.intensity=(day?1.15:0.6)*Math.PI; OF.sun.color.setHex(day?({calida:0xffe0b5,fria:0xe2ecff}[MARCA.luz]||0xffffff):0x9db8ff); if(MARCA.luz==='calida') OF.hemi.color.setHex(0xfff0dc); else if(MARCA.luz==='fria') OF.hemi.color.setHex(0xdfeaff); if(MARCA.brillo) { OF.hemi.intensity*=MARCA.brillo; OF.sun.intensity*=MARCA.brillo; } }
 
 /* Recorrido de cámara: pasa por las zonas de la oficina sin parar */
 const RUTA=[{x:0,z:-0.4,zoom:1},{x:-10,z:2,zoom:0.72},{x:-5,z:-7,zoom:0.74},{x:12,z:-7.5,zoom:0.7},{x:12,z:6.5,zoom:0.74},{x:2,z:3,zoom:0.8}];
