@@ -4,12 +4,12 @@
 import crypto from 'node:crypto';
 import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
-  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe,
+  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
-import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme } from '../_marketing.js';
+import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme, costeVoz, COSTE_BUSQUEDA_PLACES } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
 
 const json = (res, c, o) => res.status(c).json(o);
@@ -549,8 +549,14 @@ async function equipo(req, res, neg) {
     else await encargoInterno(neg, tipo === 'post' ? 'redes' : 'contenido', tema).catch((e) => console.error('[equipo/encargo]', e.message));
   }
   let audio = null;
-  if (conVoz && r.respuesta) { try { audio = (await voz(r.respuesta, hayEleven() ? undefined : 'ash')).toString('base64'); } catch (e) { console.error('[equipo/voz]', e.message); } }
+  if (conVoz && r.respuesta) { try { audio = (await voz(r.respuesta, hayEleven() ? undefined : 'ash')).toString('base64'); await gastoExtra(neg, null, 'voz', costeVoz(r.respuesta, hayEleven() ? undefined : 'ash')); } catch (e) { console.error('[equipo/voz]', e.message); } }
   return json(res, 200, { ok: true, respuesta: r.respuesta, accion: r.accion, audio });
+}
+
+// Gastos que no son de IA (voz, búsquedas): cuentan en el presupuesto del departamento para mantener el margen.
+async function gastoExtra(neg, depto, modelo, costeUsd) {
+  const d = depto || (await uno(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto&order=depto.asc`))?.depto;
+  if (d) await consumo(neg.id, d, { modelo, coste: costeUsd, unidades: 0 });
 }
 
 async function video(req, res, neg) {
@@ -580,7 +586,7 @@ async function video(req, res, neg) {
     // Voz en off real con la voz elegida; el montaje con tu material lo hace el equipo de producción.
     const texto = [v.guion?.gancho, ...(v.guion?.escenas || []).map((e) => e.voz), v.guion?.cierre].filter(Boolean).join(' ');
     let audio = null;
-    try { audio = await subirArchivo(`${neg.id}/videos/${v.id}.mp3`, await voz(texto, vozId || v.voz, v.estilo ? `Estilo ${v.estilo}.` : ''), 'audio/mpeg'); } catch (e) { console.error('[video/voz]', e.message); }
+    try { audio = await subirArchivo(`${neg.id}/videos/${v.id}.mp3`, await voz(texto, vozId || v.voz, v.estilo ? `Estilo ${v.estilo}.` : ''), 'audio/mpeg'); await gastoExtra(neg, 'redes', 'voz', costeVoz(texto, vozId || v.voz)); } catch (e) { console.error('[video/voz]', e.message); }
     await sb(`of_videos?id=eq.${v.id}`, { metodo: 'PATCH', cuerpo: { estado: 'montaje', audio_path: audio, ...(vozId ? { voz: vozId } : {}), actualizado: new Date().toISOString() } });
     await actividad(neg.id, 'redes', `Guion aprobado: «${v.titulo}». Voz en off grabada; el vídeo pasa a montaje`, 'hecho', { video: v.id });
     const pend = await uno(`of_actividad?negocio_id=eq.${neg.id}&detalle->>video=eq.${v.id}&tipo=eq.pendiente&resuelto=eq.false&select=id`);
@@ -607,7 +613,7 @@ async function competencia(req, res, neg) {
   const { op, id, nombre, web: url } = cuerpo(req);
   if (op === 'buscar') {
     if (!hayPlaces()) return json(res, 503, { error: 'La búsqueda automática de competencia se está activando. Mientras, añade a mano los que conozcas.' });
-    const n = await buscarCompetidores(neg); return json(res, 200, { ok: true, n });
+    const n = await buscarCompetidores(neg); await gastoExtra(neg, 'contenido', 'places', COSTE_BUSQUEDA_PLACES); return json(res, 200, { ok: true, n });
   }
   if (op === 'anadir') {
     if (!String(nombre || '').trim()) return json(res, 400, { error: 'Pon el nombre.' });

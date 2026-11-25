@@ -1,6 +1,6 @@
 // Marketing y análisis de la Oficina de IA: métricas reales de la web (Google Analytics, Search Console) y de redes
 // (Instagram, Facebook, TikTok) guardadas cada día, chat con el equipo, vídeos (guion + voz), competencia e informes.
-import { sb, uno, actividad, tokenDe, DEPTO } from './_oficina.js';
+import { sb, uno, actividad, tokenDe, consumo, DEPTO } from './_oficina.js';
 import { llamarIA, leerJson, fichaNegocio, generar } from './_agente.js';
 
 const hoyISO = () => new Date().toISOString().slice(0, 10);
@@ -106,6 +106,7 @@ ${contexto}
 ${hablado ? 'ESTÁS EN UNA LLAMADA DE VOZ: contesta como al teléfono, natural y muy breve (1 a 3 frases cortas), sin listas, sin emojis, sin símbolos ni enlaces. Di las horas y cifras como se dicen en voz alta.\n' : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
 Devuelve SOLO JSON: {"respuesta":"...", "accion": null | {"tipo":"post|articulo|video", "tema":"..."}}`;
   const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 220 : 500, json: true });
+  if (mis[0]) await consumo(neg.id, mis[0], { ...ia, unidades: 0 });
   const o = leerJson(ia.texto) || { respuesta: ia.texto };
   const permitida = { post: 'redes', video: 'redes', articulo: 'contenido' }[o.accion?.tipo];
   const accion = permitida && mis.includes(permitida) && o.accion?.tema ? o.accion : null;
@@ -130,6 +131,9 @@ JSON: {"titulo":"...","gancho":"...","escenas":[{"voz":"...","texto":"...","imag
 const esVozEleven = (v) => /^[A-Za-z0-9]{18,24}$/.test(String(v || ''));
 export const hayEleven = () => Boolean(process.env.ELEVENLABS_API_KEY);
 export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || '851ejYcv2BoNPjrkw93G' : 'nova');
+// Lo que cuesta poner voz a un texto (USD): ElevenLabs v4 0,08 $ por 1.000 caracteres; OpenAI mini-tts ≈ 0,015 $ por minuto (~1.000 caracteres).
+export const costeVoz = (texto, vozId = VOZ_DEFECTO()) => (String(texto).length / 1000) * (hayEleven() && (esVozEleven(vozId) || !VOCES.includes(vozId)) ? 0.08 : 0.015);
+export const COSTE_BUSQUEDA_PLACES = 0.032; // USD por búsqueda de texto (Places API, SKU Pro)
 export async function voz(texto, vozId = VOZ_DEFECTO(), instrucciones = '') {
   if (hayEleven() && (esVozEleven(vozId) || !VOCES.includes(vozId))) {
     const id = esVozEleven(vozId) ? vozId : VOZ_DEFECTO();
