@@ -842,7 +842,28 @@ async function crmEntrada(req, res) {
   return json(res, 200, { ok: true });
 }
 
-const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada };
+// Demo pública de la llamada: oír y hablar con la misma calidad que la versión real, con límites para que nadie abuse.
+const RITMO_DEMO = new Map();
+async function demoVoz(req, res) {
+  if (req.method !== 'POST') return json(res, 405, {});
+  const org = String(req.headers.origin || req.headers.referer || '');
+  if (org && !/^https:\/\/(www\.)?agutidesigns\.io|^http:\/\/localhost/.test(org)) return json(res, 403, {});
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'x'; const ahora = Date.now();
+  const r = (RITMO_DEMO.get(ip) || []).filter((t) => ahora - t < 10 * 60e3); if (r.length >= 40) return json(res, 429, { error: 'Demasiadas pruebas seguidas. Espera unos minutos.' });
+  r.push(ahora); RITMO_DEMO.set(ip, r);
+  const { op, audio, mime, texto } = cuerpo(req);
+  try {
+    if (op === 'oir') {
+      const buf = Buffer.from(String(audio || ''), 'base64'); if (buf.length > 450_000) return json(res, 413, { error: 'Audio demasiado largo' }); if (buf.length < 2500) return json(res, 200, { oido: '' });
+      const oido = await transcribir(buf, String(mime || 'audio/webm'), 'Llamada del dueño de Peluquería Marta a su oficina de IA: citas, reseñas, presupuestos, publicaciones, carrusel, historias, reels, clientes, WhatsApp, mechas, tinte, corte.');
+      return json(res, 200, { oido: /^(gracias por ver el v[ií]deo|subt[ií]tulos)/i.test(oido) ? '' : oido });
+    }
+    if (op === 'hablar') { const t = String(texto || '').slice(0, 400); if (!t) return json(res, 400, {}); const v = await vozLlamada(t); return json(res, 200, { audio: v.mp3.toString('base64') }); }
+  } catch (e) { console.error('[demo-voz]', e.message); return json(res, 502, { error: 'No disponible' }); }
+  return json(res, 400, {});
+}
+
+const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada, 'demo-voz': demoVoz };
 const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm, saber, llamada };
 
 export default async function handler(req, res) {
