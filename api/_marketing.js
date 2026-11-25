@@ -76,15 +76,35 @@ export async function actualizarMetricas(neg) {
 }
 
 // ---------- chat con el equipo ----------
+// Métricas (SEO, web, redes), reseñas y competencia en texto corto para que el asistente pueda contestar de todo.
+function resumenMetricas(mets = [], comps = [], res = []) {
+  const ult = (f) => mets.find((m) => m.fuente === f)?.datos;
+  const out = [];
+  const g = ult('google_busqueda');
+  if (g) {
+    const serie = g.serie || []; const m = Math.floor(serie.length / 2); const s1 = serie.slice(m); const s0 = serie.slice(0, m);
+    const sum = (a, k) => a.reduce((x, y) => x + (y[k] || 0), 0); const c = sum(serie, 'clics'); const i = sum(serie, 'impresiones');
+    out.push(`SEO EN GOOGLE (últimos 28 días): ${c} clics, ${i} impresiones, CTR ${i ? ((c / i) * 100).toFixed(1) : 0} %. Clics últimos 14 días ${sum(s1, 'clics')} frente a ${sum(s0, 'clics')} los 14 anteriores.\nBúsquedas principales:\n${(g.busquedas || []).slice(0, 10).map((b) => `- «${b.q}»: posición ${Number(b.posicion).toFixed(1)}, ${b.clics} clics, ${b.impresiones} impresiones`).join('\n')}`);
+  } else out.push('SEO EN GOOGLE: Search Console no está conectado, no hay datos.');
+  const w = ult('web'); if (w) out.push(`WEB: ${JSON.stringify(w).slice(0, 600)}`);
+  for (const f of ['instagram', 'facebook', 'tiktok']) { const d = ult(f); if (d) out.push(`${f.toUpperCase()}: ${JSON.stringify(d).slice(0, 400)}`); }
+  const r = res.filter((x) => x.detalle?.estrellas); if (r.length) out.push(`RESEÑAS DE GOOGLE respondidas: ${r.length}, nota media ${(r.reduce((a, x) => a + x.detalle.estrellas, 0) / r.length).toFixed(1)}; ${r.filter((x) => x.detalle.estrellas <= 3 && !x.resuelto).length} delicadas pendientes.`);
+  if (comps.length) out.push(`COMPETENCIA:\n${comps.map((k) => `- ${k.nombre}: ${k.nota ?? '?'} ★, ${k.resenas ?? '?'} reseñas`).join('\n')}`);
+  return out.join('\n\n');
+}
+
 export async function asistente(neg, texto, { hablado = false, depto = null, historial = null } = {}) {
   const desde = new Date(Date.now() - 7 * 864e5).toISOString();
-  const [deps, ev, citas, leads, pend, hist] = await Promise.all([
+  const [deps, ev, citas, leads, pend, hist, mets, comps, res] = await Promise.all([
     sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`),
     sb(`of_actividad?negocio_id=eq.${neg.id}&creado=gte.${desde}&tipo=eq.hecho&select=depto,texto,creado&order=creado.desc&limit=60`),
     sb(`of_citas?negocio_id=eq.${neg.id}&estado=in.(pendiente,confirmada)&select=nombre,servicio,fecha,estado&order=fecha.asc&limit=30`),
     sb(`of_leads?negocio_id=eq.${neg.id}&etapa=in.(nuevo,contactado,presupuesto)&select=nombre,interes,importe,etapa&limit=20`),
     sb(`of_actividad?negocio_id=eq.${neg.id}&tipo=in.(aviso,pendiente)&resuelto=eq.false&select=depto,texto&limit=20`),
     sb(`of_chat?negocio_id=eq.${neg.id}&depto=${depto ? `eq.${depto}` : 'is.null'}&select=de,texto&order=creado.desc&limit=10`),
+    sb(`of_metricas?negocio_id=eq.${neg.id}&select=fuente,fecha,datos&order=fecha.desc&limit=12`).catch(() => []),
+    sb(`of_competidores?negocio_id=eq.${neg.id}&select=nombre,nota,resenas,web&limit=12`).catch(() => []),
+    sb(`of_actividad?negocio_id=eq.${neg.id}&depto=eq.google&select=detalle,resuelto,creado&order=creado.desc&limit=80`).catch(() => []),
   ]);
   const mis = deps.map((d) => d.depto);
   if (depto && !mis.includes(depto)) depto = null;
@@ -95,7 +115,8 @@ export async function asistente(neg, texto, { hablado = false, depto = null, his
     `CITAS PRÓXIMAS:\n${citas.map((c) => `- ${c.nombre || 'Cliente'} · ${c.servicio || 'cita'} · ${f(c.fecha)} · ${c.estado}`).join('\n') || '- ninguna'}`,
     `CLIENTES POTENCIALES ABIERTOS:\n${leads.map((l) => `- ${l.nombre || 'Cliente'}: ${l.interes || ''} ${l.importe ? `(${l.importe} €)` : ''} · ${l.etapa}`).join('\n') || '- ninguno'}`,
     `PENDIENTE DEL DUEÑO (${pend.length}):\n${pend.map((p) => `- ${p.texto}`).join('\n') || '- nada'}`,
-  ].join('\n\n');
+    resumenMetricas(mets, comps, res),
+  ].filter(Boolean).join('\n\n');
   const previos = Array.isArray(historial) ? historial.slice(-10).map((m) => ({ de: m.de === 'tu' ? 'tu' : 'equipo', texto: String(m.texto || '').slice(0, 800) })) : hist.reverse();
   const mensajes = [...previos.map((m) => ({ role: m.de === 'tu' ? 'user' : 'assistant', content: m.texto })), { role: 'user', content: texto }];
   while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
@@ -116,6 +137,7 @@ ${hablado ? `ESTÁS EN UNA LLAMADA DE VOZ CON EL DUEÑO. Reglas de la llamada:
 - No acabes siempre con «¿algo más?»: solo pregunta si de verdad hace falta.
 - Si te pide hacer algo (un post, un artículo, un vídeo), confírmalo en una frase y crea el encargo.
 ` : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
+CONVERSACIÓN: contesta a la pregunta concreta que te hacen (SEO, web, reseñas, competencia, citas, ventas, redes, consumo…) con los datos de arriba. No sueltes el resumen de tareas del día si no te lo preguntan. Si no tienes el dato, di qué falta (por ejemplo, conectar Search Console) en vez de cambiar de tema.
 Devuelve SOLO JSON: {"respuesta":"...", "accion": null | {"tipo":"post|articulo|video", "tema":"..."}}`;
   const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 260 : 500, json: true });
   if (depto || mis[0]) await consumo(neg.id, depto || mis[0], { ...ia, unidades: 0 });

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Maximize2, MessageSquareText, Mic, MicOff, Phone, PhoneOff, Send, Sparkles, X } from 'lucide-react';
 import { api } from './datos';
 import { hora, uid } from './formato';
-import { respuestaDemo } from './demoChat';
+import { respuestaDemo, responderDemo } from './demoChat';
 import { Puntos } from './ui';
 
 const Reconocedor = typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
@@ -12,7 +12,7 @@ const tipoAudio = () => (typeof MediaRecorder === 'undefined' ? '' : ['audio/web
 const aB64 = (blob) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
 
 async function preguntar(o, texto, voz) {
-  if (o.demo) { await new Promise((r) => setTimeout(r, 900)); return { respuesta: respuestaDemo(o, texto), audio: null }; }
+  if (o.demo) return { respuesta: await responderDemo(o, texto, o.chat.filter((m) => !m.depto).slice(-8)), audio: null };
   return api('equipo', { texto, voz });
 }
 function anotar(o, de, texto, extra = {}) { o.setEstado((s) => ({ ...s, chat: [...s.chat, { id: uid(de), de, texto, creado: new Date().toISOString(), ...extra }] })); }
@@ -66,7 +66,7 @@ export function Llamada({ o, cerrar }) {
   async function enviarTexto(t) {
     callar(); fijar('pensando'); pasa('tu', t); anotar(o, 'tu', t);
     try {
-      let r; if (o.demo) { const resp = respuestaDemo(o, t, hist.current); r = { respuesta: resp, audio: await vozDemo(resp) }; } else r = await api('llamada', { texto: t, historial: hist.current.slice(0, -1) });
+      let r; if (o.demo) { const resp = await responderDemo(o, t, hist.current.slice(0, -1), { hablado: true }); r = { respuesta: resp, audio: await vozDemo(resp) }; } else r = await api('llamada', { texto: t, historial: hist.current.slice(0, -1) });
       if (!vivo.current) return; pasa('equipo', r.respuesta); anotar(o, 'equipo', r.respuesta, r.accion ? { detalle: { accion: r.accion } } : {}); await hablar(r.respuesta, r.audio);
     } catch (e) { setErr(e.message); }
     if (vivo.current) escuchar();
@@ -75,7 +75,7 @@ export function Llamada({ o, cerrar }) {
     fijar('pensando');
     try {
       const b64 = await aB64(blob); let r;
-      if (o.demo) { const j = await api('demo-voz', { op: 'oir', audio: b64, mime: blob.type }); r = { oido: j.oido }; if (j.oido) { r.respuesta = respuestaDemo(o, j.oido, hist.current); r.audio = await vozDemo(r.respuesta); } }
+      if (o.demo) { const j = await api('demo-voz', { op: 'oir', audio: b64, mime: blob.type }); r = { oido: j.oido }; if (j.oido) { r.respuesta = await responderDemo(o, j.oido, hist.current, { hablado: true }); r.audio = await vozDemo(r.respuesta); } }
       else r = await api('llamada', { audio: b64, mime: blob.type, historial: hist.current });
       if (!r.oido) { if (vivo.current) escuchar(); return; }
       await responder(r);

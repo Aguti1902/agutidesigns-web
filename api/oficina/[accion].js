@@ -6,7 +6,7 @@ import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
   negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo, sbUrl,
 } from '../_oficina.js';
-import { responderCliente, generar } from '../_agente.js';
+import { responderCliente, generar, llamarIA, leerJson } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
 import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme, costeVoz, COSTE_BUSQUEDA_PLACES, transcribir, vozLlamada } from '../_marketing.js';
@@ -849,7 +849,7 @@ async function demoVoz(req, res) {
   const org = String(req.headers.origin || req.headers.referer || '');
   if (org && !/^https:\/\/(www\.)?agutidesigns\.io|^http:\/\/localhost/.test(org)) return json(res, 403, {});
   const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'x'; const ahora = Date.now();
-  const r = (RITMO_DEMO.get(ip) || []).filter((t) => ahora - t < 10 * 60e3); if (r.length >= 40) return json(res, 429, { error: 'Demasiadas pruebas seguidas. Espera unos minutos.' });
+  const r = (RITMO_DEMO.get(ip) || []).filter((t) => ahora - t < 10 * 60e3); if (r.length >= 60) return json(res, 429, { error: 'Demasiadas pruebas seguidas. Espera unos minutos.' });
   r.push(ahora); RITMO_DEMO.set(ip, r);
   const { op, audio, mime, texto } = cuerpo(req);
   try {
@@ -857,6 +857,21 @@ async function demoVoz(req, res) {
       const buf = Buffer.from(String(audio || ''), 'base64'); if (buf.length > 450_000) return json(res, 413, { error: 'Audio demasiado largo' }); if (buf.length < 2500) return json(res, 200, { oido: '' });
       const oido = await transcribir(buf, String(mime || 'audio/webm'), 'Llamada del dueño de Peluquería Marta a su oficina de IA: citas, reseñas, presupuestos, publicaciones, carrusel, historias, reels, clientes, WhatsApp, mechas, tinte, corte.');
       return json(res, 200, { oido: /^(gracias por ver el v[ií]deo|subt[ií]tulos)/i.test(oido) ? '' : oido });
+    }
+    if (op === 'ia') {
+      const { historial, contexto, hablado, depto } = cuerpo(req);
+      const t = String(texto || '').trim().slice(0, 600); if (!t) return json(res, 400, {});
+      const quien = DEPTO[depto] ? `Eres el agente de ${DEPTO[depto].nombre} de la oficina de IA de una peluquería de ejemplo (demo) y hablas con su dueña. Primera persona, centrado en tu departamento.` : 'Eres el equipo de agentes de la oficina de IA de una peluquería de ejemplo (demo) y hablas con su dueña. Habla en plural («hemos»).';
+      const sistema = `${quien}
+Cercano, claro y natural, en castellano de España. Contesta a la pregunta concreta (SEO, web, reseñas, competencia, citas, ventas, redes, consumo…) con los datos de abajo, con cifras y nombres. No sueltes el resumen de tareas si no te lo piden. Si un dato no está, dilo. No inventes nada fuera de los datos.
+${hablado ? 'Estás en una LLAMADA DE VOZ: 1 a 3 frases cortas, sin listas ni símbolos, cifras como se dicen en voz alta. No repitas lo que ya has dicho.' : 'Máximo 6 frases o una lista corta.'}
+Si te piden un post, carrusel, historia, vídeo o artículo, confírmalo en una frase (en la demo no se crea de verdad).
+DATOS DEL PANEL (demo):
+${String(contexto || '').slice(0, 9000)}`;
+      const previos = (Array.isArray(historial) ? historial : []).slice(-8).map((m) => ({ role: m.de === 'tu' ? 'user' : 'assistant', content: String(m.texto || '').slice(0, 600) }));
+      const mensajes = [...previos, { role: 'user', content: t }]; while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
+      const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 220 : 400 });
+      return json(res, 200, { respuesta: String(ia.texto || '').trim() });
     }
     if (op === 'hablar') { const t = String(texto || '').slice(0, 400); if (!t) return json(res, 400, {}); const v = await vozLlamada(t); return json(res, 200, { audio: v.mp3.toString('base64') }); }
   } catch (e) { console.error('[demo-voz]', e.message); return json(res, 502, { error: 'No disponible' }); }
