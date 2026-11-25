@@ -129,13 +129,13 @@ JSON: {"titulo":"...","gancho":"...","escenas":[{"voz":"...","texto":"...","imag
 // Voz en off: ElevenLabs si está configurado (ELEVENLABS_API_KEY) y la voz es suya; si no, OpenAI (gpt-4o-mini-tts). Devuelve el MP3.
 const esVozEleven = (v) => /^[A-Za-z0-9]{18,24}$/.test(String(v || ''));
 export const hayEleven = () => Boolean(process.env.ELEVENLABS_API_KEY);
-export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || 'erKgR0s8Y67t4iiHuA9R' : 'nova');
+export const VOZ_DEFECTO = () => (hayEleven() ? process.env.ELEVENLABS_VOICE_ID || '851ejYcv2BoNPjrkw93G' : 'nova');
 export async function voz(texto, vozId = VOZ_DEFECTO(), instrucciones = '') {
   if (hayEleven() && (esVozEleven(vozId) || !VOCES.includes(vozId))) {
     const id = esVozEleven(vozId) ? vozId : VOZ_DEFECTO();
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${id}?output_format=mp3_44100_128`, { method: 'POST',
       headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: String(texto).slice(0, 4500), model_id: process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2', voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0, use_speaker_boost: true } }) });
+      body: JSON.stringify({ text: String(texto).slice(0, 4500), model_id: process.env.ELEVENLABS_MODEL || 'eleven_v4', voice_settings: { stability: 0.35, similarity_boost: 0.7, style: 0, use_speaker_boost: true } }) });
     if (!r.ok) throw new Error(`elevenlabs ${r.status}`);
     return Buffer.from(await r.arrayBuffer());
   }

@@ -15,6 +15,8 @@ import { LogoHerramienta } from './marcas';
 import { NuevaCita, NuevoCliente } from './vistas2';
 import { HablaConTuOficina } from './llamada';
 import { montarOficina } from '../../components/oficina/oficinaPanel';
+import { EditorOficina } from './editorOficina';
+import { NOMBRES_AG, AGENTE_DE } from './oficinaOpciones';
 import '../../components/oficina/OficinasCaso.css';
 
 const fechaHoy = () => { const t = new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); return t[0].toUpperCase() + t.slice(1); };
@@ -238,16 +240,22 @@ export function Inicio({ o, extras }) {
 }
 
 // ---------- Oficina 3D con la estética de la landing ----------
-const NOMBRES_AG = { ceo: 'Tú', prospector: 'Bruno', demos: 'Lía', redactor: 'Hugo', seguimiento: 'Vera', recontacto: 'Teo', finanzas: 'Max', cartera: 'Oriol', semanal: 'Iris', resumen: 'Clara', webleads: 'Nora', pipeline: 'Sara', contenido: 'Marta', publicador: 'Pablo', analista: 'Leo', ads: 'Álex', cs: 'Elena', produccion: 'Diego', seo: 'Rafa' };
 const ZONAS = { ventas: ['atencion', 'citas'], marketing: ['redes', 'contenido'], clientes: ['ventas'], finanzas: ['google'] };
 export function OficinaViva({ o, alto = 520, config }) {
   const ref = useRef(null); const ctl = useRef(null);
-  const cfg = config || o.negocio.oficina || {}; const cfgKey = JSON.stringify(cfg); const [logoUrl, setLogoUrl] = useState(null);
-  useEffect(() => { if (!cfg.logo_ruta || o.demo) return; supabase.storage.from('oficina-material').createSignedUrl(cfg.logo_ruta, 3600).then(({ data }) => setLogoUrl(data?.signedUrl || null)); }, [cfg.logo_ruta, o.demo]);
+  const cfg = config || o.negocio.oficina || {}; const cfgKey = JSON.stringify(cfg); const [logoUrl, setLogoUrl] = useState(null); // mapa ruta → enlace
+  // Las imágenes del cliente están en su carpeta privada: se piden enlaces temporales.
+  const rutas = [cfg.logo_ruta, ...(cfg.fotos || []).map((f) => f?.ruta)].filter(Boolean).join('|');
+  useEffect(() => {
+    if (!rutas || o.demo) return;
+    const lista = rutas.split('|');
+    supabase.storage.from('oficina-material').createSignedUrls(lista, 3600).then(({ data }) => setLogoUrl(Object.fromEntries((data || []).map((x, i) => [lista[i], x.signedUrl]))));
+  }, [rutas, o.demo]);
+  const url = (x) => x?.data || (x?.ruta && logoUrl?.[x.ruta]) || null;
   const mis = o.deptos.map((d) => d.depto).join(',');
   const charla = useMemo(() => {
     const ev = o.eventos.filter((e) => e.tipo === 'hecho').slice(0, 12);
-    const quien = { atencion: 'seguimiento', citas: 'demos', ventas: 'pipeline', redes: 'publicador', google: 'cs', contenido: 'contenido' };
+    const quien = AGENTE_DE;
     return ev.length ? ev.map((e) => [quien[e.depto] || 'pipeline', 'ceo', e.texto.replace(/^Ha /, 'He ').slice(0, 70)]) : null;
   }, [o.eventos]);
   useEffect(() => {
@@ -255,14 +263,20 @@ export function OficinaViva({ o, alto = 520, config }) {
     const lista = mis.split(',').filter(Boolean);
     const nombreZona = (z) => { const ds = (ZONAS[z] || []).filter((d) => lista.includes(d)); return ds.length ? ds.map((d) => DEPTO[d].corto).join(' · ') : null; };
     // Rótulo de la pared con el nombre del negocio (si no hay logo propio).
+    const logoPropio = url({ data: cfg.logo_data, ruta: cfg.logo_ruta });
     const c = document.createElement('canvas'); c.width = 1024; c.height = 282; const g = c.getContext('2d');
     g.fillStyle = '#ffffff'; g.textBaseline = 'middle'; let tam = 150; g.font = `800 ${tam}px Outfit, Archivo, Inter, Arial`;
     while (g.measureText(o.negocio.nombre).width > 1000 && tam > 50) { tam -= 8; g.font = `800 ${tam}px Outfit, Archivo, Inter, Arial`; }
     g.fillText(o.negocio.nombre, 8, 141);
     const marca = {
-      placa: o.negocio.nombre.toUpperCase().slice(0, 18), ceo: 'Tú', logo: logoUrl || cfg.logo_data || c.toDataURL('image/png'), lema: (cfg.lema || o.negocio.sector || 'TU OFICINA DE IA').toUpperCase().slice(0, 34),
-      colores: cfg.colores || {}, muebles: cfg.muebles || {}, ...(cfg.colores?.acento ? { acentoCss: cfg.colores.detalle || '#e5fc63' } : {}),
-      pantalla: `${o.negocio.nombre.toUpperCase().slice(0, 16)} · EN DIRECTO`, pizarra: [cfg.pizarra || 'Hoy en la oficina', `${o.est?.hoy?.total || 0} tareas hechas`], nombres: NOMBRES_AG,
+      placa: (cfg.placa || o.negocio.nombre).toUpperCase().slice(0, 18), ceo: 'Tú', lema: (cfg.lema || o.negocio.sector || 'TU OFICINA DE IA').toUpperCase().slice(0, 34),
+      ...(logoPropio ? { logo: logoPropio, logoColor: cfg.logo_color === 'acento' ? (cfg.colores?.acento || '#0047ff') : (cfg.logo_color || 'original') } : { logo: c.toDataURL('image/png') }),
+      logoTam: cfg.logo_tam || (logoPropio ? 'M' : undefined), logoPared: cfg.logo_pared !== false, logoSuelo: !!cfg.logo_suelo, logoRecepcion: !!cfg.logo_recepcion,
+      colores: cfg.colores || {}, muebles: { ...(cfg.muebles || {}), ...(cfg.logo_recepcion ? { recepcion: true } : {}) }, estructura: cfg.estructura || {}, luz: cfg.luz, brillo: cfg.brillo,
+      ...(cfg.colores?.acento ? { acentoCss: cfg.colores.detalle || '#e5fc63' } : {}),
+      neon: cfg.neon || '', neonColor: cfg.neon_color, fotos: (cfg.fotos || []).map(url),
+      pantalla: cfg.pantalla || `${o.negocio.nombre.toUpperCase().slice(0, 16)} · EN DIRECTO`, pizarra: [cfg.pizarra || 'Hoy en la oficina', `${o.est?.hoy?.total || 0} tareas hechas`],
+      nombres: { ...NOMBRES_AG, ...Object.fromEntries(Object.entries(cfg.nombres || {}).filter(([, v]) => v)) },
       deptos: { direccion: 'Dirección', ventas: nombreZona('ventas') || 'Atención', marketing: nombreZona('marketing') || 'Marketing', clientes: nombreZona('clientes') || 'Ventas', finanzas: nombreZona('finanzas') || 'Reseñas' },
       ...(charla ? { charla } : {}),
     };
@@ -279,61 +293,6 @@ export function OficinaViva({ o, alto = 520, config }) {
       </div>
       <p className="oc-pista">Arrastra para girar · lo que se dicen es el trabajo real de hoy</p>
     </div>
-  );
-}
-
-const TEMAS = [
-  { id: 'agutidesigns', t: 'Noche', c: { pared: '#0b1433', pared2: '#101c48', suelo: '#e9ecf3', acento: '#0047ff', detalle: '#e5fc63' } },
-  { id: 'claro', t: 'Luminosa', c: { pared: '#e9e6df', pared2: '#d9d4c9', suelo: '#f6f4ef', acento: '#2f6bff', detalle: '#ffb547' } },
-  { id: 'madera', t: 'Madera cálida', c: { pared: '#5b3a29', pared2: '#6e4a35', suelo: '#d9b48f', acento: '#c56a2d', detalle: '#f4d35e' } },
-  { id: 'verde', t: 'Natural', c: { pared: '#1f3d2f', pared2: '#2b5240', suelo: '#e8efe6', acento: '#3ea36b', detalle: '#e5fc63' } },
-  { id: 'rosa', t: 'Salón de belleza', c: { pared: '#f3d6dc', pared2: '#ecc3cc', suelo: '#fbf3f4', acento: '#d14d72', detalle: '#ffd1dc' } },
-  { id: 'negro', t: 'Elegante', c: { pared: '#111111', pared2: '#1c1c1c', suelo: '#2a2a2a', acento: '#c9a24a', detalle: '#c9a24a' } },
-];
-const MUEBLES = [['plantas', 'Plantas'], ['sofa', 'Sofá y zona de descanso'], ['pingpong', 'Mesa de ping-pong'], ['cocina', 'Cocina y cafetera'], ['agua', 'Fuente de agua'], ['cuadros', 'Cuadros en la pared'], ['estanteria', 'Estantería']];
-const COLORES = [['pared', 'Paredes'], ['suelo', 'Suelo'], ['acento', 'Color principal'], ['detalle', 'Detalles']];
-const MUEBLES_DEF = { plantas: true, sofa: true, pingpong: true, cocina: true, agua: true, cuadros: false, estanteria: false };
-
-function EditorOficina({ o, cfg, setCfg, cerrar }) {
-  const [st, setSt] = useState('');
-  const col = { ...TEMAS[0].c, ...(cfg.colores || {}) }; const mu = { ...MUEBLES_DEF, ...(cfg.muebles || {}) };
-  const cambia = (c) => setCfg({ ...cfg, ...c });
-  async function guardar() {
-    setSt('Guardando…');
-    try { if (!o.demo) { const { error } = await supabase.from('of_negocios').update({ oficina: cfg }).eq('id', o.negocio.id); if (error) throw error; }
-      o.setEstado((s) => ({ ...s, negocio: { ...s.negocio, oficina: cfg } })); setSt('Guardado.'); setTimeout(cerrar, 700); } catch { setSt('No se ha podido guardar.'); }
-  }
-  async function subirLogo(f) {
-    if (!f) return; setSt('Subiendo logo…');
-    if (o.demo || f.size > 5e6) { const r = new FileReader(); r.onload = () => { cambia({ logo_data: r.result }); setSt(''); }; r.readAsDataURL(f); return; }
-    const ruta = `${o.negocio.id}/logo-oficina-${Date.now()}.${(f.name.split('.').pop() || 'png').toLowerCase()}`;
-    const { error } = await supabase.storage.from('oficina-material').upload(ruta, f, { contentType: f.type });
-    if (error) { setSt('No se ha podido subir.'); return; }
-    await supabase.from('of_material').insert({ negocio_id: o.negocio.id, nombre: f.name, tipo: 'logo', ruta, tamano: f.size });
-    cambia({ logo_ruta: ruta, logo_data: undefined }); setSt('Logo listo. Pulsa Guardar.');
-  }
-  return (
-    <aside className="ed" aria-label="Personaliza tu oficina">
-      <header><b>Personaliza tu oficina</b><button className="ico" onClick={cerrar} aria-label="Cerrar"><X size={18} /></button></header>
-      <section><h3>Estilo</h3><div className="ed-temas">{TEMAS.map((t) => (
-        <button key={t.id} className={JSON.stringify(t.c) === JSON.stringify(col) ? 'is-on' : ''} onClick={() => cambia({ colores: t.c })}>
-          <span>{['pared', 'suelo', 'acento', 'detalle'].map((k) => <i key={k} style={{ background: t.c[k] }} />)}</span>{t.t}</button>
-      ))}</div></section>
-      <section><h3>Colores</h3><div className="ed-col">{COLORES.map(([k, t]) => (
-        <label key={k}><input type="color" value={col[k]} onChange={(e) => cambia({ colores: { ...col, [k]: e.target.value, ...(k === 'pared' ? { pared2: e.target.value } : {}) } })} /><span>{t}</span></label>
-      ))}</div></section>
-      <section><h3>Tu logo en la pared</h3>
-        <label className="ed-logo"><input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" onChange={(e) => subirLogo(e.target.files?.[0])} />
-          {cfg.logo_data && <img src={cfg.logo_data} alt="" />}<span>{cfg.logo_ruta || cfg.logo_data ? 'Cambiar logo' : 'Subir logo (PNG con fondo transparente)'}</span></label>
-        {(cfg.logo_ruta || cfg.logo_data) && <button className="enlace enlace--gris" onClick={() => cambia({ logo_ruta: undefined, logo_data: undefined })}>Quitar logo y poner el nombre</button>}</section>
-      <section><h3>Mobiliario</h3><div className="ed-mu">{MUEBLES.map(([k, t]) => (
-        <label key={k} className="sw"><input type="checkbox" checked={!!mu[k]} onChange={(e) => cambia({ muebles: { ...mu, [k]: e.target.checked } })} /><span /><div><b>{t}</b></div></label>
-      ))}</div></section>
-      <section><h3>Rótulos</h3>
-        <label className="campo"><span>Frase de la pared</span><input value={cfg.lema || ''} maxLength={34} onChange={(e) => cambia({ lema: e.target.value })} placeholder={o.negocio.sector || 'Tu lema'} /></label>
-        <label className="campo"><span>Pizarra</span><input value={cfg.pizarra || ''} maxLength={26} onChange={(e) => cambia({ pizarra: e.target.value })} placeholder="Hoy en la oficina" /></label></section>
-      <footer><button className="btn btn--pri btn--ancho" onClick={guardar}>Guardar mi oficina</button><button className="btn btn--fan btn--ancho" onClick={() => setCfg({})}>Volver al diseño original</button>{st && <small className="muted">{st}</small>}</footer>
-    </aside>
   );
 }
 
