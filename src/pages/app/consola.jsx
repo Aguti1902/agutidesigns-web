@@ -6,7 +6,7 @@ import {
   Search, Send, Smartphone, Sparkles, Star, Trash2, Users, Webhook, X,
 } from 'lucide-react';
 import { siHubspot, siSalesforce, siZoho, siOdoo } from 'simple-icons';
-import { DEPTO } from '../../data/oficinaSaas';
+import { DEPTO, DEPARTAMENTOS, precioOficina, precioAnual } from '../../data/oficinaSaas';
 import { ajustesDe } from '../../data/oficinaAjustes';
 import { api, pendiente, metrica } from './datos';
 import { Avatar, Puntos } from './ui';
@@ -545,6 +545,26 @@ export function Crm({ o }) {
       <section className="cx"><div className="cx__b cx-row"><div style={{ flex: 1, minWidth: 220 }}><b style={{ fontSize: 13.5 }}>¿No usas ningún CRM?</b><p className="muted" style={{ margin: '2px 0 0', fontSize: 13 }}>Tus agentes llevan una agenda y un embudo de clientes sencillos dentro de la oficina.</p></div>
         <button className="btn btn--sec btn--sm" onClick={() => o.ir('agenda')}>Agenda</button><button className="btn btn--sec btn--sm" onClick={() => o.ir('clientes')}>Clientes potenciales</button></div></section>
     </div>
+  );
+}
+
+// Recomendado para ti: lo que más le puede servir a este negocio, con su precio real.
+export function Recomendado({ o }) {
+  const n = o.deptos.length; const anual = o.negocio.periodo === 'anio';
+  const faltan = DEPARTAMENTOS.filter((d) => !o.deptos.some((x) => x.depto === d.id)).slice(0, 3);
+  const cards = faltan.map((d) => ({ k: d.id, c: d.color, tag: d.corto, t: d.nombre, d: d.que, precio: `+${anual ? precioAnual(n + 1) - precioAnual(n) : precioOficina(n + 1) - precioOficina(n)} € ${anual ? '/año' : '/mes'}`, ir: () => o.ir(`mejora-${d.id}`) }));
+  if (!o.conexiones.some((x) => x.herramienta === 'crm' && x.estado === 'conectada')) cards.push({ k: 'crm', c: '#0047ff', tag: 'Conexión', t: 'Conecta tu CRM', d: 'Que cada cliente y cada cita que consiguen tus agentes llegue también a tu programa.', precio: 'Incluido', ir: () => o.ir('crm') });
+  if (!cards.length) return null;
+  return (
+    <Panel titulo="Recomendado para ti">
+      <div className="cx-reco">{cards.slice(0, 4).map((x) => (
+        <button key={x.k} className="cx-reco__c" style={{ '--c': x.c }} onClick={x.ir}>
+          <header>{DEPTO[x.k] ? <Avatar depto={x.k} size={30} /> : <span />}<span className="cx-st">{x.tag}</span></header>
+          <b>{x.t}</b><p>{x.d}</p>
+          <footer><span>{x.precio}</span><span>Descubrir <ArrowRight size={13} /></span></footer>
+        </button>
+      ))}</div>
+    </Panel>
   );
 }
 
