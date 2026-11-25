@@ -242,7 +242,7 @@ export function Inicio({ o, extras }) {
 // ---------- Oficina 3D con la estética de la landing ----------
 const ZONAS = { ventas: ['atencion', 'citas'], marketing: ['redes', 'contenido'], clientes: ['ventas'], finanzas: ['google'] };
 export function OficinaViva({ o, alto = 520, config }) {
-  const ref = useRef(null); const ctl = useRef(null);
+  const ref = useRef(null); const ctl = useRef(null); const charlaRef = useRef(null); const [auto, setAuto] = useState(true);
   const cfg = config || o.negocio.oficina || {}; const cfgKey = JSON.stringify(cfg); const [logoUrl, setLogoUrl] = useState(null); // mapa ruta → enlace
   // Las imágenes del cliente están en su carpeta privada: se piden enlaces temporales.
   const rutas = [cfg.logo_ruta, ...(cfg.fotos || []).map((f) => f?.ruta)].filter(Boolean).join('|');
@@ -269,7 +269,7 @@ export function OficinaViva({ o, alto = 520, config }) {
     while (g.measureText(o.negocio.nombre).width > 1000 && tam > 50) { tam -= 8; g.font = `800 ${tam}px Outfit, Archivo, Inter, Arial`; }
     g.fillText(o.negocio.nombre, 8, 141);
     const marca = {
-      placa: (cfg.placa || o.negocio.nombre).toUpperCase().slice(0, 18), ceo: 'Tú', lema: (cfg.lema || o.negocio.sector || 'TU OFICINA DE IA').toUpperCase().slice(0, 34),
+      placa: (cfg.placa || o.negocio.nombre).toUpperCase().slice(0, 18), ceo: 'Tú', etiquetaCeo: 'Tú', lema: (cfg.lema || o.negocio.sector || 'TU OFICINA DE IA').toUpperCase().slice(0, 34),
       ...(logoPropio ? { logo: logoPropio, logoColor: cfg.logo_color === 'acento' ? (cfg.colores?.acento || '#0047ff') : (cfg.logo_color || 'original') } : { logo: c.toDataURL('image/png') }),
       logoTam: cfg.logo_tam || (logoPropio ? 'M' : undefined), logoPared: cfg.logo_pared !== false, logoSuelo: !!cfg.logo_suelo, logoRecepcion: !!cfg.logo_recepcion,
       colores: cfg.colores || {}, muebles: { ...(cfg.muebles || {}), ...(cfg.logo_recepcion ? { recepcion: true } : {}) }, estructura: cfg.estructura || {}, luz: cfg.luz, brillo: cfg.brillo,
@@ -278,20 +278,23 @@ export function OficinaViva({ o, alto = 520, config }) {
       pantalla: cfg.pantalla || `${o.negocio.nombre.toUpperCase().slice(0, 16)} · EN DIRECTO`, pizarra: [cfg.pizarra || 'Hoy en la oficina', `${o.est?.hoy?.total || 0} tareas hechas`],
       nombres: { ...NOMBRES_AG, ...Object.fromEntries(Object.entries(cfg.nombres || {}).filter(([, v]) => v)) },
       deptos: { direccion: 'Dirección', ventas: nombreZona('ventas') || 'Atención', marketing: nombreZona('marketing') || 'Marketing', clientes: nombreZona('clientes') || 'Ventas', finanzas: nombreZona('finanzas') || 'Reseñas' },
-      ...(charla ? { charla } : {}),
+      ...(charlaRef.current ? { charla: charlaRef.current } : {}),
     };
     let off = null;
     try { off = montarOficina(host, { marca, interactivo: true, quieto: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches }); } catch { off = null; }
     ctl.current = off;
     return () => off?.();
-  }, [mis, o.negocio.nombre, o.negocio.sector, charla, cfgKey, logoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mis, o.negocio.nombre, o.negocio.sector, cfgKey, logoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Lo que se dicen se actualiza sin volver a montar la oficina (así no se te mueve la vista).
+  useEffect(() => { charlaRef.current = charla; ctl.current?.setCharla?.(charla); }, [charla]);
   return (
-    <div className="oc-lienzo pc-oficina" ref={ref} style={{ height: alto }}>
+    <div className="oc-lienzo pc-oficina" ref={ref} style={{ height: alto }} onPointerDown={(e) => { if (e.target.tagName === 'CANVAS') setAuto(false); }}>
       <div className="oc-hud">
         <span className="oc-pill"><i style={{ background: '#e5fc63' }} />{o.negocio.nombre} · {o.deptos.length} departamentos</span>
-        <span className="oc-ctl"><button type="button" aria-label="Acercar" onClick={() => ctl.current?.zoom?.(-1)}><Plus size={16} /></button><button type="button" aria-label="Alejar" onClick={() => ctl.current?.zoom?.(1)}><Minus size={16} /></button></span>
+        <span className="oc-ctl"><button type="button" aria-label="Acercar" onClick={() => { ctl.current?.zoom?.(-1); setAuto(false); }}><Plus size={16} /></button><button type="button" aria-label="Alejar" onClick={() => { ctl.current?.zoom?.(1); setAuto(false); }}><Minus size={16} /></button>
+          <button type="button" className="oc-auto" aria-pressed={auto} onClick={() => setAuto(!!ctl.current?.recorrido?.(!auto))}>{auto ? 'Parar recorrido' : 'Recorrido automático'}</button></span>
       </div>
-      <p className="oc-pista">Arrastra para girar · lo que se dicen es el trabajo real de hoy</p>
+      <p className="oc-pista">Arrastra para girar: se queda donde la dejes · lo que se dicen es el trabajo real de hoy</p>
     </div>
   );
 }
