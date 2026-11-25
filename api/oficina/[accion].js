@@ -11,6 +11,7 @@ import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
 import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme, costeVoz, COSTE_BUSQUEDA_PLACES } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
+import { probarCrm, guardarCrm, claveEntrada, enviarACrm, PROVEEDORES_CRM } from '../_crm.js';
 
 const json = (res, c, o) => res.status(c).json(o);
 const cuerpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {});
@@ -215,6 +216,7 @@ async function cita(req, res, neg) {
     if (tok) await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ summary: `${c.servicio || 'Cita'} · ${c.nombre}`, start: { dateTime: f.toISOString() }, end: { dateTime: new Date(f.getTime() + 3600e3).toISOString() } }) }).catch(() => {});
     await actividad(neg.id, 'citas', `Has apuntado la cita de ${c.nombre}`, 'hecho', { cita: c.id });
+    await enviarACrm(neg.id, 'cita', { nombre: c.nombre, contacto: c.contacto, servicio: c.servicio, fecha: c.fecha, canal: c.canal });
     return json(res, 200, { ok: true, cita: c });
   }
   const c = esUuid(id) && await uno(`of_citas?id=eq.${id}&negocio_id=eq.${neg.id}&select=*`);
@@ -236,6 +238,7 @@ async function cita(req, res, neg) {
       body: JSON.stringify({ summary: `${c.servicio || 'Cita'} · ${c.nombre || 'Cliente'}`, description: `Reservada por tu Oficina de IA (${c.canal === 'whatsapp' ? `WhatsApp +${c.contacto}` : 'chat de la web'})`,
         start: { dateTime: cuando.toISOString() }, end: { dateTime: new Date(cuando.getTime() + 3600e3).toISOString() } }) }).catch(() => {});
   }
+  if (estado === 'confirmada') await enviarACrm(neg.id, 'cita', { nombre: c.nombre, contacto: c.contacto, servicio: c.servicio, fecha: cuando?.toISOString() || null, canal: c.canal });
   await actividad(neg.id, 'citas', `${estado === 'confirmada' ? 'Has confirmado' : estado === 'cancelada' ? 'Has rechazado' : 'Has marcado como hecha'} la cita de ${c.nombre || 'un cliente'}`, 'hecho', { cita: c.id });
   return json(res, 200, { ok: true });
 }
@@ -246,6 +249,7 @@ async function lead(req, res, neg) {
     const tel = String(nuevo.telefono || '').replace(/\D/g, '');
     const [l] = await sb('of_leads', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, nombre: String(nuevo.nombre).trim().slice(0, 80), interes: String(nuevo.interes || '').trim().slice(0, 200) || null,
       contacto: tel || null, canal: 'manual', importe: nuevo.importe ? Number(nuevo.importe) : null, etapa: 'nuevo', nota: String(nuevo.nota || '').slice(0, 1000) || null }] });
+    await enviarACrm(neg.id, 'lead', { nombre: l.nombre, contacto: l.contacto, interes: l.interes, importe: l.importe, canal: 'manual' });
     return json(res, 200, { ok: true, lead: l });
   }
   if (!esUuid(id)) return json(res, 400, {});
@@ -259,22 +263,26 @@ async function lead(req, res, neg) {
 }
 // Encargos directos del dueño: «hazme un post sobre…», «escribe un artículo sobre…».
 async function encargo(req, res, neg) {
-  const { depto, tema } = cuerpo(req);
-  const r = await encargoInterno(neg, depto, tema);
+  const { depto, tema, formato } = cuerpo(req);
+  const r = await encargoInterno(neg, depto, tema, formato);
   return json(res, r.status, r.cuerpo);
 }
-async function encargoInterno(neg, depto, tema) {
+async function encargoInterno(neg, depto, tema, formato = 'post') {
   const json = (status, cuerpo) => ({ status, cuerpo }); const t = String(tema || '').trim().slice(0, 400);
   if (!t || !['redes', 'contenido'].includes(depto)) return json(400, { error: 'Cuéntanos sobre qué quieres que trabaje.' });
   if (!(await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.${depto}&activo=eq.true&select=depto`))) return json(403, { error: 'No tienes este departamento.' });
   const o = depto === 'redes'
-    ? await generar({ negocio: neg, depto, encargo: { tarea: `Escribiendo un post sobre «${t.slice(0, 50)}»`, fin: 'Post listo para que lo revises',
-      prompt: `Escribe una publicación para Instagram y Facebook sobre: «${t}». Con el tono del negocio, 2-4 frases y 3-5 hashtags locales. Sin inventar precios ni ofertas. JSON: {"titulo":"...","texto":"...","idea_imagen":"..."}` } })
+    ? await generar({ negocio: neg, depto, maxTokens: 1200, encargo: { tarea: `Diseñando ${({ historia: 'una historia', carrusel: 'un carrusel' })[formato] || 'un post'} sobre «${t.slice(0, 50)}»`, fin: 'Listo para que lo revises',
+      prompt: formato === 'historia'
+        ? `Diseña una historia de Instagram sobre: «${t}». Un texto corto en pantalla (máx. 12 palabras) y una llamada a la acción. Sin inventar precios ni ofertas. JSON: {"titulo":"...","texto":"texto en pantalla","cta":"...","idea_imagen":"qué foto o imagen va de fondo"}`
+        : formato === 'carrusel'
+          ? `Diseña un carrusel de Instagram de 5 diapositivas sobre: «${t}». Portada con gancho, 3 diapositivas de valor y cierre con llamada a la acción; frases cortas. Y el texto del post con 3-5 hashtags locales. Sin inventar precios ni ofertas. JSON: {"titulo":"...","diapositivas":["...","...","...","...","..."],"texto":"texto del post","idea_imagen":"estilo de la portada"}`
+          : `Escribe una publicación para Instagram y Facebook sobre: «${t}». Con el tono del negocio, 2-4 frases y 3-5 hashtags locales. Sin inventar precios ni ofertas. JSON: {"titulo":"...","texto":"...","idea_imagen":"..."}` } })
     : await generar({ negocio: neg, depto, maxTokens: 2200, encargo: { tarea: `Escribiendo un artículo sobre «${t.slice(0, 50)}»`, fin: 'Artículo listo para que lo revises',
       prompt: `Escribe un artículo para el blog del negocio sobre: «${t}». Pensado para Google y para clientes de la zona. 600-800 palabras con subtítulos. Sin inventar datos. JSON: {"titulo":"...","resumen":"...","texto":"... (markdown)"}` } });
   if (!o?.titulo) return json(409, { error: 'Ahora mismo no se ha podido (puede que se haya acabado el cupo del mes).' });
   await actividad(neg.id, depto, `${depto === 'redes' ? 'Post' : 'Artículo'} listo: «${o.titulo}». Revísalo y apruébalo`, 'pendiente',
-    depto === 'redes' ? { accion: 'publicar', red: 'instagram', texto: o.texto, idea_imagen: o.idea_imagen, titulo: o.titulo } : { accion: 'articulo', titulo: o.titulo, texto: o.texto, resumen: o.resumen });
+    depto === 'redes' ? { accion: 'publicar', red: 'instagram', formato: ['historia', 'carrusel'].includes(formato) ? formato : 'post', texto: o.texto, idea_imagen: o.idea_imagen, titulo: o.titulo, diapositivas: o.diapositivas, cta: o.cta } : { accion: 'articulo', titulo: o.titulo, texto: o.texto, resumen: o.resumen });
   return json(200, { ok: true });
 }
 async function factura(req, res, neg) {
@@ -539,10 +547,11 @@ async function bolsa(req, res, neg) {
 
 // ---------------- chat con el equipo, vídeos, competencia, informes ----------------
 async function equipo(req, res, neg) {
-  const { texto: tx, voz: conVoz } = cuerpo(req); const t = String(tx || '').trim().slice(0, 1500);
+  const { texto: tx, voz: conVoz, depto: dx } = cuerpo(req); const t = String(tx || '').trim().slice(0, 1500);
+  const depto = DEPTO[dx] ? dx : null;
   if (!t) return json(res, 400, { error: 'Escribe algo.' });
   let r;
-  try { r = await hablarConEquipo(neg, t, { hablado: Boolean(conVoz) }); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
+  try { r = await hablarConEquipo(neg, t, { hablado: Boolean(conVoz), depto }); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
   if (r.accion) {
     const { tipo, tema } = r.accion;
     if (tipo === 'video') guionVideo(neg, tema, ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes)).catch((e) => console.error('[equipo/video]', e.message));
@@ -733,8 +742,48 @@ async function cron(req, res) {
 }
 
 // ---------------- enrutador ----------------
-const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa };
+
+// ---------------- CRM del negocio (no lo sustituimos: lo conectamos) ----------------
+async function crm(req, res, neg) {
+  const { op, proveedor, token, url, programa } = cuerpo(req);
+  if (op === 'estado') {
+    const c = await uno(`of_conexiones?negocio_id=eq.${neg.id}&herramienta=eq.crm&select=proveedor,estado,cuenta,externo_id,actualizado`);
+    return json(res, 200, { crm: c ? { proveedor: c.proveedor, estado: c.estado, cuenta: c.cuenta, actualizado: c.actualizado } : null, entrada: c?.externo_id ? `${origen(req)}/api/oficina/crm-entrada?k=${c.externo_id}` : null });
+  }
+  if (op === 'entrada') { const k = await claveEntrada(neg); return json(res, 200, { entrada: `${origen(req)}/api/oficina/crm-entrada?k=${k}` }); }
+  if (op === 'quitar') { await sb(`of_conexiones?negocio_id=eq.${neg.id}&herramienta=eq.crm`, { metodo: 'DELETE' }); return json(res, 200, { ok: true }); }
+  if (op === 'probar') { await enviarACrm(neg.id, 'lead', { nombre: 'Prueba Oficina de IA', contacto: 'prueba@agutidesigns.io', canal: 'prueba', interes: 'Mensaje de prueba: puedes borrarlo' }); return json(res, 200, { ok: true }); }
+  if (op !== 'conectar' || !PROVEEDORES_CRM.includes(proveedor)) return json(res, 400, { error: 'Elige cómo quieres conectarlo.' });
+  if (!hayCifrado()) return json(res, 503, { error: 'Las conexiones se están activando.' });
+  const cred = proveedor === 'webhook' ? { url: String(url || '').trim() } : { token: String(token || '').trim() };
+  if (proveedor !== 'webhook' && cred.token.length < 10) return json(res, 400, { error: 'Pega el token completo.' });
+  let cuenta;
+  try { cuenta = await probarCrm(proveedor, cred); } catch (e) { return json(res, 400, { error: e.message }); }
+  const k = await guardarCrm(neg, proveedor, cred, cuenta, String(programa || '').slice(0, 60));
+  await actividad(neg.id, 'ventas', `Has conectado tu CRM (${cuenta}). Cada cliente potencial y cada cita irán también allí.`, 'sistema');
+  return json(res, 200, { conectada: true, cuenta, entrada: `${origen(req)}/api/oficina/crm-entrada?k=${k}` });
+}
+
+// Entrada desde el CRM o programa del cliente (Zapier, Make, n8n…): citas y clientes que nacen allí.
+async function crmEntrada(req, res) {
+  if (req.method !== 'POST') return json(res, 405, {});
+  const k = String(req.query.k || '');
+  if (!/^[\w-]{20,40}$/.test(k)) return json(res, 401, { error: 'Clave no válida' });
+  const con = await uno(`of_conexiones?herramienta=eq.crm&externo_id=eq.${encodeURIComponent(k)}&select=negocio_id`);
+  if (!con) return json(res, 401, { error: 'Clave no válida' });
+  const b = cuerpo(req); const tipo = String(b.tipo || b.evento || (b.fecha ? 'cita' : 'cliente')).toLowerCase();
+  const nombre = String(b.nombre || b.name || '').slice(0, 80) || null; const contacto = String(b.contacto || b.telefono || b.phone || b.email || '').slice(0, 120) || null;
+  if (tipo.startsWith('cita')) {
+    const f = b.fecha ? new Date(b.fecha) : null;
+    await sb('of_citas', { metodo: 'POST', cuerpo: [{ negocio_id: con.negocio_id, nombre, contacto, canal: 'crm', servicio: String(b.servicio || '').slice(0, 160) || null, fecha: f && !isNaN(f) ? f.toISOString() : null, estado: 'confirmada' }] });
+  } else {
+    await sb('of_leads', { metodo: 'POST', cuerpo: [{ negocio_id: con.negocio_id, nombre, contacto, canal: 'crm', interes: String(b.interes || b.nota || 'Desde tu CRM').slice(0, 200), etapa: 'nuevo' }] });
+  }
+  return json(res, 200, { ok: true });
+}
+
+const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');

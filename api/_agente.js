@@ -1,5 +1,6 @@
 // Núcleo de los agentes: llama a la IA con el contexto del negocio, controla el cupo antes de cada llamada y
 // registra consumo, actividad y estado en directo. Usa Claude si hay ANTHROPIC_API_KEY; si no, OpenAI.
+import { enviarACrm } from './_crm.js';
 import { sb, rpc, uno, actividad, estadoAgente, consumo, DEPTO } from './_oficina.js';
 import { instruccionesDe } from '../src/data/oficinaAjustes.js';
 
@@ -160,11 +161,13 @@ Devuelve SOLO un JSON: {"respuesta": "...", "pasar_a_humano": true|false, "motiv
     const fecha = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(o.cita.fecha_iso || '') ? fechaMadrid(o.cita.fecha_iso.slice(0, 16)) : null;
     const fila = { nombre: nombre || null, contacto: conversacion.contacto, canal, servicio: String(o.cita.servicio || '').slice(0, 160) || null, cuando_texto: String(o.cita.cuando || '').slice(0, 160) || null, fecha, actualizado: new Date().toISOString() };
     if (yaCita) await sb(`of_citas?id=eq.${yaCita.id}`, { metodo: 'PATCH', cuerpo: fila });
-    else await sb('of_citas', { metodo: 'POST', cuerpo: [{ ...fila, negocio_id: negocio.id, conversacion_id: conversacion.id }] });
+    else { await sb('of_citas', { metodo: 'POST', cuerpo: [{ ...fila, negocio_id: negocio.id, conversacion_id: conversacion.id }] }); await enviarACrm(negocio.id, 'cita', { ...fila, estado: 'pendiente' }); }
   }
   if (o.interes || o.tema === 'presupuesto' || o.motivo === 'presupuesto') {
+    const yaLead = await uno(`of_leads?conversacion_id=eq.${conversacion.id}&select=id`).catch(() => null);
     await sb('of_leads?on_conflict=conversacion_id', { metodo: 'POST', prefer: 'resolution=merge-duplicates',
       cuerpo: [{ negocio_id: negocio.id, conversacion_id: conversacion.id, nombre: nombre || null, contacto: conversacion.contacto, canal, interes: String(o.interes || 'Pide presupuesto').slice(0, 200), actualizado: new Date().toISOString() }] }).catch(() => {});
+    if (!yaLead) await enviarACrm(negocio.id, 'lead', { nombre: nombre || null, contacto: conversacion.contacto, canal, interes: String(o.interes || 'Pide presupuesto').slice(0, 200) });
   }
   if (o.pasar_a_humano) {
     const motivo = { cita: 'quiere cita', presupuesto: 'pide presupuesto', queja: 'tiene una queja', persona: 'quiere hablar contigo', duda: 'pregunta algo que tus agentes no saben' }[o.motivo] || 'necesita que le contestes tú';

@@ -251,20 +251,18 @@ export function Videos({ o, abrir }) {
   return (
     <div className="vista">
       <Cabecera titulo="Vídeos" sub="Reels y TikToks de tu negocio: tu agente escribe el guion, pone la voz que elijas y montamos el vídeo con tu material." />
-      <Caja icono={Sparkles} titulo="Pide un vídeo">
-        <form className="linea" onSubmit={pedir}><input value={tema} onChange={(e) => setTema(e.target.value)} placeholder="Ej.: 3 consejos para que el color dure más" aria-label="Tema del vídeo" /><button className="btn btn--pri"><Clapperboard size={15} /> Pedir vídeo</button></form>
-        {st && <p className="muted">{st}</p>}
-      </Caja>
-      <div className="vd-col">{ESTADOS_V.filter(([k]) => k !== 'aprobado').map(([k, t]) => {
+      <form className="cx-comp" onSubmit={pedir}><Clapperboard /><input value={tema} onChange={(e) => setTema(e.target.value)} placeholder="Pide un reel o TikTok. Ej.: 3 consejos para que el color dure más" aria-label="Tema del vídeo" /><button className="btn btn--pri btn--sm"><Sparkles size={14} /> Pedir guion</button></form>
+      {st && <p className="cx-nota">{st}</p>}
+      <div className="cx-kan">{ESTADOS_V.filter(([k]) => k !== 'aprobado').map(([k, t], i) => {
         const col = o.videos.filter((x) => x.estado === k || (k === 'revision' && x.estado === 'aprobado'));
         return (
-          <section key={k} className="vd-col__c"><header><b>{t}</b><span>{col.length}</span></header>
+          <section key={k} className="cx-kan__c" style={{ '--c': ['#e5a100', '#7c5cff', '#0047ff', '#16a34a'][i] }}><header><i />{t}<em>{col.length}</em></header>
             {col.map((x) => (
-              <button key={x.id} className="vd-card" onClick={() => setVer(x.id)}>
-                <span className={`vd-card__img is-${x.estilo || 'dinamico'}`}><Clapperboard size={20} /><em>9:16</em></span>
-                <b>{x.titulo}</b><small><Mic size={12} /> {voces.find((y) => y[0] === x.voz)?.[1] || VOCES.find((y) => y[0] === x.voz)?.[1] || 'Voz'} · {hace(x.creado)}</small>
+              <button key={x.id} className="cx-vcard" onClick={() => setVer(x.id)}>
+                <span className="cx-vcard__img"><Clapperboard /></span>
+                <div><b>{x.titulo}</b><small><Mic /> {voces.find((y) => y[0] === x.voz)?.[1] || VOCES.find((y) => y[0] === x.voz)?.[1] || 'Voz'} · {hace(x.creado)}</small></div>
               </button>
-            ))}{!col.length && <p className="muted vd-vacio">—</p>}
+            ))}{!col.length && <p className="cx-kan__vacio">Nada por aquí</p>}
           </section>
         );
       })}</div>

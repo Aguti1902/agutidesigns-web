@@ -414,16 +414,21 @@ export function Plan({ o }) {
   async function reactivar() { setSt('…'); try { if (!o.demo) await api('reactivar'); o.setEstado((s) => ({ ...s, negocio: { ...s.negocio, cancela_el: null, pausa_hasta: null, estado: 'activo' } })); setSt('¡Tu oficina sigue en marcha!'); } catch (e) { setSt(e.message); } }
   async function portal() { if (o.demo) return; try { const j = await api('portal'); window.location.assign(j.url); } catch (e) { setSt(e.message); } }
   const ahorro = precioOficina(o.deptos.length) * 12 - precioAnual(o.deptos.length);
+  const hoyD = new Date(o.ahora); const dMes = new Date(hoyD.getFullYear(), hoyD.getMonth() + 1, 0).getDate(); const diaMes = hoyD.getDate();
   return (
     <div className="vista">
       {n.cancela_el && <p className="banda-prueba banda--aviso"><X size={17} /><span><b>Tu suscripción termina el {fecha(n.cancela_el)}.</b> Hasta entonces todo sigue funcionando.</span><button className="btn btn--pri btn--sm" onClick={reactivar}>Reactivar</button></p>}
       {n.estado === 'pausado' && <p className="banda-prueba banda--aviso"><PauseCircle size={17} /><span><b>Tu oficina está en pausa{n.pausa_hasta ? ` hasta el ${fecha(n.pausa_hasta)}` : ''}.</b> Tus agentes no trabajan y no se te cobra nada.</span><button className="btn btn--pri btn--sm" onClick={reactivar}>Reactivar ahora</button></p>}
       <div className="fila fila--2-1">
-        <Tarjeta titulo="Tu plan">
-          <div className="plan-res"><div><span className="chip">{anual ? 'Anual' : 'Mensual'}{prueba ? ' · prueba gratis' : ''}</span><b>{anual ? `${precioAnual(o.deptos.length)} €` : `${precioOficina(o.deptos.length)} €`}<small>{anual ? '/año' : '/mes'} + IVA</small></b>
-            <p className="muted">{o.deptos.length} departamento{o.deptos.length === 1 ? '' : 's'}{prueba ? ` · primer cobro el ${fecha(n.prueba_hasta)}` : ''}</p></div></div>
-          <div className="fila-btn"><button className="btn btn--sec" onClick={portal} disabled={o.demo}><ExternalLink size={15} /> Tarjeta y datos de facturación</button></div>
-        </Tarjeta>
+        <section className="cx">
+          <header className="cx__h"><h2>Tu plan</h2><span className={`cx-st ${n.estado === 'pausado' || n.cancela_el ? 'is-aviso' : 'is-ok'}`}><i />{n.estado === 'pausado' ? 'En pausa' : n.cancela_el ? 'Se cancela' : prueba ? 'Prueba gratis' : 'Activo'}</span></header>
+          <div className="cx-plan">
+            <div><div className="cx-plan__p">{anual ? precioAnual(o.deptos.length) : precioOficina(o.deptos.length)} €<small> {anual ? '/año' : '/mes'} + IVA</small></div>
+              <p className="muted" style={{ margin: '4px 0 0', fontSize: 13 }}>{anual ? 'Anual' : 'Mensual'} · {o.deptos.length} departamento{o.deptos.length === 1 ? '' : 's'}{prueba ? ` · primer cobro el ${fecha(n.prueba_hasta)}` : ''}</p>
+              <div className="cx-row" style={{ marginTop: 10 }}>{o.deptos.map((d) => <span key={d.depto} className="cx-st"><span style={{ width: 7, height: 7, borderRadius: 2, background: DEPTO[d.depto].color }} />{DEPTO[d.depto].corto}</span>)}</div></div>
+            <div className="cx-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}><button className="btn btn--sec btn--sm" onClick={portal} disabled={o.demo}><ExternalLink size={13} /> Tarjeta y facturación</button><button className="btn btn--sec btn--sm" onClick={() => o.ir('facturas')}>Ver facturas</button></div>
+          </div>
+        </section>
         {!anual ? (
           <Tarjeta titulo="Plan anual" className="upsell">
             <p>{ahorro > 0 ? <><b>Ahorra {ahorro} € al año</b> pagando una vez al año (20 % de descuento).</> : <>Paga una vez al año. Con 2 departamentos o más, además, <b>te ahorras el 20 %</b>.</>}{o.deptos.length >= WEB_DESDE ? <> Y <b>te diseñamos tu web</b> o rediseñamos la que tienes.</> : <> Con {WEB_DESDE} departamentos o más, tu web va incluida.</>}</p>
@@ -444,11 +449,27 @@ export function Plan({ o }) {
         </div>
         {st && <p className="muted">{st}</p>}
       </Tarjeta>
-      <Tarjeta titulo="Consumo de este mes">
-        <div className="cupos cupos--am">{o.deptos.map((d) => { const c = cupoDe(o, d.depto); const p = Math.min(1, c.pct); return <div key={d.depto}><span>{DEPTO[d.depto].corto}<b>{fmt(c.usado)} / {fmt(c.total)} {DEPTO[d.depto].cupo.unidad}</b></span><Medidor valor={p} color={p >= AVISO_CUPO ? 'var(--aviso)' : DEPTO[d.depto].color} /><Ampliar o={o} depto={d.depto} sm texto={`+${fmt(unidadesBolsa(d.depto))} por ${BOLSA_EXTRA.precio} €`} /></div>; })}</div>
-        <p className="muted nota">Te avisamos al llegar al 80 % y al 100 %. Si un departamento se te queda corto, amplíalo solo este mes: +50 % de su cupo por {BOLSA_EXTRA.precio} € + IVA.</p>
-        {o.bolsas?.length > 0 && <ul className="kn">{o.bolsas.slice(0, 6).map((b) => <li key={b.id}><p>+{fmt(b.unidades)} {DEPTO[b.depto]?.cupo.unidad} en {DEPTO[b.depto]?.nombre}<small> · {new Date(b.creado).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} · {fmt(b.importe)} € + IVA</small></p></li>)}</ul>}
-      </Tarjeta>
+      <section className="cx" id="consumo">
+        <header className="cx__h"><h2>Consumo de este mes</h2><small>día {diaMes} de {dMes}</small><span className="cx-sp" /><span className="cx-legend"><span><i style={{ '--c': 'var(--acento)' }} />Usado</span><span><i style={{ '--c': '#9aa3b5' }} />Previsión a fin de mes</span></span></header>
+        {o.deptos.map((d) => {
+          const c = cupoDe(o, d.depto); const info = DEPTO[d.depto]; const p = Math.min(1, c.pct); const proy = Math.round((c.usado / Math.max(1, diaMes)) * dMes); const pp = proy / Math.max(1, c.total);
+          const diaFinX = c.usado > 0 ? Math.ceil(c.total / (c.usado / Math.max(1, diaMes))) : null; const diaFin = c.pct >= 1 ? diaMes : diaFinX && diaFinX < dMes ? diaFinX : null;
+          return (
+            <div key={d.depto} className="cx-uso">
+              <Avatar depto={d.depto} size={28} />
+              <div className="cx-uso__n"><b>{info.nombre}</b><small>{fmt(c.total)} {info.cupo.unidad} al mes</small></div>
+              <div className="cx-uso__m">
+                <div className={`cx-meter ${p >= 1 ? 'is-mal' : p >= AVISO_CUPO ? 'is-aviso' : ''}`} style={{ '--c': info.color }}><s style={{ width: `${Math.min(100, pp * 100)}%`, background: 'var(--linea2)' }} /><s style={{ width: `${p * 100}%` }} /></div>
+                <small><span>{fmt(c.usado)} de {fmt(c.total)} · {Math.round(c.pct * 100)} %</span><span>{c.pct >= 1 ? 'Cupo agotado este mes' : diaFin ? `Al ritmo actual se acaba el día ${diaFin}` : `Previsión: ${fmt(proy)} (${Math.round(pp * 100)} %)`}</span></small>
+              </div>
+              <span className="cx-uso__p">{diaFin ? <span className="cx-st is-aviso"><i />Se quedará corto</span> : <span className="cx-st is-ok"><i />Va bien</span>}</span>
+              <Ampliar o={o} depto={d.depto} sm texto={`+${fmt(unidadesBolsa(d.depto))} · ${BOLSA_EXTRA.precio} €`} />
+            </div>
+          );
+        })}
+        <footer className="cx__f"><small className="muted">Te avisamos al llegar al 80 % y al 100 %. Si un departamento se queda corto, amplíalo solo este mes: +50 % de su cupo por {BOLSA_EXTRA.precio} € + IVA. Para que rinda más, completa «Lo que saben»: cuantas más respuestas tengan, menos vueltas da cada conversación.</small></footer>
+      </section>
+      {o.bolsas?.length > 0 && <section className="cx"><header className="cx__h"><h2>Ampliaciones de este mes</h2></header><ul className="cx-list">{o.bolsas.slice(0, 8).map((b) => <li key={b.id}><Avatar depto={b.depto} size={24} /><div className="cx-list__m"><b>+{fmt(b.unidades)} {DEPTO[b.depto]?.cupo.unidad} en {DEPTO[b.depto]?.nombre}</b><small>{new Date(b.creado).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</small></div><span className="cx-uso__p">{fmt(b.importe)} € + IVA</span></li>)}</ul></section>}
       {!n.cancela_el && <p className="nota muted">¿Quieres irte? <button className="enlace enlace--gris" onClick={() => setBaja(true)}>Cancelar la suscripción</button></p>}
       {baja && <Baja o={o} cerrar={() => setBaja(false)} />}
     </div>
