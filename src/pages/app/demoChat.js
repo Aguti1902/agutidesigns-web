@@ -62,3 +62,38 @@ export function respuestaDemo(o, t, historial = []) {
   }
   return una(['No te he entendido bien. ¿Me lo dices de otra forma? Puedo contarte citas, reseñas, presupuestos o encargarme de un post.', 'Eso no lo tengo claro. Pregúntame por tus citas, las reseñas, los presupuestos o pídeme una publicación.']);
 }
+
+// ---------- demo con IA de verdad: contexto del panel en texto + respuesta del servidor ----------
+const f = (d) => new Date(d).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+export function contextoPanel(o) {
+  const n = o.negocio; const out = [];
+  out.push(`NEGOCIO: ${n.nombre} (${n.sector || ''}). Horario: ${n.horarios || '-'}. Dirección: ${n.direccion || '-'}. Precios: ${n.precios || '-'}`);
+  out.push(`DEPARTAMENTOS: ${o.deptos.map((d) => d.depto).join(', ')}`);
+  out.push(`HOY: ${o.est?.hoy?.total ?? 0} tareas (${o.est?.hoy?.conversaciones ?? 0} conversaciones, ${o.est?.hoy?.citas ?? 0} gestiones de citas, ${o.est?.hoy?.google ?? 0} reseñas)`);
+  out.push(`CUPO DEL MES: ${Object.entries(o.uso || {}).map(([d, u]) => `${d} ${u.unidades_mes}/${u.cupo} (${Math.round((u.pct || 0) * 100)} %)`).join(', ')}`);
+  const prox = o.citas.filter((k) => k.fecha && new Date(k.fecha) > Date.now() && k.estado !== 'cancelada').sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(0, 12);
+  out.push(`CITAS PRÓXIMAS:\n${prox.map((k) => `- ${k.nombre} · ${k.servicio} · ${f(k.fecha)} · ${k.estado}`).join('\n') || '- ninguna'}`);
+  out.push(`CLIENTES POTENCIALES:\n${o.leads.map((l) => `- ${l.nombre}: ${l.interes || ''} ${l.importe ? `${l.importe} €` : ''} · ${l.etapa}`).join('\n') || '- ninguno'}`);
+  const pend = o.eventos.filter((e) => (e.tipo === 'aviso' || e.tipo === 'pendiente') && !e.resuelto).slice(0, 12);
+  out.push(`PENDIENTE DEL DUEÑO (${pend.length}):\n${pend.map((e) => `- ${e.texto}`).join('\n')}`);
+  out.push(`ACTIVIDAD RECIENTE:\n${o.eventos.slice(0, 25).map((e) => `- [${e.depto}] ${f(e.creado)}: ${e.texto}`).join('\n')}`);
+  const g = (o.metricas || []).find((m) => m.fuente === 'google_busqueda')?.datos;
+  if (g) {
+    const s = g.serie || []; const m = Math.floor(s.length / 2); const sum = (a, k) => a.reduce((x, y) => x + (y[k] || 0), 0); const c = sum(s, 'clics'); const i = sum(s, 'impresiones');
+    out.push(`SEO EN GOOGLE (28 días): ${c} clics, ${i} impresiones, CTR ${i ? ((c / i) * 100).toFixed(1) : 0} %. Clics últimos 14 días ${sum(s.slice(m), 'clics')} vs ${sum(s.slice(0, m), 'clics')} los 14 anteriores.\nBúsquedas:\n${(g.busquedas || []).map((b) => `- «${b.q}»: posición ${b.posicion}, ${b.clics} clics, ${b.impresiones} impresiones`).join('\n')}`);
+  }
+  const w = (o.metricas || []).find((m) => m.fuente === 'web')?.datos; if (w) out.push(`WEB (analítica): ${JSON.stringify(w).slice(0, 700)}`);
+  const ig = (o.metricas || []).find((m) => m.fuente === 'instagram')?.datos; if (ig) out.push(`INSTAGRAM: ${JSON.stringify(ig).slice(0, 400)}`);
+  const r = o.eventos.filter((e) => e.depto === 'google' && e.detalle?.estrellas);
+  if (r.length) out.push(`RESEÑAS: ${r.length} respondidas, media ${(r.reduce((a, e) => a + e.detalle.estrellas, 0) / r.length).toFixed(1)} ★`);
+  if (o.competidores?.length) out.push(`COMPETENCIA:\n${o.competidores.map((k) => `- ${k.nombre}: ${k.nota ?? '?'} ★, ${k.resenas ?? '?'} reseñas${k.datos?.publica ? `, publica: ${k.datos.publica}` : ''}`).join('\n')}`);
+  const vids = o.videos || []; if (vids.length) out.push(`VÍDEOS: ${vids.map((v) => `${v.titulo} (${v.estado})`).join('; ')}`);
+  return out.join('\n\n');
+}
+export async function responderDemo(o, texto, historial = [], { hablado = false, depto = null } = {}) {
+  try {
+    const r = await fetch('/api/oficina/demo-voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'ia', texto, historial, contexto: contextoPanel(o), hablado, depto }) });
+    const j = await r.json(); if (r.ok && j.respuesta) return j.respuesta;
+  } catch { /* sin conexión: respuesta local */ }
+  return respuestaDemo(o, texto, historial);
+}

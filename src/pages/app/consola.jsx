@@ -11,7 +11,7 @@ import { ajustesDe } from '../../data/oficinaAjustes';
 import { api, pendiente, metrica } from './datos';
 import { Avatar, Puntos } from './ui';
 import { fmt, hace, hora, uid } from './formato';
-import { respuestaDemo } from './demoChat';
+import { respuestaDemo, responderDemo } from './demoChat';
 import { Cabecera } from './pantallas';
 
 const conectada = (o, id) => o.conexiones.some((c) => c.herramienta === id && c.estado === 'conectada');
@@ -382,7 +382,7 @@ export function ChatEquipo({ o }) {
     e?.preventDefault(); const x = (x0 ?? t).trim(); if (!x || esc) return; setT(''); setErr(''); setEsc(true); const d = hilo;
     o.setEstado((s) => ({ ...s, chat: [...s.chat, { id: uid('t'), de: 'tu', depto: d, texto: x, creado: new Date().toISOString() }] }));
     try {
-      const r = o.demo ? (await new Promise((ok) => setTimeout(ok, 1000)), { respuesta: demoDepto(o, d, x) }) : await api('equipo', { texto: x, depto: d });
+      const r = o.demo ? { respuesta: await responderDemo(o, x, o.chat.filter((m) => (m.depto || null) === d).slice(-8), { depto: d }) } : await api('equipo', { texto: x, depto: d });
       o.setEstado((s) => ({ ...s, chat: [...s.chat, { id: uid('e'), de: 'equipo', depto: d, texto: r.respuesta, detalle: r.accion ? { accion: r.accion } : {}, creado: new Date().toISOString() }] }));
     } catch (er) { setErr(er.message); }
     setEsc(false);
