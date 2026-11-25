@@ -587,3 +587,8 @@
 .ay-faq details[open] summary::after { content: '–'; }
 .ay-faq summary:hover { background: var(--suave); } .ay-faq summary:focus-visible { outline: 2px solid var(--acento); outline-offset: -2px; }
 .ay-faq details p { margin: 0; padding: 0 16px 14px; font-size: 13.5px; line-height: 1.6; color: var(--tinta2); max-width: 75ch; }
+/* llamada: conversación visible */
+.ll__conv { width: min(640px, 100%); display: grid; gap: 8px; max-height: 32vh; overflow-y: auto; padding: 0 4px; }
+.ll__t { margin: 0; padding: 9px 13px; border-radius: 14px; font-size: 15px; line-height: 1.45; max-width: 85%; font-family: Inter, system-ui, sans-serif; }
+.ll__t--equipo { justify-self: start; background: rgba(255,255,255,.08); color: #e8ecff; }
+.ll__t--tu { justify-self: end; background: rgba(0,71,255,.35); color: #fff; }

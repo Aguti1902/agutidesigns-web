@@ -9,7 +9,7 @@ import {
 import { responderCliente, generar } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
 import { ajustesDe } from '../../src/data/oficinaAjustes.js';
-import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme, costeVoz, COSTE_BUSQUEDA_PLACES } from '../_marketing.js';
+import { actualizarMetricas, asistente as hablarConEquipo, guionVideo, voz, subirArchivo, VOCES, vocesEleven, hayEleven, buscarCompetidores, hayPlaces, enviarInforme, costeVoz, COSTE_BUSQUEDA_PLACES, transcribir, vozLlamada } from '../_marketing.js';
 import { facturaDesdeStripe, pdfFactura, hayHolded } from '../_holded.js';
 import { probarCrm, guardarCrm, claveEntrada, enviarACrm, PROVEEDORES_CRM } from '../_crm.js';
 
@@ -552,17 +552,48 @@ async function bolsa(req, res, neg) {
 }
 
 // ---------------- chat con el equipo, vídeos, competencia, informes ----------------
+async function hacerEncargo(neg, accion) {
+  const { tipo, tema } = accion;
+  if (tipo === 'video') guionVideo(neg, tema, ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes)).catch((e) => console.error('[equipo/video]', e.message));
+  else await encargoInterno(neg, tipo === 'post' ? 'redes' : 'contenido', tema).catch((e) => console.error('[equipo/encargo]', e.message));
+}
+
+// Llamada con tu oficina: recibe tu voz, la pasa a texto, contesta con los datos reales y devuelve la respuesta hablada.
+async function llamada(req, res, neg) {
+  const { op, audio, mime, historial, texto: escrito } = cuerpo(req);
+  const hablar = async (t) => { try { const v = await vozLlamada(t); await gastoExtra(neg, null, 'voz', v.coste); return v.mp3.toString('base64'); } catch (e) { console.error('[llamada/voz]', e.message); return null; } };
+  if (op === 'saludo') {
+    const h = Number(new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'Europe/Madrid' }));
+    const pend = (await sb(`of_actividad?negocio_id=eq.${neg.id}&tipo=in.(aviso,pendiente)&resuelto=eq.false&select=id&limit=50`).catch(() => [])).length;
+    const hola = h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches';
+    const t = pend ? `${hola}, aquí tu oficina. Tienes ${pend === 1 ? 'una cosa' : `${pend} cosas`} esperándote. ¿Te cuento o necesitas otra cosa?` : `${hola}, aquí tu oficina. Todo al día por aquí. ¿En qué te ayudo?`;
+    return json(res, 200, { respuesta: t, audio: await hablar(t) });
+  }
+  let oido = String(escrito || '').trim().slice(0, 1500);
+  if (!oido && audio) {
+    const buf = Buffer.from(String(audio), 'base64');
+    if (buf.length > 3_000_000) return json(res, 413, { error: 'Audio demasiado largo' });
+    if (buf.length < 2500) return json(res, 200, { oido: '' });
+    const deps = await sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`).catch(() => []);
+    const pista = `Llamada del dueño de ${neg.nombre}${neg.sector ? ` (${neg.sector})` : ''} a su oficina de IA. Puede hablar de: ${deps.map((d) => DEPTO[d.depto]?.nombre).filter(Boolean).join(', ')}, citas, reseñas, publicaciones, carrusel, historias, reels, TikTok, presupuestos, clientes, WhatsApp.`;
+    try { oido = await transcribir(buf, String(mime || 'audio/webm'), pista); await gastoExtra(neg, null, 'stt', (buf.length / 16000 / 60) * 0.003); } catch (e) { console.error('[llamada/stt]', e.message); return json(res, 502, { error: 'No te he oído bien. Prueba otra vez.' }); }
+    // Muletillas o ruido: no gastes una respuesta.
+    if (!oido || /^(gracias por ver el v[ií]deo|subt[ií]tulos|\.+|mmm+|eh+)$/i.test(oido)) return json(res, 200, { oido: '' });
+  }
+  if (!oido) return json(res, 400, { error: 'Sin audio' });
+  let r;
+  try { r = await hablarConEquipo(neg, oido, { hablado: true, historial: Array.isArray(historial) ? historial : [] }); } catch (e) { console.error('[llamada]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar.' }); }
+  if (r.accion) await hacerEncargo(neg, r.accion);
+  return json(res, 200, { oido, respuesta: r.respuesta, accion: r.accion, audio: r.respuesta ? await hablar(r.respuesta) : null });
+}
+
 async function equipo(req, res, neg) {
   const { texto: tx, voz: conVoz, depto: dx } = cuerpo(req); const t = String(tx || '').trim().slice(0, 1500);
   const depto = DEPTO[dx] ? dx : null;
   if (!t) return json(res, 400, { error: 'Escribe algo.' });
   let r;
   try { r = await hablarConEquipo(neg, t, { hablado: Boolean(conVoz), depto }); } catch (e) { console.error('[equipo]', e.message); return json(res, 502, { error: 'Ahora mismo no podemos contestar. Inténtalo en un momento.' }); }
-  if (r.accion) {
-    const { tipo, tema } = r.accion;
-    if (tipo === 'video') guionVideo(neg, tema, ajustesDe('redes', (await uno(`of_departamentos?negocio_id=eq.${neg.id}&depto=eq.redes&select=ajustes`))?.ajustes)).catch((e) => console.error('[equipo/video]', e.message));
-    else await encargoInterno(neg, tipo === 'post' ? 'redes' : 'contenido', tema).catch((e) => console.error('[equipo/encargo]', e.message));
-  }
+  if (r.accion) await hacerEncargo(neg, r.accion);
   let audio = null;
   if (conVoz && r.respuesta) { try { audio = (await voz(r.respuesta, hayEleven() ? undefined : 'ash')).toString('base64'); await gastoExtra(neg, null, 'voz', costeVoz(r.respuesta, hayEleven() ? undefined : 'ash')); } catch (e) { console.error('[equipo/voz]', e.message); } }
   return json(res, 200, { ok: true, respuesta: r.respuesta, accion: r.accion, audio });
@@ -812,7 +843,7 @@ async function crmEntrada(req, res) {
 }
 
 const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm, saber };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm, saber, llamada };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');
