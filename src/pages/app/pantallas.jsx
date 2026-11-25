@@ -1,4 +1,5 @@
 // Pantallas principales del panel (versión pro): Inicio, Te necesitan, Conversaciones, Departamentos y Oficina 3D.
+import { Recomendado } from './consola';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, ArrowRight, CalendarCheck, CalendarPlus, Check, ChevronRight, Clapperboard, Clock, Copy, Filter, Handshake, Inbox, MessageCircle,
@@ -222,6 +223,7 @@ export function Inicio({ o, extras }) {
       <div className="pc-grid">
         <div className="pc-col">
           <NecesitaAtencion o={o} />
+          <Recomendado o={o} />
           <Caja icono={Zap} titulo="Trabajo de los últimos 14 días" sub="Tareas hechas por tus agentes cada día">
             <BarrasDia serie={serie14} deptos={o.deptos.map((d) => d.depto)} alto={180} />
           </Caja>

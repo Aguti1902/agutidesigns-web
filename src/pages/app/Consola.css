@@ -394,3 +394,48 @@
 .cx-crmc__l.is-logo { background: #fff; border: 1px solid var(--linea); }
 .cx-crmc__l.is-logo img { display: block; border-radius: 4px; }
 .cx__h .cx-crmc__l { width: 28px; height: 28px; border-radius: 7px; flex: none; }
+
+/* ---------- barra lateral clara (estilo software de gestión) ---------- */
+.app--pro .lado { background: #fbfbfc; border-right: 1px solid var(--linea); color: var(--tinta2); scrollbar-color: var(--linea2) transparent; }
+.app--pro .lado__x { color: var(--tinta); }
+.app--pro .lado__tag { background: var(--tinta); color: #fff; }
+.app--pro .nav-g__t { color: var(--muted); }
+.app--pro .lado nav button { color: var(--tinta2); }
+.app--pro .lado nav button svg { color: var(--muted); }
+.app--pro .lado nav button:hover { background: #f0f1f4; color: var(--tinta); }
+.app--pro .lado nav button.is-on { background: #eceef2; color: var(--tinta); }
+.app--pro .lado nav button.is-on::before { background: var(--acento); }
+.app--pro .lado nav button.is-on svg { color: var(--acento); }
+.app--pro .lado nav em { background: var(--acento-s); color: var(--acento); }
+.app--pro .lado nav em.is-tarea { background: var(--suave); color: var(--tinta2); }
+.app--pro .nav-mas { border: 1px dashed var(--linea2) !important; color: var(--tinta2) !important; }
+.app--pro .nav-mas span { color: var(--muted); }
+.app--pro .lado__pie { border-top: 1px solid var(--linea); color: var(--muted); }
+.app--pro .neg { background: var(--carta); border: 1px solid var(--linea); }
+.app--pro .neg b { color: var(--tinta); } .app--pro .neg small { color: var(--muted); }
+.app--pro .neg__av { background: var(--tinta); color: #fff; }
+.app--pro .lado__acc .enlace { color: var(--muted); } .app--pro .lado__acc .enlace:hover { color: var(--tinta); }
+@media (prefers-color-scheme: dark) {
+  .app--pro .lado { background: #0e121c; }
+  .app--pro .lado nav button:hover, .app--pro .lado nav button.is-on { background: #1a2030; }
+  .app--pro .lado__tag { background: var(--lima); color: var(--navy); }
+  .app--pro .neg__av { background: var(--lima); color: var(--navy); }
+}
+
+/* ---------- recomendado para ti ---------- */
+.cx-reco { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.cx-reco__c { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; padding: 14px; border: 1px solid var(--linea); border-radius: var(--r); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 7%, var(--carta)), var(--carta) 60%); min-width: 0; }
+.cx-reco__c:hover { border-color: color-mix(in srgb, var(--c) 40%, var(--linea)); } .cx-reco__c:focus-visible { outline: 2px solid var(--acento); }
+.cx-reco__c header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.cx-reco__c header .cx-st { background: color-mix(in srgb, var(--c) 14%, var(--carta)); color: var(--c); }
+.cx-reco__c b { font-size: 14px; font-weight: 600; } .cx-reco__c p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cx-reco__c footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.cx-reco__c footer span:last-child { color: var(--tinta); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.app--pro .pc-kpi.is-osc { background: var(--navy); border-color: var(--navy); }
+.app--pro .pc-kpi.is-osc b { color: #fff; } .app--pro .pc-kpi.is-osc .pc-kpi__t, .app--pro .pc-kpi.is-osc .pc-kpi__s { color: #aab1c8; }
+/* filas de «Necesita atención» compactas */
+.app--pro .pc-aten button { gap: 12px; padding: 10px 14px; }
+.app--pro .pc-aten__i { width: 32px; height: 32px; border-radius: 8px; }
+.app--pro .pc-aten__i svg { width: 15px; height: 15px; }
+.app--pro .pc-aten b { font-size: 13.5px; } .app--pro .pc-aten small { font-size: 12px; }
+.app--pro .pc-eq button { padding-block: 8px; }
