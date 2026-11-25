@@ -609,7 +609,8 @@
 .llv__ico { all: unset; cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #aeb6c8; }
 .llv__ico:hover, .llv__ico.is-on { background: rgba(255,255,255,.08); color: #fff; } .llv__ico:focus-visible { outline: 2px solid rgb(var(--c)); }
 .llv__centro { grid-column: 1; display: grid; align-content: center; justify-items: center; gap: 18px; padding: 0 20px; position: relative; z-index: 1; min-height: 0; }
-.llv__orbe { all: unset; cursor: pointer; position: relative; width: min(46vw, 240px); aspect-ratio: 1; display: grid; place-items: center; }
+.llv__orbe { all: unset; cursor: pointer; position: relative; width: min(80vw, 440px); aspect-ratio: 1; display: grid; place-items: center; margin: -30px 0 -20px; }
+.llv__lienzo { width: 100%; height: 100%; display: block; }
 .llv__orbe:focus-visible { outline: 2px solid rgb(var(--c)); outline-offset: 12px; border-radius: 50%; }
 .llv__orbe > span { position: absolute; border-radius: 50%; }
 .llv__halo { inset: -18%; background: radial-gradient(circle, rgba(var(--c), .28), transparent 65%); transform: scale(calc(.9 + var(--n) * .5)); transition: transform .12s linear, background .6s; }

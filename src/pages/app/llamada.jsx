@@ -34,7 +34,8 @@ export function Llamada({ o, cerrar }) {
   useEffect(() => { conv.current?.scrollTo({ top: conv.current.scrollHeight, behavior: 'smooth' }); });
   const vad = useRef({ suelo: 0.01, hablando: false, ini: 0, ultimaVoz: 0, inicioTurno: 0, fuerte: 0 }); const recWeb = useRef(null);
   const fijar = (e) => { est.current = e; setEstado(e); };
-  const servidor = !o.demo && puedeGrabar;
+  const servidor = puedeGrabar;
+  const vozDemo = (t) => api('demo-voz', { op: 'hablar', texto: t }).then((j) => j.audio).catch(() => null);
   const pasa = (de, texto) => { hist.current = [...hist.current, { de, texto }].slice(-10); setTurnos((t) => [...t, { id: uid(de), de, texto }].slice(-6)); };
 
   // ---------- hablar ----------
@@ -65,7 +66,7 @@ export function Llamada({ o, cerrar }) {
   async function enviarTexto(t) {
     callar(); fijar('pensando'); pasa('tu', t); anotar(o, 'tu', t);
     try {
-      const r = o.demo ? (await new Promise((ok) => setTimeout(ok, 700)), { respuesta: respuestaDemo(o, t, hist.current), audio: null }) : await api('llamada', { texto: t, historial: hist.current.slice(0, -1) });
+      let r; if (o.demo) { const resp = respuestaDemo(o, t, hist.current); r = { respuesta: resp, audio: await vozDemo(resp) }; } else r = await api('llamada', { texto: t, historial: hist.current.slice(0, -1) });
       if (!vivo.current) return; pasa('equipo', r.respuesta); anotar(o, 'equipo', r.respuesta, r.accion ? { detalle: { accion: r.accion } } : {}); await hablar(r.respuesta, r.audio);
     } catch (e) { setErr(e.message); }
     if (vivo.current) escuchar();
@@ -73,7 +74,9 @@ export function Llamada({ o, cerrar }) {
   async function enviarAudio(blob) {
     fijar('pensando');
     try {
-      const r = await api('llamada', { audio: await aB64(blob), mime: blob.type, historial: hist.current });
+      const b64 = await aB64(blob); let r;
+      if (o.demo) { const j = await api('demo-voz', { op: 'oir', audio: b64, mime: blob.type }); r = { oido: j.oido }; if (j.oido) { r.respuesta = respuestaDemo(o, j.oido, hist.current); r.audio = await vozDemo(r.respuesta); } }
+      else r = await api('llamada', { audio: b64, mime: blob.type, historial: hist.current });
       if (!r.oido) { if (vivo.current) escuchar(); return; }
       await responder(r);
     } catch (e) { setErr(e.message); if (vivo.current) escuchar(); }
@@ -107,11 +110,11 @@ export function Llamada({ o, cerrar }) {
     const rms = Math.sqrt(d.reduce((a, x) => a + x * x, 0) / d.length); const v = vad.current; const ahora = performance.now();
     if (est.current === 'escuchando' || est.current === 'oyendo') {
       if (!v.hablando) v.suelo = v.suelo * 0.97 + Math.min(rms, 0.05) * 0.03;
-      const umbral = Math.max(0.018, v.suelo * 2.6);
+      const umbral = Math.max(0.012, v.suelo * 2.2);
       setNivel(Math.min(1, rms * 9));
-      if (rms > umbral) { if (!v.ini) v.ini = ahora; if (ahora - v.ini > 120 && !v.hablando) { v.hablando = true; fijar('oyendo'); } v.ultimaVoz = ahora; } else if (!v.hablando) v.ini = 0;
+      if (rms > umbral) { if (!v.ini) v.ini = ahora; if (ahora - v.ini > 150 && !v.hablando) { v.hablando = true; fijar('oyendo'); } v.ultimaVoz = ahora; } else if (!v.hablando) v.ini = 0;
       const silencio = ahora - v.ultimaVoz;
-      if (v.hablando && (silencio > 850 || ahora - v.inicioTurno > 25000)) { if (rec.current?.state === 'recording') { rec.current._conVoz = true; rec.current.stop(); } v.hablando = false; }
+      if (v.hablando && (silencio > 1100 || ahora - v.inicioTurno > 25000)) { if (rec.current?.state === 'recording') { rec.current._conVoz = true; rec.current.stop(); } v.hablando = false; }
       else if (!v.hablando && ahora - v.inicioTurno > 15000 && rec.current?.state === 'recording') { rec.current._conVoz = false; rec.current.stop(); } // descarta silencio largo
     } else if (est.current === 'hablando') {
       // Interrumpir: voz fuerte sostenida mientras habla la oficina.
@@ -140,7 +143,7 @@ export function Llamada({ o, cerrar }) {
           an.current = ctx.current.createAnalyser(); an.current.fftSize = 1024; src.connect(an.current); raf.current = requestAnimationFrame(bucle);
         } catch { setErr('Necesitamos permiso para usar el micrófono. Mientras, puedes escribir abajo.'); }
       }
-      let saludo; try { saludo = o.demo ? { respuesta: `Hola, aquí tu oficina de ${o.negocio.nombre}. ¿Qué necesitas?` } : await api('llamada', { op: 'saludo' }); } catch { saludo = { respuesta: '¿Sí? Dime, te escucho.' }; }
+      let saludo; try { if (o.demo) { const t = `Hola, aquí tu oficina de ${o.negocio.nombre}. ¿Qué necesitas?`; saludo = { respuesta: t, audio: await vozDemo(t) }; } else saludo = await api('llamada', { op: 'saludo' }); } catch { saludo = { respuesta: '¿Sí? Dime, te escucho.' }; }
       if (!vivo.current) return; pasa('equipo', saludo.respuesta); await hablar(saludo.respuesta, saludo.audio); if (vivo.current) escuchar();
     })();
     return () => { vivo.current = false; callar(); try { if (rec.current?.state === 'recording') rec.current.stop(); } catch { /* */ } recWeb.current?.abort?.(); stream.current?.getTracks().forEach((t) => t.stop()); ctx.current?.close?.().catch(() => {}); };
@@ -151,6 +154,9 @@ export function Llamada({ o, cerrar }) {
   useEffect(() => { const i = setInterval(() => setSeg((x) => x + 1), 1000); return () => clearInterval(i); }, []);
   const reloj = `${String(Math.floor(seg / 60)).padStart(2, '0')}:${String(seg % 60).padStart(2, '0')}`;
   const fase = estado === 'oyendo' ? 'escuchando' : estado;
+  const lienzo = useRef(null); const visual = useRef({ nivel: 0, fase: 'escuchando' });
+  visual.current = { nivel, fase: fase === 'conectando' ? 'parado' : fase };
+  useEffect(() => { let limpiar = () => {}; let fuera = false; import('./orbeParticulas').then(({ montarOrbe }) => { if (!fuera && lienzo.current) limpiar = montarOrbe(lienzo.current, () => visual.current); }); return () => { fuera = true; limpiar(); }; }, []);
   const etiqueta = { conectando: 'Conectando', escuchando: 'Te escucho', pensando: 'Pensando', hablando: 'Hablando', parado: muteado ? 'Micrófono apagado' : 'En pausa · toca para seguir' }[fase];
   const ultimo = turnos.at(-1);
   return (
@@ -162,7 +168,7 @@ export function Llamada({ o, cerrar }) {
       </header>
       <main className="llv__centro">
         <button type="button" className="llv__orbe" onClick={interrumpir} aria-label={fase === 'hablando' ? 'Interrumpir y hablar' : 'Volver a escuchar'}>
-          <span className="llv__halo" /><span className="llv__anillo" /><span className="llv__anillo llv__anillo--2" /><span className="llv__nucleo" />
+          <canvas ref={lienzo} className="llv__lienzo" aria-hidden="true" />
         </button>
         <p className="llv__estado"><i />{etiqueta}{fase === 'pensando' && <Puntos />}</p>
         <div className="llv__subt" aria-live="polite">
