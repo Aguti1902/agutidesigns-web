@@ -391,3 +391,6 @@
 .cx-chat__h .a-av, .cx-msg .a-av { border-radius: 8px; flex: none; }
 .cx-msg .cx-hilo__av, .cx-chat__h .cx-hilo__av { flex: none; }
 .cx-uso > :last-child { justify-self: end; }
+.cx-crmc__l.is-logo { background: #fff; border: 1px solid var(--linea); }
+.cx-crmc__l.is-logo img { display: block; border-radius: 4px; }
+.cx__h .cx-crmc__l { width: 28px; height: 28px; border-radius: 7px; flex: none; }
