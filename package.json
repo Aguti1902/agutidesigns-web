@@ -16,13 +16,15 @@
     "@vercel/analytics": "^1.5.0",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
+    "mammoth": "^1.13.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-intersection-observer": "^10.0.2",
     "react-router-dom": "^7.13.0",
     "resend": "^6.16.0",
     "simple-icons": "^13.21.0",
-    "three": "0.180.0"
+    "three": "0.180.0",
+    "unpdf": "^1.9.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

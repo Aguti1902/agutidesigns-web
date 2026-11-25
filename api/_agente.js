@@ -86,21 +86,32 @@ export async function puedeTrabajar(negocio, depto) {
 }
 
 async function conocimiento(negocio) {
-  const filas = await sb(`of_conocimiento?negocio_id=eq.${negocio.id}&select=tipo,pregunta,respuesta,hasta&order=created_at.asc&limit=80`).catch(() => []);
+  const filas = await sb(`of_conocimiento?negocio_id=eq.${negocio.id}&select=tipo,pregunta,respuesta,hasta,titulo,url,texto,datos&order=created_at.asc&limit=400`).catch(() => []);
   const hoy = new Date().toISOString().slice(0, 10);
-  const faq = filas.filter((f) => f.tipo === 'faq').map((f) => `- P: ${f.pregunta}\n  R: ${f.respuesta}`).join('\n');
-  const notas = filas.filter((f) => f.tipo === 'nota' && (!f.hasta || f.hasta >= hoy)).map((f) => `- ${f.respuesta}${f.hasta ? ` (válido hasta ${f.hasta})` : ''}`).join('\n');
-  return { faq, notas };
+  const de = (t) => filas.filter((f) => f.tipo === t);
+  const faq = de('faq').map((f) => `- P: ${f.pregunta}\n  R: ${f.respuesta}`).join('\n');
+  const notas = de('nota').filter((f) => !f.hasta || f.hasta >= hoy).map((f) => `- ${f.respuesta}${f.hasta ? ` (válido hasta ${f.hasta})` : ''}`).join('\n');
+  const servicios = de('servicio').map((f) => { const d = f.datos || {}; return `- ${f.titulo}${d.precio ? `: ${d.precio}` : ''}${d.duracion ? ` · ${d.duracion}` : ''}${f.respuesta ? ` — ${f.respuesta}` : ''}`; }).join('\n');
+  const equipo = de('equipo').map((f) => `- ${f.titulo}${f.datos?.rol ? ` (${f.datos.rol})` : ''}${f.respuesta ? `: ${f.respuesta}` : ''}`).join('\n');
+  const enlaces = de('enlace').map((f) => `- ${f.titulo}: ${f.url}${f.respuesta ? ` — úsalo para: ${f.respuesta}` : ''}`).join('\n');
+  const politicas = de('politica').map((f) => `- ${f.titulo}: ${f.respuesta}`).join('\n');
+  const info = de('info').map((f) => `### ${f.titulo}\n${f.respuesta}`).join('\n');
+  // Documentos: su texto extraído, con un tope total para no disparar el coste de cada respuesta.
+  let resto = 40000;
+  const docs = de('documento').filter((f) => f.texto).map((f) => { const t = f.texto.slice(0, Math.max(0, Math.min(15000, resto))); resto -= t.length; return t ? `### ${f.titulo}\n${t}` : ''; }).filter(Boolean).join('\n\n');
+  return { faq, notas, servicios, equipo, enlaces, politicas, info, docs };
 }
 
 export async function fichaNegocio(negocio) {
-  const { faq, notas } = await conocimiento(negocio);
+  const { faq, notas, servicios, equipo, enlaces, politicas, info, docs } = await conocimiento(negocio);
   return [
     `NEGOCIO: ${negocio.nombre}${negocio.sector ? ` (${negocio.sector})` : ''}`,
     negocio.direccion && `Dirección: ${negocio.direccion}`, negocio.telefono && `Teléfono: ${negocio.telefono}`,
     negocio.horarios && `Horarios: ${negocio.horarios}`, negocio.precios && `Servicios y precios:\n${negocio.precios}`,
     negocio.tono && `Tono con los clientes: ${negocio.tono}`, negocio.instrucciones && `Nunca hagas esto: ${negocio.instrucciones}`,
-    notas && `AVISOS ACTUALES (tienen prioridad):\n${notas}`, faq && `PREGUNTAS FRECUENTES:\n${faq}`,
+    notas && `AVISOS ACTUALES (tienen prioridad):\n${notas}`, servicios && `CATÁLOGO DE SERVICIOS:\n${servicios}`, equipo && `EQUIPO:\n${equipo}`,
+    politicas && `CONDICIONES Y POLÍTICAS:\n${politicas}`, enlaces && `ENLACES QUE PUEDES DAR A LOS CLIENTES (cópialos tal cual, no inventes otros):\n${enlaces}`,
+    faq && `PREGUNTAS FRECUENTES:\n${faq}`, info && `MÁS INFORMACIÓN DEL NEGOCIO:\n${info}`, docs && `DOCUMENTOS DEL NEGOCIO (úsalos como fuente):\n${docs}`,
     `Hoy es ${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Madrid' })}.`,
   ].filter(Boolean).join('\n');
 }

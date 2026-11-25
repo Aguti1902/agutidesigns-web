@@ -68,10 +68,10 @@ export function MenuAyuda({ ir, tutorial }) {
       <button type="button" className="lado__fila" onClick={() => setAb(!ab)} aria-expanded={ab} aria-haspopup="menu"><LifeBuoy size={16} /><span>Ayuda y soporte</span><ChevronRight size={15} /></button>
       <Flota abierto={ab} cerrar={() => setAb(false)} lado="lado">
         <Item I={BookOpen} t="Centro de ayuda" onClick={() => go('ayuda')} />
-        <Item I={PlayCircle} t="Vídeos tutoriales" onClick={() => go('ayuda')} />
+        <Item I={PlayCircle} t="Vídeos tutoriales" onClick={() => go('videos-ayuda')} />
         <Item I={GraduationCap} t="Tutorial guiado" onClick={() => { setAb(false); tutorial(); }} />
         <hr />
-        <Item I={MessageCircle} t="Escríbenos" sub="Te contestamos en menos de 24 h laborables" onClick={() => go('ayuda')} />
+        <Item I={MessageCircle} t="Escríbenos" sub="Te contestamos en menos de 24 h laborables" onClick={() => go('soporte')} />
       </Flota>
     </div>
   );

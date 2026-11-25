@@ -15,7 +15,9 @@ import { Analitica, Videos, Material, Informes } from './marketing';
 import { ChatEquipo, Seo, Publicaciones, Articulos, Resenas, Crm } from './consola';
 import { Agenda, Clientes, Mejora, Plan, Facturas, Avisos, SugerenciaMejora } from './vistas2';
 import { CabeceraDepto } from './departamentos';
-import { Tutorial, Ayuda } from './ayuda';
+import { Tutorial } from './ayuda';
+import { LoQueSaben } from './saben';
+import { CentroAyuda, VideosAyuda, Soporte } from './soporte';
 import { AvisosCupo } from './ampliar';
 import { CAMPOS } from './formato';
 import { MenuNegocio, MenuAyuda, MenuUsuario, Perfil, Configuracion, useTema } from './menus';
@@ -52,7 +54,7 @@ const GRUPOS = [
     { id: 'actividad', t: 'Actividad', I: Activity },
   ] },
   { t: 'Configuración', oculto: true, items: [
-    { id: 'ensenar', t: 'Lo que saben', I: BookOpen },
+    { id: 'ensenar', t: 'Lo que saben tus agentes', I: BookOpen },
     { id: 'material', t: 'Tu material', I: FolderOpen },
     { id: 'conexiones', t: 'Conexiones', I: Plug },
   ] },
@@ -61,13 +63,15 @@ const GRUPOS = [
     { id: 'plan', t: 'Plan', I: CreditCard },
     { id: 'facturas', t: 'Facturas', I: Receipt },
     { id: 'ajustes', t: 'Avisos y cuenta', I: Settings },
-    { id: 'ayuda', t: 'Ayuda y vídeos', I: LifeBuoy },
+    { id: 'ayuda', t: 'Centro de ayuda', I: LifeBuoy },
+    { id: 'videos-ayuda', t: 'Vídeos tutoriales', I: LifeBuoy },
+    { id: 'soporte', t: 'Escríbenos', I: LifeBuoy },
   ] },
 ];
 const VISTAS = GRUPOS.flatMap((g) => g.items);
 const DEPARTAMENTOS_IDS = ['atencion', 'citas', 'ventas', 'redes', 'google', 'contenido'];
 // Vistas que aún usan la cabecera sencilla (las nuevas traen la suya).
-const VIEJAS = ['actividad', 'agenda', 'clientes', 'publicaciones', 'resenas', 'articulos', 'mejora', 'ensenar', 'conexiones', 'plan', 'facturas', 'ajustes', 'ayuda'];
+const VIEJAS = ['actividad', 'agenda', 'clientes', 'publicaciones', 'resenas', 'articulos', 'mejora', 'ensenar', 'conexiones', 'plan', 'facturas', 'ajustes'];
 
 // Buscador global (⌘K): clientes, conversaciones, citas y lo que han hecho los agentes.
 function Buscador({ o }) {
@@ -289,14 +293,16 @@ export default function Panel() {
           {vistaReal === 'mejora' && deptoMejora && <Mejora key={deptoMejora} o={o} depto={deptoMejora} />}
           {vistaReal === 'analitica' && <Analitica key={extra.filtro || 'a'} o={o} dias={dias} setDias={setDias} inicial={extra.filtro} />}
           {vistaReal === 'informes' && <Informes o={o} />}
-          {vistaReal === 'ensenar' && <Ensenar o={o} />}
+          {vistaReal === 'ensenar' && <LoQueSaben o={o} />}
           {vistaReal === 'material' && <Material o={o} />}
           {vistaReal === 'conexiones' && <Conexiones o={o} aviso={aviso} />}
           {vistaReal === 'plan' && <Plan o={o} />}
           {vistaReal === 'facturas' && <Facturas o={o} />}
           {vistaReal === 'ajustes' && <Avisos o={o} />}
           {vistaReal === 'configuracion' && <Configuracion o={o} ir={ir} abrirPerfil={() => setPerfil(true)} />}
-          {vistaReal === 'ayuda' && <Ayuda o={o} abrirTutorial={() => setTutoAbierto(true)} />}
+          {vistaReal === 'ayuda' && <CentroAyuda o={o} ir={ir} abrirTutorial={() => setTutoAbierto(true)} abrirPerfil={() => setPerfil(true)} />}
+          {vistaReal === 'videos-ayuda' && <VideosAyuda o={o} ir={ir} />}
+          {vistaReal === 'soporte' && <Soporte o={o} ir={ir} />}
         </main>
       </div>
       {perfil && <Perfil o={o} tema={tema} ir={ir} cerrar={() => setPerfil(false)} />}
