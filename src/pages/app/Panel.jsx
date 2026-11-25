@@ -18,6 +18,7 @@ import { CabeceraDepto } from './departamentos';
 import { Tutorial, Ayuda } from './ayuda';
 import { AvisosCupo } from './ampliar';
 import { CAMPOS } from './formato';
+import { MenuNegocio, MenuAyuda, MenuUsuario, Perfil, Configuracion, useTema } from './menus';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
 import './PanelPro.css';
@@ -50,12 +51,13 @@ const GRUPOS = [
     { id: 'informes', t: 'Informes', I: Mail },
     { id: 'actividad', t: 'Actividad', I: Activity },
   ] },
-  { t: 'Configuración', items: [
+  { t: 'Configuración', oculto: true, items: [
     { id: 'ensenar', t: 'Lo que saben', I: BookOpen },
     { id: 'material', t: 'Tu material', I: FolderOpen },
     { id: 'conexiones', t: 'Conexiones', I: Plug },
   ] },
-  { t: 'Cuenta', items: [
+  { t: 'Cuenta', oculto: true, items: [
+    { id: 'configuracion', t: 'Configuración', I: Settings },
     { id: 'plan', t: 'Plan', I: CreditCard },
     { id: 'facturas', t: 'Facturas', I: Receipt },
     { id: 'ajustes', t: 'Avisos y cuenta', I: Settings },
@@ -161,6 +163,7 @@ export default function Panel() {
   const [extra, setExtra] = useState({}); const [menu, setMenu] = useState(false); const [dias, setDias] = useState(30);
   const [ahora, setAhora] = useState(() => Date.now());
   const [tutoAbierto, setTutoAbierto] = useState(() => qs.has('tutorial'));
+  const tema = useTema(); const [perfil, setPerfil] = useState(false);
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 15000); return () => clearInterval(t); }, []);
   const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
   useSeo({ title: demo ? 'Demo · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
@@ -224,12 +227,13 @@ export default function Panel() {
 
   const sinContratar = DEPARTAMENTOS_IDS.filter((d) => !tiene(d));
   return (
-    <div className={`app app--pro ${menu ? 'menu-on' : ''}`}>
+    <div className={`app app--pro ${tema.clase} ${menu ? 'menu-on' : ''}`}>
       {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
       <aside className="lado">
-        <div className="lado__top"><a href="/" className="lado__logo"><picture><source srcSet="/images/logo-blanco.png" media="(prefers-color-scheme: dark)" /><img src="/images/logo-negro.png" alt="Agutidesigns" width="118" height="32" /></picture></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
+        <div className="lado__top"><a href="/" className="lado__logo"><img src={tema.oscuro ? '/images/logo-blanco.png' : '/images/logo-negro.png'} alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
+        <MenuNegocio o={o} ir={ir} faltan={faltanDatos} />
         <nav aria-label="Secciones">
-          {GRUPOS.map((g) => {
+          {GRUPOS.filter((g) => !g.oculto).map((g) => {
             const items = g.items.filter((x) => tiene(x.depto));
             if (!items.length) return null;
             return (
@@ -247,8 +251,8 @@ export default function Panel() {
         </nav>
         <div className="lado__pie">
           <p className="lado__vivo"><i />{trabajando ? `${trabajando} agente${trabajando > 1 ? 's' : ''} trabajando ahora` : 'Agentes conectados'}</p>
-          <div className="neg"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><div><b>{negocio.nombre}</b><small className={activo ? '' : 'is-off'}>{negocio.periodo === 'anio' ? 'Plan anual' : 'Plan mensual'} · {estado.deptos.length} dpto{estado.deptos.length === 1 ? '' : 's'}</small></div></div>
-          <div className="lado__acc"><button className="enlace enlace--gris" onClick={() => ir('ajustes')}><Settings size={14} /> Mi cuenta</button>{!demo && <button className="enlace enlace--gris" onClick={() => supabase.auth.signOut()}><LogOut size={14} /> Salir</button>}</div>
+          <MenuAyuda ir={ir} tutorial={() => setTutoAbierto(true)} />
+          <MenuUsuario o={o} ir={ir} abrirPerfil={() => setPerfil(true)} />
         </div>
       </aside>
       <div className="velo" onClick={() => setMenu(false)} aria-hidden="true" />
@@ -260,7 +264,7 @@ export default function Panel() {
             {tiene('citas') && <button className="btn btn--osc btn--sm top__btn" onClick={() => ir('agenda')}><CalendarPlus size={15} /> Agenda</button>}
             <button className="btn btn--sec btn--sm top__btn" onClick={() => ir('chat')}><MessagesSquare size={15} /> Tu equipo</button>
             <button className="ico top__campana" onClick={() => ir('bandeja')} aria-label={`Te necesitan: ${pend}`}><Bell size={20} />{pend > 0 && <em>{pend > 99 ? '99+' : pend}</em>}</button>
-            <span className="top__yo"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><b>{negocio.nombre}</b></span>
+            <button type="button" className="top__yo" onClick={() => setPerfil(true)} aria-label="Mi perfil"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><b>{negocio.nombre}</b></button>
           </div>
         </header>
         <main className="cont">
@@ -291,9 +295,11 @@ export default function Panel() {
           {vistaReal === 'plan' && <Plan o={o} />}
           {vistaReal === 'facturas' && <Facturas o={o} />}
           {vistaReal === 'ajustes' && <Avisos o={o} />}
+          {vistaReal === 'configuracion' && <Configuracion o={o} ir={ir} abrirPerfil={() => setPerfil(true)} />}
           {vistaReal === 'ayuda' && <Ayuda o={o} abrirTutorial={() => setTutoAbierto(true)} />}
         </main>
       </div>
+      {perfil && <Perfil o={o} tema={tema} ir={ir} cerrar={() => setPerfil(false)} />}
       {verTuto && <Tutorial o={o} cerrar={() => { setTutoAbierto(false); ir('inicio'); }} />}
     </div>
   );
