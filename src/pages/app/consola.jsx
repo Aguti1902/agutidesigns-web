@@ -5,6 +5,7 @@ import {
   ArrowRight, Check, Copy, ExternalLink, FileText, Image as ImageIcon, Layers, Link2, Plug, Plus, RefreshCw,
   Search, Send, Smartphone, Sparkles, Star, Trash2, Users, Webhook, X,
 } from 'lucide-react';
+import { siHubspot, siSalesforce, siZoho, siOdoo } from 'simple-icons';
 import { DEPTO } from '../../data/oficinaSaas';
 import { ajustesDe } from '../../data/oficinaAjustes';
 import { api, pendiente, metrica } from './datos';
@@ -423,35 +424,43 @@ export function ChatEquipo({ o }) {
 // ---------------- Tu CRM: conectar el programa que ya usa el negocio ----------------
 // Directo = conexión propia con token. El resto entra por webhook (Zapier, Make, n8n o la API del programa) o lo conectamos nosotros.
 const CRMS = [
-  { id: 'hubspot', n: 'HubSpot', s: 'general', c: '#ff7a59', directo: true, d: 'CRM general' },
-  { id: 'pipedrive', n: 'Pipedrive', s: 'general', c: '#1a1a1a', directo: true, d: 'CRM de ventas' },
-  { id: 'salesforce', n: 'Salesforce', s: 'general', c: '#00a1e0', d: 'CRM general' },
-  { id: 'zoho', n: 'Zoho CRM', s: 'general', c: '#e42527', d: 'CRM general' },
-  { id: 'clientify', n: 'Clientify', s: 'general', c: '#1e4bd2', d: 'CRM y marketing' },
-  { id: 'holded', n: 'Holded', s: 'general', c: '#ff5a5f', d: 'Gestión y CRM' },
-  { id: 'odoo', n: 'Odoo', s: 'general', c: '#714b67', d: 'ERP y CRM' },
-  { id: 'booksy', n: 'Booksy', s: 'belleza', c: '#00a3ad', d: 'Peluquería y estética' },
-  { id: 'treatwell', n: 'Treatwell', s: 'belleza', c: '#ff5c39', d: 'Peluquería y estética' },
-  { id: 'koibox', n: 'Koibox', s: 'belleza', c: '#6c4ce0', d: 'Peluquería y estética' },
-  { id: 'flowww', n: 'Flowww', s: 'belleza', c: '#e6007e', d: 'Centros de belleza' },
-  { id: 'fresha', n: 'Fresha', s: 'belleza', c: '#101928', d: 'Peluquería y estética' },
-  { id: 'gesden', n: 'Gesden', s: 'salud', c: '#0072bc', d: 'Clínicas dentales' },
-  { id: 'clinic_cloud', n: 'Clinic Cloud', s: 'salud', c: '#00a6a6', d: 'Clínicas' },
-  { id: 'dentalink', n: 'Dentalink', s: 'salud', c: '#2d6cdf', d: 'Clínicas dentales' },
-  { id: 'pabau', n: 'Pabau', s: 'salud', c: '#4b3cc4', d: 'Clínicas y estética' },
-  { id: 'cliniko', n: 'Cliniko', s: 'salud', c: '#2f8f5b', d: 'Fisioterapia y consultas' },
-  { id: 'gesvision', n: 'Gesvision', s: 'optica', c: '#003b71', d: 'Ópticas' },
-  { id: 'trainingym', n: 'Trainingym', s: 'fitness', c: '#ff3c00', d: 'Gimnasios' },
-  { id: 'virtuagym', n: 'Virtuagym', s: 'fitness', c: '#1d9bf0', d: 'Gimnasios y entrenadores' },
-  { id: 'crosshero', n: 'CrossHero', s: 'fitness', c: '#e53935', d: 'Box y centros de fitness' },
-  { id: 'bsport', n: 'bsport', s: 'fitness', c: '#111827', d: 'Yoga y pilates' },
-  { id: 'eversports', n: 'Eversports', s: 'fitness', c: '#00b67a', d: 'Estudios y clases' },
-  { id: 'inmovilla', n: 'Inmovilla', s: 'inmo', c: '#e30613', d: 'Inmobiliarias' },
-  { id: 'witei', n: 'Witei', s: 'inmo', c: '#1f6feb', d: 'Inmobiliarias' },
-  { id: 'covermanager', n: 'CoverManager', s: 'hosteleria', c: '#ef4444', d: 'Reservas de restaurante' },
-  { id: 'thefork', n: 'TheFork Manager', s: 'hosteleria', c: '#00665c', d: 'Reservas de restaurante' },
+  { id: 'hubspot', n: 'HubSpot', web: 'hubspot.com', s: 'general', c: '#ff7a59', directo: true, d: 'CRM general' },
+  { id: 'pipedrive', n: 'Pipedrive', web: 'pipedrive.com', s: 'general', c: '#1a1a1a', directo: true, d: 'CRM de ventas' },
+  { id: 'salesforce', n: 'Salesforce', web: 'salesforce.com', s: 'general', c: '#00a1e0', d: 'CRM general' },
+  { id: 'zoho', n: 'Zoho CRM', web: 'zoho.com', s: 'general', c: '#e42527', d: 'CRM general' },
+  { id: 'clientify', n: 'Clientify', web: 'clientify.com', s: 'general', c: '#1e4bd2', d: 'CRM y marketing' },
+  { id: 'holded', n: 'Holded', web: 'holded.com', s: 'general', c: '#ff5a5f', d: 'Gestión y CRM' },
+  { id: 'odoo', n: 'Odoo', web: 'odoo.com', s: 'general', c: '#714b67', d: 'ERP y CRM' },
+  { id: 'booksy', n: 'Booksy', web: 'booksy.com', s: 'belleza', c: '#00a3ad', d: 'Peluquería y estética' },
+  { id: 'treatwell', n: 'Treatwell', web: 'treatwell.es', s: 'belleza', c: '#ff5c39', d: 'Peluquería y estética' },
+  { id: 'koibox', n: 'Koibox', web: 'koibox.es', s: 'belleza', c: '#6c4ce0', d: 'Peluquería y estética' },
+  { id: 'flowww', n: 'Flowww', web: 'flowww.es', s: 'belleza', c: '#e6007e', d: 'Centros de belleza' },
+  { id: 'fresha', n: 'Fresha', web: 'fresha.com', s: 'belleza', c: '#101928', d: 'Peluquería y estética' },
+  { id: 'gesden', n: 'Gesden', web: 'gesden.es', s: 'salud', c: '#0072bc', d: 'Clínicas dentales' },
+  { id: 'clinic_cloud', n: 'Clinic Cloud', web: 'clinic-cloud.com', s: 'salud', c: '#00a6a6', d: 'Clínicas' },
+  { id: 'dentalink', n: 'Dentalink', web: 'softwaredentalink.com', s: 'salud', c: '#2d6cdf', d: 'Clínicas dentales' },
+  { id: 'pabau', n: 'Pabau', web: 'pabau.com', s: 'salud', c: '#4b3cc4', d: 'Clínicas y estética' },
+  { id: 'cliniko', n: 'Cliniko', web: 'cliniko.com', s: 'salud', c: '#2f8f5b', d: 'Fisioterapia y consultas' },
+  { id: 'gesvision', n: 'Gesvision', web: 'gesvision.com', s: 'optica', c: '#003b71', d: 'Ópticas' },
+  { id: 'trainingym', n: 'Trainingym', web: 'trainingym.com', s: 'fitness', c: '#ff3c00', d: 'Gimnasios' },
+  { id: 'virtuagym', n: 'Virtuagym', web: 'virtuagym.com', s: 'fitness', c: '#1d9bf0', d: 'Gimnasios y entrenadores' },
+  { id: 'crosshero', n: 'CrossHero', web: 'crosshero.com', s: 'fitness', c: '#e53935', d: 'Box y centros de fitness' },
+  { id: 'bsport', n: 'bsport', web: 'bsport.io', s: 'fitness', c: '#111827', d: 'Yoga y pilates' },
+  { id: 'eversports', n: 'Eversports', web: 'eversports.com', s: 'fitness', c: '#00b67a', d: 'Estudios y clases' },
+  { id: 'inmovilla', n: 'Inmovilla', web: 'inmovilla.com', s: 'inmo', c: '#e30613', d: 'Inmobiliarias' },
+  { id: 'witei', n: 'Witei', web: 'witei.com', s: 'inmo', c: '#1f6feb', d: 'Inmobiliarias' },
+  { id: 'covermanager', n: 'CoverManager', web: 'covermanager.com', s: 'hosteleria', c: '#ef4444', d: 'Reservas de restaurante' },
+  { id: 'thefork', n: 'TheFork Manager', web: 'theforkmanager.com', s: 'hosteleria', c: '#00665c', d: 'Reservas de restaurante' },
 ];
 const SECTORES = [['todos', 'Todos'], ['general', 'Generales'], ['belleza', 'Belleza'], ['salud', 'Clínicas'], ['optica', 'Ópticas'], ['fitness', 'Gimnasios'], ['inmo', 'Inmobiliarias'], ['hosteleria', 'Restaurantes']];
+const SVG_CRM = { hubspot: siHubspot, salesforce: siSalesforce, zoho: siZoho, odoo: siOdoo };
+// Logo de cada programa: icono de marca (simple-icons) o el icono oficial de su web; si no carga, sus iniciales.
+function LogoCrm({ c }) {
+  const [mal, setMal] = useState(false); const ic = SVG_CRM[c.id];
+  if (ic) return <span className="cx-crmc__l is-logo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d={ic.path} fill={`#${ic.hex}`} /></svg></span>;
+  if (c.web && !mal) return <span className="cx-crmc__l is-logo"><img src={`https://www.google.com/s2/favicons?domain=${c.web}&sz=64`} alt="" width="22" height="22" loading="lazy" onError={() => setMal(true)} onLoad={(e) => { if (e.currentTarget.naturalWidth < 32) setMal(true); }} /></span>;
+  return <span className="cx-crmc__l" style={{ '--c': c.c }}>{iniciales(c.n)}</span>;
+}
 const iniciales = (n) => n.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();
 
 export function Crm({ o }) {
@@ -498,7 +507,7 @@ export function Crm({ o }) {
           <div className="cx__b"><div className="cx-crm">
             {lista.map((c) => (
               <button key={c.id} className={`cx-crmc ${sel === c.id ? 'is-on' : ''}`} onClick={() => { setSel(c.id); setSt(''); }}>
-                <span className="cx-crmc__l" style={{ '--c': c.c }}>{iniciales(c.n)}</span><div><b>{c.n}</b><small>{c.d}</small></div>
+                <LogoCrm c={c} /><div><b>{c.n}</b><small>{c.d}</small></div>
                 {c.directo ? <span className="cx-st is-azul">Directa</span> : <span className="cx-st">Webhook</span>}
               </button>
             ))}
@@ -506,7 +515,7 @@ export function Crm({ o }) {
           </div></div>
         </section>
         <section className="cx">
-          <header className="cx__h"><Webhook /><h2>{p ? p.n : sel === 'otro' ? 'Otro programa' : 'Cómo conectarlo'}</h2></header>
+          <header className="cx__h">{p ? <LogoCrm c={p} /> : <Webhook />}<h2>{p ? p.n : sel === 'otro' ? 'Otro programa' : 'Cómo conectarlo'}</h2></header>
           <div className="cx__b cx-metodo">
             {!sel && <p className="muted" style={{ margin: 0, fontSize: 13 }}>Elige tu programa a la izquierda. HubSpot y Pipedrive se conectan con un token; el resto, con un webhook de Zapier, Make, n8n o de su propia API. Si no sabes hacerlo, te lo conectamos nosotros.</p>}
             {p?.directo && <form className="cx-metodo" onSubmit={conectar}>
