@@ -63,7 +63,7 @@ export const DEPARTAMENTOS = [
   },
   {
     id: 'google', nombre: 'Google y reseñas', corto: 'Google', color: '#e0a100',
-    que: 'Mantiene viva tu ficha de Google para que salgas en el mapa de Cornellà, y responde cada reseña con educación y con tu tono.',
+    que: 'Mantiene viva tu ficha de Google para que salgas en el mapa de tu zona, y responde cada reseña con educación y con tu tono.',
     hace: ['Responde todas tus reseñas', 'Publica novedades en tu ficha', 'Revisa que horarios y datos estén bien'],
     cupo: { n: 60, unidad: 'reseñas y publicaciones' }, tokensMes: 1_000_000,
     tareas: ['Respondiendo una reseña de 5 estrellas', 'Publicando la oferta en tu ficha', 'Revisando tus horarios en Google'],
