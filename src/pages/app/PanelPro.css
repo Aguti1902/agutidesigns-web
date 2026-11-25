@@ -7,8 +7,9 @@
   --disp: Outfit, Inter, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-  .app--pro { --fondo: #0a0c14; --carta: #12151f; --linea: #222634; --linea2: #2e3344; --tinta: #eef0f7; --tinta2: #c2c6d6; --muted: #8a8fa6; --suave: #1a1e2b; --acento-s: #17203f; }
+  .app--pro:not(.tema-claro) { --fondo: #0a0c14; --carta: #12151f; --linea: #222634; --linea2: #2e3344; --tinta: #eef0f7; --tinta2: #c2c6d6; --muted: #8a8fa6; --suave: #1a1e2b; --acento-s: #17203f; }
 }
+.app--pro.tema-oscuro { --fondo: #0a0c14; --carta: #12151f; --linea: #222634; --linea2: #2e3344; --tinta: #eef0f7; --tinta2: #c2c6d6; --muted: #8a8fa6; --suave: #1a1e2b; --acento-s: #17203f; }
 .app--pro { --lado: 268px; }
 .app--pro h1, .app--pro h2, .app--pro h3, .app--pro .pc-kpi b, .app--pro .kpi > b { font-family: var(--disp); letter-spacing: -.015em; }
 
@@ -54,7 +55,10 @@
 .top__res .muted { margin: 0; padding: 12px; }
 .top__a { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .btn--osc { background: var(--navy); color: #fff; } .btn--osc:hover { background: #1a2142; }
-@media (prefers-color-scheme: dark) { .btn--osc { background: var(--lima); color: var(--navy); } }
+@media (prefers-color-scheme: dark) {
+  .app:not(.tema-claro) .btn--osc { background: var(--lima); color: var(--navy); }
+}
+.app.tema-oscuro .btn--osc { background: var(--lima); color: var(--navy); }
 .top__btn { height: 40px; border-radius: 11px; }
 .top__campana { position: relative; width: 42px; height: 42px; color: var(--tinta2); }
 .top__campana em { position: absolute; top: 2px; right: 0; font-style: normal; font-size: .66rem; font-weight: 800; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; display: grid; place-items: center; background: var(--lima); color: var(--navy); border: 2px solid var(--fondo); }
@@ -189,7 +193,12 @@
 .cv-b--cliente { align-self: flex-start; background: var(--carta); border-bottom-left-radius: 5px; }
 .cv-b--agente { align-self: flex-end; background: #dfe8ff; border-bottom-right-radius: 5px; }
 .cv-b--humano { align-self: flex-end; background: #e7f8ec; border-bottom-right-radius: 5px; } .cv-b--humano .cv-b__q { color: #14995a; }
-@media (prefers-color-scheme: dark) { .cv-b--agente { background: #1b2a57; } .cv-b--humano { background: #12301f; } }
+@media (prefers-color-scheme: dark) {
+  .app:not(.tema-claro) .cv-b--agente { background: #1b2a57; }
+  .app:not(.tema-claro) .cv-b--humano { background: #12301f; }
+}
+.app.tema-oscuro .cv-b--agente { background: #1b2a57; }
+.app.tema-oscuro .cv-b--humano { background: #12301f; }
 .cv-rap { display: flex; gap: 6px; padding: 8px 14px 0; overflow-x: auto; scrollbar-width: none; background: var(--carta); border-top: 1px solid var(--linea); }
 .cv-rap button { flex: none; height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--linea); background: var(--suave); color: var(--tinta2); font: inherit; font-size: .8rem; cursor: pointer; }
 .cv-rap button:hover { border-color: var(--acento); color: var(--acento); }
@@ -397,7 +406,12 @@
 .cal-pend > b { width: 100%; color: #8a4b00; font-size: .92rem; }
 .cal-pend button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--carta); border: 1px solid #ffe0b2; }
 .cal-pend button:hover { border-color: #d97a06; } .cal-pend button > span:last-child { display: grid; } .cal-pend small { color: var(--muted); font-size: .78rem; }
-@media (prefers-color-scheme: dark) { .cal-pend { background: #2b200f; border-color: #4a3412; } .cal__c.is-pendiente { background: #2b200f; } }
+@media (prefers-color-scheme: dark) {
+  .app:not(.tema-claro) .cal-pend { background: #2b200f; border-color: #4a3412; }
+  .app:not(.tema-claro) .cal__c.is-pendiente { background: #2b200f; }
+}
+.app.tema-oscuro .cal-pend { background: #2b200f; border-color: #4a3412; }
+.app.tema-oscuro .cal__c.is-pendiente { background: #2b200f; }
 
 /* editor de la oficina */
 .ed-w { display: grid; gap: 18px; } .ed-w.is-ed { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
