@@ -4,7 +4,7 @@
 import crypto from 'node:crypto';
 import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
-  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo,
+  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo, sbUrl,
 } from '../_oficina.js';
 import { responderCliente, generar } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
@@ -323,15 +323,21 @@ async function desconectar(req, res, neg) {
   return json(res, 200, { ok: true });
 }
 
+const TEMAS_SOPORTE = ['Empezar', 'Mis agentes', 'Conexiones', 'Redes y contenido', 'Plan y facturas', 'Otra cosa'];
 async function ayuda(req, res, neg) {
-  const { herramienta, mensaje } = cuerpo(req);
+  const { herramienta, mensaje, tema: t, op } = cuerpo(req);
+  if (op === 'lista') return json(res, 200, { mensajes: await sb(`of_soporte?negocio_id=eq.${neg.id}&select=id,creado,tema,mensaje,estado,respuesta&order=creado.desc&limit=20`) });
+  const tema = TEMAS_SOPORTE.includes(t) ? t : herramienta ? 'Conexiones' : null;
+  const texto = `${herramienta ? `Conectar: ${herramienta}. ` : ''}${String(mensaje || '').slice(0, 2000)}`.trim();
+  if (!texto) return json(res, 400, { error: 'Escribe qué necesitas.' });
+  const [fila] = await sb('of_soporte', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id: neg.id, tema, mensaje: texto }] }).catch(() => [null]);
   await actividad(neg.id, 'atencion', `Has pedido ayuda${herramienta ? ` para conectar ${herramienta}` : ''}. Te escribimos en menos de 24 h laborables.`, 'sistema');
   if (process.env.RESEND_API_KEY) {
     const { Resend } = await import('resend');
     await new Resend(process.env.RESEND_API_KEY).emails.send({ from: 'Oficina de IA <info@agutidesigns.io>', to: 'info@agutidesigns.io', reply_to: neg.owner_email,
-      subject: `Ayuda: ${neg.nombre}${herramienta ? ` · conectar ${herramienta}` : ''}`, text: `${neg.nombre} (${neg.owner_email})\n${herramienta ? `Conectar: ${herramienta}\n` : ''}${String(mensaje || '').slice(0, 2000)}` }).catch(() => {});
+      subject: `Ayuda: ${neg.nombre}${tema ? ` · ${tema}` : ''}${herramienta ? ` · conectar ${herramienta}` : ''}`, text: `${neg.nombre} (${neg.owner_email})\n${herramienta ? `Conectar: ${herramienta}\n` : ''}${String(mensaje || '').slice(0, 2000)}` }).catch(() => {});
   }
-  return json(res, 200, { ok: true });
+  return json(res, 200, { ok: true, mensaje: fila });
 }
 
 async function cuentaWhatsapp(tok) {
@@ -743,6 +749,29 @@ async function cron(req, res) {
 
 // ---------------- enrutador ----------------
 
+// ---------------- Lo que saben: leer documentos para que los agentes los usen ----------------
+async function saber(req, res, neg) {
+  const { op, id } = cuerpo(req);
+  if (op !== 'documento' || !/^[0-9a-f-]{36}$/i.test(String(id || ''))) return json(res, 400, { error: 'Petición no válida' });
+  const fila = await uno(`of_conocimiento?id=eq.${id}&negocio_id=eq.${neg.id}&tipo=eq.documento&select=id,archivo,titulo`);
+  if (!fila?.archivo || !fila.archivo.startsWith(`${neg.id}/`)) return json(res, 404, { error: 'No encuentro el documento' });
+  const base = sbUrl(); const clave = process.env.OFICINA_SUPABASE_SERVICE_ROLE_KEY;
+  const r = await fetch(`${base}/storage/v1/object/oficina-material/${fila.archivo.split('/').map(encodeURIComponent).join('/')}`, { headers: { Authorization: `Bearer ${clave}`, apikey: clave } });
+  if (!r.ok) return json(res, 502, { error: 'No se ha podido abrir el archivo' });
+  const buf = new Uint8Array(await r.arrayBuffer()); const ext = fila.archivo.split('.').pop().toLowerCase();
+  let texto = '';
+  try {
+    if (ext === 'pdf') { const { extractText, getDocumentProxy } = await import('unpdf'); const pdf = await getDocumentProxy(buf); texto = (await extractText(pdf, { mergePages: true })).text; }
+    else if (ext === 'docx') { const mammoth = (await import('mammoth')).default; texto = (await mammoth.extractRawText({ buffer: Buffer.from(buf) })).value; }
+    else if (['txt', 'md', 'csv', 'json', 'html', 'htm'].includes(ext)) { texto = new TextDecoder('utf-8').decode(buf); if (ext.startsWith('htm')) texto = texto.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' '); }
+    else return json(res, 400, { error: 'Ese tipo de archivo no se puede leer. Sube PDF, Word (.docx), TXT o CSV.' });
+  } catch (e) { return json(res, 422, { error: 'No hemos podido leer el texto del archivo. Si es un PDF escaneado (una foto), súbelo en Word o copia el texto.' }); }
+  texto = texto.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, 60000);
+  if (!texto) return json(res, 422, { error: 'El archivo no tiene texto que leer. Si es un PDF escaneado, súbelo en Word o copia el texto.' });
+  await sb(`of_conocimiento?id=eq.${fila.id}`, { metodo: 'PATCH', cuerpo: { texto, datos: { caracteres: texto.length, leido: new Date().toISOString() } } });
+  return json(res, 200, { ok: true, caracteres: texto.length, recortado: texto.length >= 60000 });
+}
+
 // ---------------- CRM del negocio (no lo sustituimos: lo conectamos) ----------------
 async function crm(req, res, neg) {
   const { op, proveedor, token, url, programa } = cuerpo(req);
@@ -783,7 +812,7 @@ async function crmEntrada(req, res) {
 }
 
 const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada };
-const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm };
+const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm, saber };
 
 export default async function handler(req, res) {
   const accion = String(req.query.accion || '');
