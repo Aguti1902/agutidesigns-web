@@ -2,7 +2,7 @@
 // ayuda y perfil abajo, y la página de Configuración con buscador y categorías.
 import { useEffect, useRef, useState } from 'react';
 import {
-  BellRing, BookOpen, Building2, ChevronDown, ChevronRight, CreditCard, Database, FolderOpen, GraduationCap, LifeBuoy, LogOut, Mail, MessageCircle,
+  BellRing, BookOpen, LayoutGrid, Building2, ChevronDown, ChevronRight, CreditCard, Database, FolderOpen, GraduationCap, LifeBuoy, LogOut, Mail, MessageCircle,
   Monitor, Moon, PlayCircle, Plug, Receipt, Search, Settings, Sun, User, X,
 } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
@@ -19,6 +19,18 @@ export function useTema() {
   const setTema = (t) => { setTemaSt(t); try { localStorage.setItem(CLAVE_TEMA, t); } catch { /* sin almacenamiento */ } };
   const oscuro = tema === 'oscuro' || (tema === 'sistema' && sisOscuro);
   return { tema, setTema, oscuro, clase: tema === 'oscuro' ? 'tema-oscuro' : tema === 'claro' ? 'tema-claro' : '' };
+}
+
+// ---------- vista del panel: sencilla (para quien no entiende de IA) o completa ----------
+const CLAVE_VISTA = 'oficina-vista';
+export function useVistaPanel() {
+  const [modo, setModoSt] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get('vista');
+    if (q === 'sencilla' || q === 'completa') return q;
+    try { return localStorage.getItem(CLAVE_VISTA) || ''; } catch { return ''; }
+  });
+  const setModo = (m) => { setModoSt(m); try { localStorage.setItem(CLAVE_VISTA, m); } catch { /* sin almacenamiento */ } };
+  return { modo, setModo, sencilla: modo === 'sencilla' };
 }
 
 // ---------- menú flotante ----------
@@ -95,7 +107,7 @@ export function MenuUsuario({ o, abrirPerfil, ir }) {
 }
 
 // Perfil de usuario: cuenta, apariencia, notificaciones y acceso.
-export function Perfil({ o, tema, cerrar, ir }) {
+export function Perfil({ o, tema, cerrar, ir, vista }) {
   const email = o.sesion?.user?.email || 'demo@agutidesigns.io';
   useEffect(() => { const k = (e) => { if (e.key === 'Escape') cerrar(); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [cerrar]);
   return (
@@ -116,6 +128,15 @@ export function Perfil({ o, tema, cerrar, ir }) {
             ))}
           </div>
         </section>
+        {vista && <section className="pf__s">
+          <h3><LayoutGrid size={14} /> Vista del panel</h3>
+          <p>«Sencilla» enseña tu oficina y lo que hace cada agente, sin números ni gráficas. «Completa» lo enseña todo.</p>
+          <div className="pf__vistas" role="radiogroup" aria-label="Vista del panel">
+            {[['sencilla', 'Sencilla', 'Tu oficina en 3D y botones grandes'], ['completa', 'Completa', 'Todas las secciones, números y gráficas']].map(([k, t, s]) => (
+              <button key={k} type="button" role="radio" aria-checked={(vista.modo || 'completa') === k} className={(vista.modo || 'completa') === k ? 'is-on' : ''} onClick={() => { vista.setModo(k); cerrar(); ir('inicio'); }}><b>{t}</b><small>{s}</small></button>
+            ))}
+          </div>
+        </section>}
         <section className="pf__s">
           <h3><Mail size={14} /> Notificaciones</h3>
           <p>Avisos cuando te necesiten tus agentes y el resumen de la semana por correo.</p>

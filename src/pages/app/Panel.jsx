@@ -20,7 +20,8 @@ import { LoQueSaben } from './saben';
 import { CentroAyuda, VideosAyuda, Soporte } from './soporte';
 import { AvisosCupo } from './ampliar';
 import { CAMPOS } from './formato';
-import { MenuNegocio, MenuAyuda, MenuUsuario, Perfil, Configuracion, useTema } from './menus';
+import { MenuNegocio, MenuAyuda, MenuUsuario, Perfil, Configuracion, useTema, useVistaPanel } from './menus';
+import { Sencilla, ElegirVista } from './sencilla';
 import '../../components/oficina/Oficina3D.css';
 import './Panel.css';
 import './PanelPro.css';
@@ -167,7 +168,7 @@ export default function Panel() {
   const [extra, setExtra] = useState({}); const [menu, setMenu] = useState(false); const [dias, setDias] = useState(30);
   const [ahora, setAhora] = useState(() => Date.now());
   const [tutoAbierto, setTutoAbierto] = useState(() => qs.has('tutorial'));
-  const tema = useTema(); const [perfil, setPerfil] = useState(false);
+  const tema = useTema(); const vistaPanel = useVistaPanel(); const [perfil, setPerfil] = useState(false);
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 15000); return () => clearInterval(t); }, []);
   const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
   useSeo({ title: demo ? 'Demo · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
@@ -230,6 +231,19 @@ export default function Panel() {
   const trabajando = Object.values(estado.agentes || {}).filter((a) => a.estado === 'trabajando' && o.ahora - new Date(a.actualizado).getTime() < 180e3).length;
 
   const sinContratar = DEPARTAMENTOS_IDS.filter((d) => !tiene(d));
+  const perfilModal = perfil && <Perfil o={o} tema={tema} ir={ir} vista={vistaPanel} cerrar={() => setPerfil(false)} />;
+  const tutoModal = verTuto && <Tutorial o={o} cerrar={() => { setTutoAbierto(false); ir('inicio'); }} />;
+  // Vista sencilla: la oficina 3D como protagonista, sin menú lateral ni números.
+  if (vistaPanel.sencilla && vistaReal === 'inicio') {
+    return (
+      <div className={`app app--pro app--facil ${tema.clase}`}>
+        {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
+        {banners}
+        <Sencilla o={o} vista={vistaPanel} abrirPerfil={() => setPerfil(true)} />
+        {perfilModal}{tutoModal}
+      </div>
+    );
+  }
   return (
     <div className={`app app--pro ${tema.clase} ${menu ? 'menu-on' : ''}`}>
       {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
@@ -267,11 +281,13 @@ export default function Panel() {
           <div className="top__a">
             {tiene('citas') && <button className="btn btn--osc btn--sm top__btn" onClick={() => ir('agenda')}><CalendarPlus size={15} /> Agenda</button>}
             <button className="btn btn--sec btn--sm top__btn" onClick={() => ir('chat')}><MessagesSquare size={15} /> Tu equipo</button>
+            <button className="btn btn--sec btn--sm top__btn" onClick={() => { vistaPanel.setModo('sencilla'); ir('inicio'); }} title="Tu oficina en 3D, sin números ni gráficas"><Box size={15} /> Vista sencilla</button>
             <button className="ico top__campana" onClick={() => ir('bandeja')} aria-label={`Te necesitan: ${pend}`}><Bell size={20} />{pend > 0 && <em>{pend > 99 ? '99+' : pend}</em>}</button>
             <button type="button" className="top__yo" onClick={() => setPerfil(true)} aria-label="Mi perfil"><span className="neg__av">{negocio.nombre.slice(0, 1).toUpperCase()}</span><b>{negocio.nombre}</b></button>
           </div>
         </header>
         <main className="cont">
+          {vistaPanel.sencilla && <button type="button" className="sn-volver" onClick={() => ir('inicio')}>← Volver a mi oficina</button>}
           {vistaReal !== 'inicio' && vistaReal !== 'plan' && <div className="banners-top">{banners}<AvisosCupo o={o} /></div>}
           {VIEJAS.includes(vistaReal) && <div className="pc-cab pc-cab--simple"><div><p className="pc-cab__k">{GRUPOS.find((g) => g.items.some((x) => x.id === vista))?.t || 'Oficina de IA'}</p><h1>{titulo}</h1>{SUB[vistaReal] && <p className="pc-cab__s">{SUB[vistaReal]}</p>}</div></div>}
           {typeof deptoVista === 'string' && VIEJAS.includes(vistaReal) && <CabeceraDepto key={deptoVista} o={o} depto={deptoVista} />}
@@ -305,8 +321,8 @@ export default function Panel() {
           {vistaReal === 'soporte' && <Soporte o={o} ir={ir} />}
         </main>
       </div>
-      {perfil && <Perfil o={o} tema={tema} ir={ir} cerrar={() => setPerfil(false)} />}
-      {verTuto && <Tutorial o={o} cerrar={() => { setTutoAbierto(false); ir('inicio'); }} />}
+      {perfilModal}{tutoModal}
+      {!vistaPanel.modo && !verTuto && vistaReal === 'inicio' && <ElegirVista vista={vistaPanel} />}
     </div>
   );
 }

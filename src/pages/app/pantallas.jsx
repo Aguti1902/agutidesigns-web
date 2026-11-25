@@ -54,7 +54,7 @@ export function Kpi({ t, v, sub, icono: I, oscuro, onClick, serie, color }) {
   );
 }
 
-async function decidir(o, e, decision, texto) {
+export async function decidir(o, e, decision, texto) {
   if (!o.demo) await api('tarea', { id: e.id, decision, texto });
   o.setEstado((s) => ({ ...s, eventos: s.eventos.map((x) => (x.id === e.id ? { ...x, resuelto: true, respuesta: decision === 'aprobar' ? 'Aprobado' : decision === 'descartar' ? 'Descartado' : 'Hecho' } : x)) }));
 }
