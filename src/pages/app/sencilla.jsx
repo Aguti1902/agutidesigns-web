@@ -1,0 +1,184 @@
+// Vista sencilla del panel: para quien no entiende de IA. La oficina 3D es lo principal, cada agente tiene nombre y se
+// dice en una frase qué está haciendo, lo que te necesita se resuelve con «Sí» o «No», y hay tres botones grandes:
+// llamar, escribir y ver la agenda. Sin números ni gráficas. Todo lo demás está en la vista completa.
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarCheck, Check, ChevronRight, LayoutGrid, MessageCircle, Phone, Sparkles, Star, X } from 'lucide-react';
+import { DEPTO } from '../../data/oficinaSaas';
+import { pendiente, MINUTOS_TAREA } from './datos';
+import { estadoDe, duracion, hora, SECCION_DE, tipoDe } from './formato';
+import { Avatar, Puntos } from './ui';
+import { OficinaViva, decidir } from './pantallas';
+import { HablaConTuOficina, Llamada } from './llamada';
+import { NOMBRES_AG, AGENTE_DE } from './oficinaOpciones';
+
+const saludo = () => { const h = new Date().getHours(); return h < 6 ? 'Buenas noches' : h < 14 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches'; };
+const inicioHoy = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const cosas = (n) => `${n} ${n === 1 ? 'cosa' : 'cosas'}`;
+
+// «Ha contestado a Laura…» → «Vera ha contestado a Laura…»
+function enFrase(nombre, texto) {
+  const t = String(texto || '').trim();
+  if (/^Ha /.test(t)) return `${nombre} ${t.replace(/^Ha /, 'ha ')}`;
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+function useNombres(o) {
+  const propios = o.negocio.oficina?.nombres || {};
+  return (depto) => { const k = AGENTE_DE[depto]; return (k && (propios[k] || NOMBRES_AG[k])) || DEPTO[depto]?.corto || 'Tu equipo'; };
+}
+
+// ---------- una cosa que te necesita, en lenguaje llano ----------
+function Pendiente({ e, o, nombre }) {
+  const tipo = tipoDe(e); const d = e.detalle || {}; const [st, setSt] = useState('');
+  const quien = nombre(e.depto);
+  async function hacer(decision) { setSt('…'); try { await decidir(o, e, decision, d.texto); } catch (err) { setSt(err.message || 'No se ha podido. Inténtalo otra vez.'); } }
+  const cliente = (e.texto.match(/^([A-ZÁÉÍÓÚÑ][\wáéíóúñ.]+)/) || [])[1];
+  const P = {
+    post: { q: `${quien} ha preparado una publicación para tus redes. ¿La publicamos?`, ver: d.texto, si: 'Sí, publícala', no: 'No' },
+    resena: { q: `${quien} ha escrito la respuesta a una reseña de ${d.estrellas || 3} estrellas${cliente ? ` de ${cliente}` : ''}. ¿La publicamos?`, cita: d.original, ver: d.texto, si: 'Sí, publícala', no: 'La contesto yo' },
+    articulo: { q: `${quien} ha escrito un artículo para tu web${d.titulo ? `: «${d.titulo}»` : ''}. ¿Lo publicamos?`, ver: d.resumen, si: 'Sí, publícalo', no: 'No' },
+    seguimiento: { q: `${quien} ha escrito un mensaje para un cliente que pidió presupuesto y no ha vuelto a escribir. ¿Se lo enviamos?`, ver: d.texto, si: 'Sí, envíalo', no: 'No' },
+    video: { q: `${quien} tiene listo el guion de un vídeo${d.titulo ? `: «${d.titulo}»` : ''}. Solo falta que elijas la voz.`, ir: ['Ver el guion', () => o.ir('videos', d.video)] },
+    cita: { q: e.texto, ir: ['Ver mi agenda', () => o.ir('agenda')], hecho: true },
+    conversacion: { q: `Un cliente quiere hablar contigo. ${e.texto.replace(/ Último mensaje:.*$/, '')}`, ir: ['Contestar', () => o.ir('conversaciones', d.conversacion)], hecho: true },
+    aviso: { q: e.texto, hecho: true },
+  }[tipo] || { q: e.texto, hecho: true };
+  return (
+    <article className="sn-pend" style={{ '--c': DEPTO[e.depto]?.color }}>
+      <header><Avatar depto={e.depto} size={40} /><p>{P.q}</p></header>
+      {P.cita && <blockquote>«{P.cita}»</blockquote>}
+      {P.ver && <div className="sn-pend__ver">{P.ver}</div>}
+      <footer>
+        {P.si && <button className="sn-btn sn-btn--si" onClick={() => hacer('aprobar')}><Check size={20} /> {P.si}</button>}
+        {P.no && <button className="sn-btn sn-btn--no" onClick={() => hacer('descartar')}>{P.no}</button>}
+        {P.ir && <button className="sn-btn sn-btn--si" onClick={P.ir[1]}>{P.ir[0]} <ChevronRight size={18} /></button>}
+        {P.hecho && <button className="sn-btn sn-btn--no" onClick={() => hacer('hecho')}><Check size={18} /> Ya está</button>}
+        {st && <small>{st}</small>}
+      </footer>
+    </article>
+  );
+}
+
+// ---------- ficha de un agente ----------
+function FichaAgente({ o, depto, nombre, cerrar }) {
+  useEffect(() => { const k = (e) => { if (e.key === 'Escape') cerrar(); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [cerrar]);
+  const info = DEPTO[depto]; const dep = o.deptos.find((x) => x.depto === depto);
+  const st = estadoDe({ depto, agente: o.agentes[depto], ajustes: dep?.ajustes, conexiones: o.conexiones, eventos: o.eventos, ahora: o.ahora });
+  const hoy = o.eventos.filter((e) => e.depto === depto && e.tipo === 'hecho' && new Date(e.creado).getTime() >= inicioHoy());
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-label={nombre} onClick={(e) => { if (e.target === e.currentTarget) cerrar(); }}>
+      <div className="modal__c sn-ficha" style={{ '--c': info.color }}>
+        <header><Avatar depto={depto} size={64} vivo={st.clave === 'trabajando'} /><div><h2>{nombre}</h2><p>{info.nombre}</p></div><button className="ico" onClick={cerrar} aria-label="Cerrar"><X size={20} /></button></header>
+        <p className="sn-ficha__que">{info.que}</p>
+        <div className={`sn-ficha__ahora is-${st.clave}`}><b>{st.clave === 'trabajando' ? 'Ahora mismo' : 'Ahora'}</b><span>{st.clave === 'trabajando' ? <>{st.tarea}<Puntos /></> : st.clave === 'listo' ? 'Está libre, esperando trabajo nuevo.' : st.tarea}</span></div>
+        <h3>Lo que ha hecho hoy</h3>
+        {hoy.length ? <ul className="sn-lista">{hoy.slice(0, 12).map((e) => <li key={e.id}><time>{hora(e.creado)}</time><span>{e.texto}</span></li>)}</ul>
+          : <p className="sn-muted">Hoy todavía no ha tenido trabajo. En cuanto entre algo, lo verás aquí.</p>}
+        <button className="sn-btn sn-btn--no sn-btn--ancho" onClick={() => { cerrar(); o.ir(SECCION_DE[depto] || 'equipo'); }}>Ver todo su trabajo <ChevronRight size={18} /></button>
+      </div>
+    </div>
+  );
+}
+
+export function Sencilla({ o, vista, abrirPerfil }) {
+  const nombre = useNombres(o);
+  const [llamada, setLlamada] = useState(false); const [chat, setChat] = useState(false); const [agente, setAgente] = useState(null); const [todas, setTodas] = useState(false);
+  const desde = inicioHoy();
+  const hechosHoy = useMemo(() => o.eventos.filter((e) => e.tipo === 'hecho' && new Date(e.creado).getTime() >= desde), [o.eventos, desde]);
+  const minutos = hechosHoy.reduce((s, e) => s + (MINUTOS_TAREA[e.depto] || 0), 0);
+  const pend = o.eventos.filter(pendiente);
+  const estados = o.deptos.map(({ depto, ajustes }) => ({ depto, st: estadoDe({ depto, agente: o.agentes[depto], ajustes, conexiones: o.conexiones, eventos: o.eventos, ahora: o.ahora }) }));
+  const trabajando = estados.filter((x) => x.st.clave === 'trabajando');
+  const tieneCitas = o.deptos.some((d) => d.depto === 'citas');
+  const citasPend = o.citas.filter((c) => c.estado === 'pendiente').length;
+
+  return (
+    <div className="sn">
+      <header className="sn-top">
+        <a href="/" className="sn-top__logo"><img src="/images/logo-blanco.png" alt="Agutidesigns" width="118" height="32" /></a>
+        <span className="sn-top__neg">{o.negocio.nombre}</span>
+        <div className="sn-top__a">
+          <button type="button" className="sn-top__vista" onClick={() => vista.setModo('completa')}><LayoutGrid size={16} /> Vista completa</button>
+          <button type="button" className="sn-top__yo" onClick={abrirPerfil} aria-label="Mi perfil">{o.negocio.nombre.slice(0, 1).toUpperCase()}</button>
+        </div>
+      </header>
+
+      <section className="sn-hero">
+        <OficinaViva o={o} alto="min(64vh, 660px)" />
+        <div className="sn-hero__txt">
+          <span className="sn-vivo"><i />{trabajando.length ? `${trabajando.length} ${trabajando.length === 1 ? 'agente trabajando' : 'agentes trabajando'} ahora` : 'Tu equipo está conectado'}</span>
+          <h1>{saludo()}, {o.negocio.nombre}</h1>
+          <p>{hechosHoy.length ? <>Hoy tu equipo ha hecho <b>{cosas(hechosHoy.length)}</b> por ti y te ha ahorrado <b>{duracion(minutos)}</b> de trabajo.</> : 'Hoy todavía no ha entrado trabajo. Tu equipo está listo y esperando.'}</p>
+          {pend.length > 0 && <a className="sn-hero__aviso" href="#te-necesitan">Te {pend.length === 1 ? 'necesitan para 1 cosa' : `necesitan para ${pend.length} cosas`} <ChevronRight size={16} /></a>}
+        </div>
+      </section>
+
+      <div className="sn-cuerpo">
+        <section className="sn-acc" aria-label="Acciones rápidas">
+          <button type="button" className="sn-acc__b sn-acc__b--llamar" onClick={() => setLlamada(true)}><span><Phone size={26} /></span><b>Llamar a mi oficina</b><small>Habla con tu equipo como por teléfono</small></button>
+          <button type="button" className="sn-acc__b" onClick={() => setChat(true)}><span><MessageCircle size={26} /></span><b>Escribir a mi equipo</b><small>Pregunta lo que quieras o pide trabajo</small></button>
+          {tieneCitas ? <button type="button" className="sn-acc__b" onClick={() => o.ir('agenda')}><span><CalendarCheck size={26} /></span><b>Ver mi agenda</b><small>{citasPend ? `${citasPend} ${citasPend === 1 ? 'cita' : 'citas'} por confirmar` : 'Las citas de tus clientes'}</small></button>
+            : <button type="button" className="sn-acc__b" onClick={() => o.ir('ensenar')}><span><Sparkles size={26} /></span><b>Enseñar a mi equipo</b><small>Precios, horarios y lo que deben saber</small></button>}
+        </section>
+
+        <section className="sn-sec" id="te-necesitan">
+          <h2>{pend.length ? `Te necesitan (${pend.length})` : 'Te necesitan'}</h2>
+          {pend.length ? <><p className="sn-muted">Tu equipo ha preparado esto y quiere tu visto bueno. Solo tienes que decir sí o no.</p>
+            <div className="sn-pends">{pend.slice(0, todas ? 40 : 3).map((e) => <Pendiente key={e.id} e={e} o={o} nombre={nombre} />)}</div>
+            {pend.length > 3 && !todas && <button className="sn-btn sn-btn--no sn-btn--ancho" onClick={() => setTodas(true)}>Ver las {pend.length}</button>}</>
+            : <p className="sn-ok"><Check size={22} /> Nada pendiente. Tu equipo lo tiene todo bajo control.</p>}
+        </section>
+
+        <section className="sn-sec">
+          <h2>Tu equipo</h2>
+          <p className="sn-muted">Toca a cualquiera para ver qué ha hecho hoy.</p>
+          <div className="sn-eq">{estados.map(({ depto, st }) => {
+            const n = hechosHoy.filter((e) => e.depto === depto).length;
+            return (
+              <button key={depto} type="button" className={`sn-ag is-${st.clave}`} style={{ '--c': DEPTO[depto].color }} onClick={() => setAgente(depto)}>
+                <Avatar depto={depto} size={56} vivo={st.clave === 'trabajando'} />
+                <b>{nombre(depto)}</b><small>{DEPTO[depto].nombre}</small>
+                <p>{st.clave === 'trabajando' ? <>{st.tarea}<Puntos /></> : st.clave === 'listo' ? 'Libre, esperando trabajo' : st.txt}</p>
+                <span className="sn-ag__hoy">{n ? `Hoy: ${cosas(n)}` : 'Hoy: nada todavía'}</span>
+              </button>
+            );
+          })}</div>
+        </section>
+
+        <section className="sn-sec">
+          <h2>Lo que han hecho hoy</h2>
+          {hechosHoy.length ? <ul className="sn-feed">{hechosHoy.slice(0, 10).map((e) => (
+            <li key={e.id} style={{ '--c': DEPTO[e.depto]?.color }}><Avatar depto={e.depto} size={36} /><p>{enFrase(nombre(e.depto), e.texto)}</p><time>{hora(e.creado)}</time></li>
+          ))}</ul> : <p className="sn-muted">Aquí irá apareciendo todo lo que haga tu equipo durante el día.</p>}
+          {hechosHoy.length > 10 && <button className="sn-btn sn-btn--no sn-btn--ancho" onClick={() => o.ir('actividad')}>Ver todo lo de hoy</button>}
+        </section>
+
+        <p className="sn-pie"><Star size={15} /> ¿Quieres ver números, gráficas y todas las secciones? <button type="button" onClick={() => vista.setModo('completa')}>Cambia a la vista completa</button></p>
+      </div>
+
+      {agente && <FichaAgente o={o} depto={agente} nombre={nombre(agente)} cerrar={() => setAgente(null)} />}
+      {chat && (
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Escribir a mi equipo" onClick={(e) => { if (e.target === e.currentTarget) setChat(false); }}>
+          <div className="modal__c sn-chat"><header><b>Escribe a tu equipo</b><button className="ico" onClick={() => setChat(false)} aria-label="Cerrar"><X size={20} /></button></header><HablaConTuOficina o={o} /></div>
+        </div>
+      )}
+      {llamada && <Llamada o={o} cerrar={() => setLlamada(false)} />}
+    </div>
+  );
+}
+
+// Primera vez: el cliente elige cómo quiere ver su oficina.
+export function ElegirVista({ vista }) {
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-label="Elige cómo ver tu oficina">
+      <div className="modal__c sn-elegir">
+        <h2>¿Cómo quieres ver tu oficina?</h2>
+        <p className="sn-muted">Puedes cambiarlo cuando quieras desde tu perfil.</p>
+        <div className="sn-elegir__op">
+          <button type="button" onClick={() => vista.setModo('sencilla')}><span className="sn-elegir__img is-sencilla"><i /><i /><i /></span><b>Sencilla</b><small>Ves a tu equipo trabajando en tu oficina 3D y lo que hace cada uno. Solo dices sí o no. Ideal si no te manejas con la tecnología.</small></button>
+          <button type="button" onClick={() => vista.setModo('completa')}><span className="sn-elegir__img is-completa"><i /><i /><i /><i /></span><b>Completa</b><small>Todas las secciones, números, gráficas, SEO y estadísticas. Para controlar cada detalle.</small></button>
+        </div>
+      </div>
+    </div>
+  );
+}
