@@ -1,6 +1,6 @@
 // «Habla con tu oficina»: chat directo en el Inicio y llamada por voz (escucha, contesta hablando y vuelve a escuchar).
 import { useEffect, useRef, useState } from 'react';
-import { Maximize2, Mic, MicOff, Phone, PhoneOff, Send, Sparkles } from 'lucide-react';
+import { Keyboard, Maximize2, MessageSquareText, Mic, MicOff, Phone, PhoneOff, Send, Sparkles, X } from 'lucide-react';
 import { api } from './datos';
 import { hora, uid } from './formato';
 import { respuestaDemo } from './demoChat';
@@ -146,24 +146,49 @@ export function Llamada({ o, cerrar }) {
     return () => { vivo.current = false; callar(); try { if (rec.current?.state === 'recording') rec.current.stop(); } catch { /* */ } recWeb.current?.abort?.(); stream.current?.getTracks().forEach((t) => t.stop()); ctx.current?.close?.().catch(() => {}); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const etiqueta = { conectando: 'Conectando…', escuchando: 'Te escucho', oyendo: 'Te escucho…', pensando: 'Pensando', hablando: 'Hablando', parado: muteado ? 'Micrófono apagado' : 'En pausa · toca la esfera' }[estado];
+  const [verTexto, setVerTexto] = useState(false); const [verHist, setVerHist] = useState(() => window.innerWidth > 1100);
+  const [seg, setSeg] = useState(0);
+  useEffect(() => { const i = setInterval(() => setSeg((x) => x + 1), 1000); return () => clearInterval(i); }, []);
+  const reloj = `${String(Math.floor(seg / 60)).padStart(2, '0')}:${String(seg % 60).padStart(2, '0')}`;
+  const fase = estado === 'oyendo' ? 'escuchando' : estado;
+  const etiqueta = { conectando: 'Conectando', escuchando: 'Te escucho', pensando: 'Pensando', hablando: 'Hablando', parado: muteado ? 'Micrófono apagado' : 'En pausa · toca para seguir' }[fase];
+  const ultimo = turnos.at(-1);
   return (
-    <div className="ll" role="dialog" aria-modal="true" aria-label="Llamada con tu oficina">
-      <header className="ll__h"><span className="ll__dot" /> Llamada con tu oficina · {o.negocio.nombre}</header>
-      <button type="button" className={`ll__orbe is-${estado === 'oyendo' ? 'escuchando' : estado}`} style={{ '--n': nivel }} onClick={interrumpir} aria-label={estado === 'hablando' ? 'Interrumpir y hablar' : 'Volver a escuchar'}>
-        <i /><i /><i /><span />
-      </button>
-      <p className="ll__estado">{etiqueta}{estado === 'pensando' && <Puntos />}</p>
-      <div className="ll__conv" ref={conv} aria-live="polite">{turnos.map((t) => <p key={t.id} className={`ll__t ll__t--${t.de}`}>{t.texto}</p>)}</div>
-      {err && <p className="ll__err">{err}</p>}
-      <form className="ll__txt" onSubmit={(e) => { e.preventDefault(); if (txt.trim()) { if (rec.current?.state === 'recording') { rec.current._descartar = true; rec.current.stop(); } recWeb.current?.abort?.(); enviarTexto(txt.trim()); setTxt(''); } }}>
-        <input value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="O escríbelo aquí…" aria-label="Escribir" /><button aria-label="Enviar"><Send size={16} /></button>
-      </form>
-      <div className="ll__ctl">
-        <button type="button" className={`ll__b ${muteado ? 'is-on' : ''}`} onClick={alternarMicro} aria-label={muteado ? 'Activar micrófono' : 'Silenciar micrófono'}>{muteado ? <MicOff size={22} /> : <Mic size={22} />}</button>
-        <button type="button" className="ll__b ll__b--colgar" onClick={colgar} aria-label="Colgar"><PhoneOff size={24} /></button>
-      </div>
-      <p className="ll__pista">Habla con normalidad: cuando te callas, contesta. Para cortarla, habla encima o toca la esfera.</p>
+    <div className={`llv is-${fase}`} role="dialog" aria-modal="true" aria-label="Llamada con tu oficina" style={{ '--n': nivel }}>
+      <header className="llv__top">
+        <div className="llv__quien"><span className="llv__av">{o.negocio.nombre.slice(0, 1).toUpperCase()}</span><div><b>Tu oficina</b><small>{o.negocio.nombre}</small></div></div>
+        <span className="llv__pill"><i />{reloj}</span>
+        <div className="llv__acc"><button type="button" className={`llv__ico ${verHist ? 'is-on' : ''}`} onClick={() => setVerHist(!verHist)} aria-pressed={verHist} aria-label="Ver la conversación"><MessageSquareText size={18} /></button></div>
+      </header>
+      <main className="llv__centro">
+        <button type="button" className="llv__orbe" onClick={interrumpir} aria-label={fase === 'hablando' ? 'Interrumpir y hablar' : 'Volver a escuchar'}>
+          <span className="llv__halo" /><span className="llv__anillo" /><span className="llv__anillo llv__anillo--2" /><span className="llv__nucleo" />
+        </button>
+        <p className="llv__estado"><i />{etiqueta}{fase === 'pensando' && <Puntos />}</p>
+        <div className="llv__subt" aria-live="polite">
+          {ultimo ? <><small>{ultimo.de === 'tu' ? 'Tú' : 'Tu oficina'}</small><p key={ultimo.id}>{ultimo.texto}</p></> : <p className="llv__vacio">Pregúntale por tus citas, las reseñas o pídele un post.</p>}
+        </div>
+        {err && <p className="llv__err">{err}</p>}
+      </main>
+      {verHist && (
+        <aside className="llv__hist" aria-label="Conversación">
+          <header><b>Conversación</b><button type="button" className="llv__ico" onClick={() => setVerHist(false)} aria-label="Cerrar"><X size={16} /></button></header>
+          <div className="llv__lista" ref={conv}>{turnos.length ? turnos.map((t) => <div key={t.id} className={`llv__t llv__t--${t.de}`}><small>{t.de === 'tu' ? 'Tú' : 'Tu oficina'}</small><p>{t.texto}</p></div>) : <p className="llv__vacio">Aquí verás lo que dices y lo que te contesta.</p>}</div>
+        </aside>
+      )}
+      <footer className="llv__dock">
+        {verTexto && (
+          <form className="llv__txt" onSubmit={(e) => { e.preventDefault(); if (txt.trim()) { if (rec.current?.state === 'recording') { rec.current._descartar = true; rec.current.stop(); } recWeb.current?.abort?.(); enviarTexto(txt.trim()); setTxt(''); } }}>
+            <input autoFocus value={txt} onChange={(e) => setTxt(e.target.value)} placeholder="Escribe y te contesto hablando…" aria-label="Escribir" /><button aria-label="Enviar"><Send size={15} /></button>
+          </form>
+        )}
+        <div className="llv__botones">
+          <button type="button" className={`llv__b ${muteado ? 'is-off' : ''}`} onClick={alternarMicro} aria-label={muteado ? 'Activar micrófono' : 'Silenciar micrófono'}>{muteado ? <MicOff size={20} /> : <Mic size={20} />}<span>{muteado ? 'Activar' : 'Silenciar'}</span></button>
+          <button type="button" className={`llv__b ${verTexto ? 'is-on' : ''}`} onClick={() => setVerTexto(!verTexto)} aria-pressed={verTexto} aria-label="Escribir"><Keyboard size={20} /><span>Escribir</span></button>
+          <button type="button" className="llv__b llv__b--colgar" onClick={colgar} aria-label="Colgar"><PhoneOff size={20} /><span>Colgar</span></button>
+        </div>
+        <p className="llv__pista">Habla con normalidad: cuando te callas, contesta. Para cortarla, habla encima o toca el círculo.</p>
+      </footer>
     </div>
   );
 }
