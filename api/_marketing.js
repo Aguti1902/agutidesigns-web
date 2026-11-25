@@ -76,7 +76,7 @@ export async function actualizarMetricas(neg) {
 }
 
 // ---------- chat con el equipo ----------
-export async function asistente(neg, texto, { hablado = false, depto = null } = {}) {
+export async function asistente(neg, texto, { hablado = false, depto = null, historial = null } = {}) {
   const desde = new Date(Date.now() - 7 * 864e5).toISOString();
   const [deps, ev, citas, leads, pend, hist] = await Promise.all([
     sb(`of_departamentos?negocio_id=eq.${neg.id}&activo=eq.true&select=depto`),
@@ -96,7 +96,8 @@ export async function asistente(neg, texto, { hablado = false, depto = null } = 
     `CLIENTES POTENCIALES ABIERTOS:\n${leads.map((l) => `- ${l.nombre || 'Cliente'}: ${l.interes || ''} ${l.importe ? `(${l.importe} €)` : ''} · ${l.etapa}`).join('\n') || '- ninguno'}`,
     `PENDIENTE DEL DUEÑO (${pend.length}):\n${pend.map((p) => `- ${p.texto}`).join('\n') || '- nada'}`,
   ].join('\n\n');
-  const mensajes = [...hist.reverse().map((m) => ({ role: m.de === 'tu' ? 'user' : 'assistant', content: m.texto })), { role: 'user', content: texto }];
+  const previos = Array.isArray(historial) ? historial.slice(-10).map((m) => ({ de: m.de === 'tu' ? 'tu' : 'equipo', texto: String(m.texto || '').slice(0, 800) })) : hist.reverse();
+  const mensajes = [...previos.map((m) => ({ role: m.de === 'tu' ? 'user' : 'assistant', content: m.texto })), { role: 'user', content: texto }];
   while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift();
   const quien = depto
     ? `Eres el agente del departamento de ${DEPTO[depto].nombre} de la oficina de IA de este negocio y hablas con su dueño. Habla en primera persona («he», «tengo»), cercano, claro y breve (máximo 6 frases o una lista corta). Céntrate en tu departamento (${DEPTO[depto].que}); si te preguntan algo de otro departamento, contesta lo que sepas por los datos y sugiere hablar con ese compañero.`
@@ -107,15 +108,53 @@ ${await fichaNegocio(neg)}
 DATOS REALES DE LA OFICINA (no inventes nada que no esté aquí; si no lo sabes, dilo):
 ${contexto}
 
-${hablado ? 'ESTÁS EN UNA LLAMADA DE VOZ: contesta como al teléfono, natural y muy breve (1 a 3 frases cortas), sin listas, sin emojis, sin símbolos ni enlaces. Di las horas y cifras como se dicen en voz alta.\n' : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
+${hablado ? `ESTÁS EN UNA LLAMADA DE VOZ CON EL DUEÑO. Reglas de la llamada:
+- Contesta exactamente a lo que pregunta, con datos concretos de arriba (nombres, días, horas, cifras). Nada de respuestas genéricas.
+- Muy breve: 1 a 3 frases cortas, como al teléfono. Sin listas, emojis, símbolos ni enlaces. Horas y cifras como se dicen en voz alta («a las cinco y media», «unos cuarenta euros»).
+- No repitas lo que ya has dicho en esta llamada ni el resumen del día si no te lo pide. Varía cómo empiezas las frases.
+- Si lo que te llega no tiene sentido o parece cortado (la transcripción puede fallar), pide que te lo repita en pocas palabras.
+- No acabes siempre con «¿algo más?»: solo pregunta si de verdad hace falta.
+- Si te pide hacer algo (un post, un artículo, un vídeo), confírmalo en una frase y crea el encargo.
+` : ''}Puedes hacer encargos: un post para redes (si está Redes sociales), un artículo (si está Contenido web) o un vídeo (si está Redes sociales). Si el dueño pide uno, pon la acción y di que os ponéis con ello y que lo tendrá en «Te necesitan» para revisarlo.
 Devuelve SOLO JSON: {"respuesta":"...", "accion": null | {"tipo":"post|articulo|video", "tema":"..."}}`;
-  const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 220 : 500, json: true });
+  const ia = await llamarIA({ sistema, mensajes, maxTokens: hablado ? 260 : 500, json: true });
   if (depto || mis[0]) await consumo(neg.id, depto || mis[0], { ...ia, unidades: 0 });
   const o = leerJson(ia.texto) || { respuesta: ia.texto };
   const permitida = { post: 'redes', video: 'redes', articulo: 'contenido' }[o.accion?.tipo];
   const accion = permitida && mis.includes(permitida) && o.accion?.tema ? o.accion : null;
-  await sb('of_chat', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, depto, de: 'tu', texto: String(texto).slice(0, 2000) }, { negocio_id: neg.id, depto, de: 'equipo', texto: String(o.respuesta || '').slice(0, 3000), detalle: accion ? { accion } : {} }] });
+  await sb('of_chat', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, depto, de: 'tu', texto: String(texto).slice(0, 2000), detalle: hablado ? { llamada: true } : {} }, { negocio_id: neg.id, depto, de: 'equipo', texto: String(o.respuesta || '').slice(0, 3000), detalle: { ...(accion ? { accion } : {}), ...(hablado ? { llamada: true } : {}) } }] });
   return { respuesta: o.respuesta, accion };
+}
+
+// ---------- llamada: oír (voz a texto) y hablar rápido ----------
+// Transcripción con OpenAI (gpt-4o-mini-transcribe), con el vocabulario del negocio como pista.
+export async function transcribir(buffer, mime, pista = '') {
+  if (!process.env.OPENAI_API_KEY) throw new Error('sin_transcripcion');
+  const ext = /mp4|m4a|aac/.test(mime) ? 'mp4' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+  const fd = new FormData();
+  fd.append('file', new Blob([buffer], { type: mime || 'audio/webm' }), `voz.${ext}`);
+  fd.append('model', process.env.OFICINA_MODELO_STT || 'gpt-4o-mini-transcribe');
+  fd.append('language', 'es');
+  if (pista) fd.append('prompt', pista.slice(0, 800));
+  const r = await fetch('https://api.openai.com/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }, body: fd });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`stt ${r.status}: ${j?.error?.message || ''}`);
+  return String(j.text || '').trim();
+}
+// Voz de la llamada: ElevenLabs Flash (la más rápida) si hay clave; si no, OpenAI con acento de España.
+export async function vozLlamada(texto) {
+  if (hayEleven()) {
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOZ_DEFECTO()}?output_format=mp3_44100_64`, { method: 'POST',
+      headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: String(texto).slice(0, 1200), model_id: process.env.ELEVENLABS_MODEL_LLAMADA || 'eleven_flash_v2_5', language_code: 'es', voice_settings: { stability: 0.45, similarity_boost: 0.75, style: 0, use_speaker_boost: true } }) });
+    if (r.ok) return { mp3: Buffer.from(await r.arrayBuffer()), coste: (String(texto).length / 1000) * 0.05 };
+  }
+  if (!process.env.OPENAI_API_KEY) throw new Error('sin_voz');
+  const r = await fetch('https://api.openai.com/v1/audio/speech', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-4o-mini-tts', voice: process.env.OFICINA_VOZ_LLAMADA || 'coral', input: String(texto).slice(0, 1200), response_format: 'mp3',
+      instructions: 'Habla en español de España (castellano peninsular, nada de acento latinoamericano). Tono cálido y profesional, como una compañera de oficina que conoce bien el negocio. Ritmo ágil y natural, frases fluidas, sin sonar a locutora.' }) });
+  if (!r.ok) throw new Error(`voz ${r.status}`);
+  return { mp3: Buffer.from(await r.arrayBuffer()), coste: (String(texto).length / 1000) * 0.015 };
 }
 
 // ---------- vídeos: guion + voz ----------
