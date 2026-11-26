@@ -59,6 +59,15 @@ export async function sb(ruta, { metodo = 'GET', cuerpo, prefer } = {}) {
 export const rpc = (fn, args) => sb(`rpc/${fn}`, { metodo: 'POST', cuerpo: args });
 export const uno = async (ruta) => (await sb(ruta))?.[0] || null;
 
+// Registro de correos enviados a clientes (lo lee el Centro de mando).
+export async function logCorreo({ para, tipo, asunto, error, id, negocio_id }) {
+  try {
+    let nid = negocio_id || null;
+    if (!nid && para) nid = (await uno(`of_negocios?owner_email=eq.${encodeURIComponent(String(para).toLowerCase())}&select=id&order=created_at.desc&limit=1`))?.id || null;
+    await sb('of_correos', { metodo: 'POST', cuerpo: [{ negocio_id: nid, para: String(para || '').slice(0, 200), tipo, asunto: String(asunto || '').slice(0, 200), estado: error ? 'error' : 'enviado', error: error ? String(error).slice(0, 300) : null, proveedor_id: id || null }] });
+  } catch (e) { console.error('[correos] log', e.message); }
+}
+
 // ---------- registro de lo que hacen los agentes ----------
 export async function actividad(negocio_id, depto, texto, tipo = 'hecho', detalle = null) {
   const fila = await sb('of_actividad', { metodo: 'POST', prefer: 'return=representation', cuerpo: [{ negocio_id, depto, tipo, texto: String(texto).slice(0, 600), detalle }] }).then((r) => r?.[0]).catch((e) => console.error('[actividad]', e.message));
@@ -73,14 +82,16 @@ async function avisarPorCorreo(negocio_id, depto, texto) {
   if (Date.now() - ultimo < 10 * 60e3) return;
   await sb(`of_negocios?id=eq.${negocio_id}`, { metodo: 'PATCH', cuerpo: { onboarding: { ...(neg.onboarding || {}), ultimo_aviso: new Date().toISOString() } } });
   const { Resend } = await import('resend');
-  await new Resend(process.env.RESEND_API_KEY).emails.send({
-    from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: neg.preferencias?.email_avisos || neg.owner_email,
-    subject: `Tu oficina te necesita: ${String(texto).slice(0, 70)}`,
+  const para = neg.preferencias?.email_avisos || neg.owner_email, asunto = `Tu oficina te necesita: ${String(texto).slice(0, 70)}`;
+  const r = await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: para,
+    subject: asunto,
     html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px 22px;color:#0d1020"><p style="color:#6c7086;font-size:13px;margin:0 0 6px">${DEPTO[depto]?.nombre || 'Tu oficina'} · ${neg.nombre}</p>
       <p style="font-size:17px;line-height:1.5;margin:0 0 22px;font-weight:600">${String(texto).replace(/</g, '&lt;')}</p>
       <a href="https://panel.agutidesigns.io" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a>
       <p style="color:#6c7086;font-size:12px;margin:24px 0 0">Puedes desactivar estos avisos en tu panel, en Ajustes → Avisos.</p></div>`,
   });
+  await logCorreo({ para, tipo: 'aviso', asunto, error: r?.error?.message, id: r?.data?.id, negocio_id });
 }
 export const estadoAgente = (negocio_id, depto, estado, tarea) =>
   sb('of_agentes?on_conflict=negocio_id,depto', { metodo: 'POST', prefer: 'resolution=merge-duplicates', cuerpo: { negocio_id, depto, estado, tarea: String(tarea || '').slice(0, 160), actualizado: new Date().toISOString() } }).catch(() => {});
@@ -121,9 +132,10 @@ export async function correoPago({ email, nombre, importe, numero, primero, pdf,
     ? `Gracias por confiar en Agutidesigns. ${nombre ? `La oficina de <b>${nombre}</b>` : 'Tu oficina'} ya está en marcha con el cupo completo de cada departamento: tus agentes trabajan para ti cada día.`
     : `Hemos recibido el pago de ${nombre ? `la oficina de <b>${nombre}</b>` : 'tu oficina de IA'}. Tus agentes siguen trabajando para ti, como siempre.`;
   const { Resend } = await import('resend');
-  const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+  const asunto = primero ? `Bienvenido a tu Oficina de IA${nombre ? ` · ${nombre}` : ''}` : `Gracias por tu pago${numero ? ` · Factura ${numero}` : ''}`;
+  const { data: enviado, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
     from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: email, reply_to: 'info@agutidesigns.io',
-    subject: primero ? `Bienvenido a tu Oficina de IA${nombre ? ` · ${nombre}` : ''}` : `Gracias por tu pago${numero ? ` · Factura ${numero}` : ''}`,
+    subject: asunto,
     html: `<div style="background:#f4f5f8;padding:32px 12px"><div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:18px;padding:36px 28px;color:#0d1020">
       <img src="${panel}/images/logoazul.png" alt="Agutidesigns" height="28" style="height:28px">
       <h1 style="font-size:24px;line-height:1.2;margin:28px 0 10px">${titulo}</h1>
@@ -138,6 +150,7 @@ export async function correoPago({ email, nombre, importe, numero, primero, pdf,
     text: `${titulo}\n\nImporte cobrado: ${eur(importe)}${numero ? `\nFactura: ${numero}` : ''}\n\nEntra en tu oficina: ${panel}${urlFactura ? `\nRecibo: ${urlFactura}` : ''}`,
     ...(pdf ? { attachments: [{ filename: `Factura ${numero || ''}.pdf`.replace(' .pdf', '.pdf'), content: pdf }] } : {}),
   });
+  await logCorreo({ para: email, tipo: primero ? 'bienvenida' : 'pago', asunto, error: error?.message, id: enviado?.id });
   if (error) { console.error('[pago] correo', error.message); return false; }
   return true;
 }
@@ -151,9 +164,10 @@ export async function enviarAcceso(email, base, nombre) { // base = dirección d
   const enlace = `${base}/entrar?t=${encodeURIComponent(hash)}`;
   if (!process.env.RESEND_API_KEY) { console.error('[acceso] falta RESEND_API_KEY'); return false; }
   const { Resend } = await import('resend');
-  const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+  const asunto = nombre ? `Entra en la oficina de IA de ${nombre}` : 'Tu enlace para entrar en tu oficina de IA';
+  const { data: enviado, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
     from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: mail,
-    subject: nombre ? `Entra en la oficina de IA de ${nombre}` : 'Tu enlace para entrar en tu oficina de IA',
+    subject: asunto,
     html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#0d1020">
       <img src="${base}/images/logoazul.png" alt="Agutidesigns" height="28" style="height:28px">
       <h1 style="font-size:22px;margin:28px 0 8px">Entra en tu oficina de IA</h1>
@@ -162,6 +176,7 @@ export async function enviarAcceso(email, base, nombre) { // base = dirección d
       <p style="color:#6c7086;font-size:13px;line-height:1.5;margin:28px 0 0">Si no has pedido este enlace, ignora este correo.</p></div>`,
     text: `Entra en tu oficina de IA: ${enlace}\nEl enlace caduca en una hora.`,
   });
+  await logCorreo({ para: mail, tipo: 'acceso', asunto, error: error?.message, id: enviado?.id });
   if (error) { console.error('[acceso] resend', error.message); return false; }
   return true;
 }
