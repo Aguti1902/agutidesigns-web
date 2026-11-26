@@ -133,7 +133,7 @@ export default function Contratar() {
                   : <><BotonGoogle texto="Registrarme con Google" antes={recordar} /><p className="bg-o">o con tu correo</p></>}
                 <label><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /></label>
                 {!cuenta && <label><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegará el acceso a tu panel y las facturas.</small></label>}
-                <label className="ct-check"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las condiciones del servicio y la <a href={urlWeb('/privacidad')} target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+                <label className="ct-check"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las <a href={urlWeb('/condiciones')} target="_blank" rel="noopener">condiciones del servicio</a> y la <a href={urlWeb('/privacidad')} target="_blank" rel="noopener">política de privacidad</a>.</span></label>
               </div>
               {estado.error && <p className="ct-error" role="alert">{estado.error}</p>}
               <div className="ct-nav"><button type="button" className="ct-btn ct-btn--sec" onClick={() => setPaso(2)}><ArrowLeft size={17} /> Atrás</button>

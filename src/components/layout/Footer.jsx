@@ -40,7 +40,7 @@ export default function Footer() {
       </div>
       <div className="foot__bottom">
         <span>© {new Date().getFullYear()} Agutidesigns</span>
-        <span>Diseño web en Barcelona</span>
+        <span className="foot__legal"><a href="/aviso-legal">Aviso legal</a> · <a href="/privacidad">Privacidad</a> · <a href="/condiciones">Condiciones</a></span>
       </div>
     </footer>
   );
