@@ -108,6 +108,23 @@ export function MenuUsuario({ o, abrirPerfil, ir }) {
 }
 
 // Perfil de usuario: cuenta, apariencia, notificaciones y acceso.
+function CambiarClave() {
+  const [abierto, setAbierto] = useState(false); const [c, setC] = useState(''); const [st, setSt] = useState('');
+  async function guardar(e) {
+    e.preventDefault(); if (c.length < 8) { setSt('Mínimo 8 caracteres.'); return; }
+    setSt('Guardando…'); const { error } = await supabase.auth.updateUser({ password: c });
+    setSt(error ? 'No se ha podido cambiar. Vuelve a entrar e inténtalo otra vez.' : 'Contraseña guardada.'); if (!error) setC('');
+  }
+  if (!abierto) return <button type="button" className="btn btn--sec btn--sm" onClick={() => setAbierto(true)}>Crear o cambiar mi contraseña</button>;
+  return (
+    <form onSubmit={guardar} className="pf__clave">
+      <input type="password" value={c} onChange={(e) => setC(e.target.value)} placeholder="Nueva contraseña (mínimo 8)" autoComplete="new-password" aria-label="Nueva contraseña" />
+      <button className="btn btn--pri btn--sm">Guardar</button>
+      {st && <small>{st}</small>}
+    </form>
+  );
+}
+
 export function Perfil({ o, tema, cerrar, ir, vista }) {
   const email = o.sesion?.user?.email || 'demo@agutidesigns.io';
   useEffect(() => { const k = (e) => { if (e.key === 'Escape') cerrar(); }; document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [cerrar]);
@@ -145,7 +162,8 @@ export function Perfil({ o, tema, cerrar, ir, vista }) {
         </section>
         <section className="pf__s">
           <h3><User size={14} /> Acceso</h3>
-          <p>Entras con un enlace que te mandamos a tu correo, sin contraseña. Cada enlace caduca en una hora y solo sirve una vez.</p>
+          <p>Entras con Google, con tu correo y contraseña o con un enlace que te mandamos al correo.</p>
+          {!o.demo && <CambiarClave />}
           {!o.demo && <button className="btn btn--sec btn--sm" onClick={() => supabase.auth.signOut()}><LogOut size={13} /> Cerrar sesión</button>}
         </section>
       </div>

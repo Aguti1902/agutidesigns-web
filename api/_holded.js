@@ -1,7 +1,7 @@
 // Facturas de la Oficina de IA en Holded: cada cobro de Stripe genera una factura en la serie «Factura»
 // (numeración correlativa de Holded), con IVA, marcada como cobrada y enviada al cliente. Idempotente.
 // Variables: HOLDED_API_KEY (obligatoria), HOLDED_SERIE_FACTURAS (opcional, por defecto la serie «Factura»).
-import { sb, uno, DEPTO } from './_oficina.js';
+import { sb, uno, DEPTO, correoPago } from './_oficina.js';
 import { IVA, IRPF } from '../src/data/oficinaSaas.js';
 
 const BASE = 'https://api.holded.com/api/invoicing/v1';
@@ -48,7 +48,11 @@ export async function facturaDesdeStripe(inv) {
     const id = doc.id;
     const detalle = await holded(`documents/invoice/${id}`).catch(() => ({}));
     await holded(`documents/invoice/${id}/pay`, { metodo: 'POST', cuerpo: { date: Math.floor(Date.now() / 1000), amount: pagado } }).catch((e) => console.error('[holded] pago', e.message));
-    await holded(`documents/invoice/${id}/send`, { metodo: 'POST', cuerpo: { emails: inv.customer_email || neg.owner_email, subject: `Tu factura de la Oficina de IA · ${detalle.docNumber || ''}`.trim(), message: `Hola, te enviamos la factura de tu Oficina de IA. Gracias por confiar en Agutidesigns.` } })
+    // Correo de gracias con la factura en PDF (si falla, Holded la envía con su propio correo).
+    const previas = await sb(`of_facturas?negocio_id=eq.${neg.id}&estado=eq.pagada&select=id&limit=1`).catch(() => []);
+    const pdf = await pdfFactura(id).catch(() => null);
+    const enviado = await correoPago({ email: inv.customer_email || neg.owner_email, nombre: neg.nombre, importe: pagado, numero: detalle.docNumber, primero: !previas.length, pdf, urlFactura: inv.hosted_invoice_url }).catch(() => false);
+    if (!enviado) await holded(`documents/invoice/${id}/send`, { metodo: 'POST', cuerpo: { emails: inv.customer_email || neg.owner_email, subject: `Tu factura de la Oficina de IA · ${detalle.docNumber || ''}`.trim(), message: `Hola, te enviamos la factura de tu Oficina de IA. Gracias por confiar en Agutidesigns.` } })
       .catch((e) => console.error('[holded] envío', e.message));
     if (!neg.holded_contacto && detalle.contact) await sb(`of_negocios?id=eq.${neg.id}`, { metodo: 'PATCH', cuerpo: { holded_contacto: detalle.contact, ...(nif ? { nif } : {}), ...(inv.customer_name ? { razon_social: inv.customer_name } : {}) } });
     await sb(`of_facturas?id=eq.${fila.id}`, { metodo: 'PATCH', cuerpo: { holded_id: id, numero: detalle.docNumber || null, base, iva, retencion: -retencion, total: pagado, estado: 'pagada', concepto: linea || 'Oficina de IA',
