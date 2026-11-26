@@ -17,6 +17,7 @@ export default function CookieBanner() {
 
   const accept = () => {
     localStorage.setItem(STORAGE_KEY, 'accepted');
+    window.dispatchEvent(new Event('aguti-cookies-aceptadas'));
     setVisible(false);
   };
 

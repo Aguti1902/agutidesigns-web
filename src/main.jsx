@@ -29,6 +29,7 @@ const Casos = lazy(() => import('./pages/Casos.jsx'));
 const PanelOficina = lazy(() => import('./pages/app/Panel.jsx'));
 const ContratarOficina = lazy(() => import('./pages/Contratar.jsx'));
 const BienvenidaOficina = lazy(() => import('./pages/app/Bienvenida.jsx'));
+import { PixelMeta } from './utils/metaPixel';
 import './index.css';
 import './styles/site.css';
 
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
         <ScrollManager />
         <Analytics />
+        <PixelMeta />
         <Suspense fallback={<div className="ag" style={{ minHeight: '100vh' }} />}>
         <Routes>
           {/* Pública */}
