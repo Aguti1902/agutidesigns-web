@@ -11,11 +11,11 @@ const puedeGrabar = typeof window !== 'undefined' && typeof window.MediaRecorder
 const tipoAudio = () => (typeof MediaRecorder === 'undefined' ? '' : ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find((t) => MediaRecorder.isTypeSupported?.(t)) || '');
 const aB64 = (blob) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
 
-async function preguntar(o, texto, voz) {
+export async function preguntar(o, texto, voz) {
   if (o.demo) return { respuesta: await responderDemo(o, texto, o.chat.filter((m) => !m.depto).slice(-8)), audio: null };
   return api('equipo', { texto, voz });
 }
-function anotar(o, de, texto, extra = {}) { o.setEstado((s) => ({ ...s, chat: [...s.chat, { id: uid(de), de, texto, creado: new Date().toISOString(), ...extra }] })); }
+export function anotar(o, de, texto, extra = {}) { o.setEstado((s) => ({ ...s, chat: [...s.chat, { id: uid(de), de, texto, creado: new Date().toISOString(), ...extra }] })); }
 // Mejor voz española del navegador (solo para la demo, sin servidor).
 function vozNavegador() {
   const vs = window.speechSynthesis?.getVoices?.() || [];

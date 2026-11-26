@@ -54,7 +54,7 @@ export function respuestaDemo(o, t, historial = []) {
   }
   if (/semana|resumen|como va|que tal|que habeis hecho|hoy/.test(x)) {
     const opciones = [
-      `Hoy llevamos ${o.est.hoy.total} tareas: ${o.est.hoy.conversaciones} clientes atendidos y ${o.est.hoy.citas} gestiones de citas.`,
+      `Hoy llevamos ${o.est.hoy.total} ${o.est.hoy.total === 1 ? 'tarea' : 'tareas'}: ${o.est.hoy.conversaciones} ${o.est.hoy.conversaciones === 1 ? 'cliente atendido' : 'clientes atendidos'} y ${o.est.hoy.citas} ${o.est.hoy.citas === 1 ? 'gestión' : 'gestiones'} de citas.`,
       `Buen día: ${o.est.hoy.conversaciones} conversaciones, ${o.est.hoy.citas} citas movidas y ${o.est.hoy.google} reseñas contestadas.`,
       `Va todo bien. ${o.est.hoy.total} tareas hechas hoy y ${pend.length} cosas esperándote.`,
     ];
