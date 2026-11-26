@@ -236,10 +236,9 @@ export default function Panel() {
   // Vista sencilla: la oficina 3D como protagonista, sin menú lateral ni números.
   if (vistaPanel.sencilla && vistaReal === 'inicio') {
     return (
-      <div className={`app app--pro app--facil ${tema.clase}`}>
+      <div className={`app app--pro app--facil ${demo ? 'con-demo' : ''} ${tema.clase}`}>
         {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
-        {banners}
-        <Sencilla o={o} vista={vistaPanel} abrirPerfil={() => setPerfil(true)} />
+        <Sencilla o={o} vista={vistaPanel} tema={tema} banners={banners} abrirPerfil={() => setPerfil(true)} />
         {perfilModal}{tutoModal}
       </div>
     );
