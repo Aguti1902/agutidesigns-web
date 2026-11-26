@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Mail } from 'lucide-react';
 import useSeo from '../../hooks/useSeo';
+import { eventoPixel } from '../../utils/metaPixel';
 import './Panel.css';
 
 export default function Bienvenida() {
@@ -15,7 +16,8 @@ export default function Bienvenida() {
         const r = await fetch(`/api/oficina/alta?session_id=${encodeURIComponent(id)}`);
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'No hemos podido terminar el alta.');
-                setSt({ fase: 'ok', ...j });
+        setSt({ fase: 'ok', ...j });
+        eventoPixel('CompleteRegistration', { content_name: 'Oficina de IA' }); eventoPixel('StartTrial', { content_name: 'Oficina de IA' });
       } catch (e) { setSt({ fase: 'error', msg: e.message }); }
     })();
   }, []);

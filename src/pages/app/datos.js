@@ -159,7 +159,9 @@ export function estadoDemo() {
     { id: 'p-seg', depto: 'ventas', tipo: 'pendiente', creado: new Date(ahora - 7 * 36e5).toISOString(), resuelto: false, texto: 'Paula pidió presupuesto hace más de 2 días y no ha vuelto a escribir. Te he dejado el mensaje de seguimiento listo',
       detalle: { accion: 'seguimiento', conversacion: 'c2', texto: '¡Hola Paula! ¿Pudiste mirar el presupuesto del pack novia? Si quieres, te reservamos la prueba un sábado por la mañana 😊' } },
   );
-  return { cargando: false, sesion: null, negocio: DEMO_NEG, eventos, uso, conversaciones, citas, leads, facturas, bolsas: [], ...extras,
+  // ?nombre=… cambia el nombre del negocio de la demo (para enseñarla con el nombre de quien la mira).
+  const nombreDemo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('nombre')?.trim().slice(0, 40) : '';
+  return { cargando: false, sesion: null, negocio: nombreDemo ? { ...DEMO_NEG, nombre: nombreDemo } : DEMO_NEG, eventos, uso, conversaciones, citas, leads, facturas, bolsas: [], ...extras,
     deptos: DEMO_DEPTOS.map((d) => ({ depto: d, cupo_n: DEPTO[d].cupo.n, activo: true, ajustes: d === 'citas' ? { servicios: 'Corte mujer · 45 min\nCorte hombre · 30 min\nTinte · 1 h 30 min\nMechas · 2 h\nPeinado · 45 min' } : { revisar: d === 'redes' } })),
     agentes: Object.fromEntries(DEMO_DEPTOS.map((d) => [d, { estado: 'disponible', tarea: 'Esperando la siguiente tarea', actualizado: new Date().toISOString() }])),
     conocimiento: [{ id: 'k1', tipo: 'nota', respuesta: 'El 8 de diciembre cerramos todo el día.', hasta: '2026-12-08' }, { id: 'k2', tipo: 'faq', pregunta: '¿Se puede pagar con Bizum?', respuesta: 'Sí, aceptamos Bizum, tarjeta y efectivo.' },

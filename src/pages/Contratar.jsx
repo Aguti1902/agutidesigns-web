@@ -1,5 +1,6 @@
 // Compra de la Oficina de IA en 3 pasos (/oficina-ia/contratar): equipo → forma de pago → datos, con el pedido
 // siempre a la vista (base, IVA y lo que se paga hoy). Acepta ?deptos=a,b&plan=anio para llegar preseleccionado.
+import { eventoPixel } from '../utils/metaPixel';
 import { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Gift, Globe, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { MessageCircle, Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
@@ -43,6 +44,7 @@ export default function Contratar() {
     if (!acepto) return setEstado({ cargando: false, error: 'Acepta las condiciones para continuar.' });
     setEstado({ cargando: true, error: '' });
     try {
+      eventoPixel('InitiateCheckout', { content_name: 'Oficina de IA', num_items: sel.length });
       const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email, periodo: plan }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.url) throw new Error(j.error || 'No hemos podido abrir el pago.');
