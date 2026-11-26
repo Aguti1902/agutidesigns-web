@@ -316,7 +316,7 @@ export function Sencilla({ o, vista, abrirPerfil, tema, banners }) {
   return (
     <div className="snx">
       <aside className="snx-lado">
-        <a href="/" className="snx-logo"><img src={tema?.oscuro ? '/images/logo-blanco.png' : '/images/logoazul.png'} alt="Agutidesigns" width="118" height="32" /></a>
+        <a href="#" onClick={(e) => { e.preventDefault(); setPag('oficina'); }} className="snx-logo"><img src={tema?.oscuro ? '/images/logo-blanco.png' : '/images/logoazul.png'} alt="Agutidesigns" width="118" height="32" /></a>
         <button type="button" className="snx-neg" onClick={abrirPerfil}><span>{o.negocio.nombre.slice(0, 1).toUpperCase()}</span><div><b>{o.negocio.nombre}</b><small><i />{trabajando.length ? `${trabajando.length} trabajando ahora` : 'Tu equipo está conectado'}</small></div></button>
         <nav aria-label="Menú">
           {menu.map((m) => (

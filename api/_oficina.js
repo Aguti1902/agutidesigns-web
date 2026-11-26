@@ -16,6 +16,12 @@ const anonKey = () => process.env.VITE_OFICINA_SUPABASE_ANON_KEY || process.env.
 export const configurado = () => Boolean(stripeKey() && sbUrl() && sbKey());
 export const hayBase = () => Boolean(sbUrl() && sbKey());
 export const origen = (req) => `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
+// El panel de los clientes vive en su subdominio (panel.agutidesigns.io); en local y en las vistas previas, en /app.
+export const PANEL_URL = 'https://panel.agutidesigns.io';
+const esDominio = (req) => /(^|\.)agutidesigns\.io$/.test(String(req.headers['x-forwarded-host'] || req.headers.host || '').split(':')[0]);
+export const panelBase = (req) => (esDominio(req) ? PANEL_URL : `${origen(req)}/app`);
+// La web pública (sin el subdominio del panel): para volver a la landing y para las direcciones de vuelta de OAuth.
+export const sitio = (req) => origen(req).replace('://panel.', '://');
 export const esUuid = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s || ''));
 export const limpiaDeptos = (lista) => [...new Set((Array.isArray(lista) ? lista : String(lista || '').split(',')).map((s) => String(s).trim()).filter((id) => DEPTO[id]))];
 
@@ -72,7 +78,7 @@ async function avisarPorCorreo(negocio_id, depto, texto) {
     subject: `Tu oficina te necesita: ${String(texto).slice(0, 70)}`,
     html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:28px 22px;color:#0d1020"><p style="color:#6c7086;font-size:13px;margin:0 0 6px">${DEPTO[depto]?.nombre || 'Tu oficina'} · ${neg.nombre}</p>
       <p style="font-size:17px;line-height:1.5;margin:0 0 22px;font-weight:600">${String(texto).replace(/</g, '&lt;')}</p>
-      <a href="https://agutidesigns.io/app" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a>
+      <a href="https://panel.agutidesigns.io" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a>
       <p style="color:#6c7086;font-size:12px;margin:24px 0 0">Puedes desactivar estos avisos en tu panel, en Ajustes → Avisos.</p></div>`,
   });
 }
@@ -99,13 +105,13 @@ async function authAdmin(ruta, cuerpo) {
   const r = await fetch(`${sbUrl()}/auth/v1/admin/${ruta}`, { method: 'POST', headers: { apikey: sbKey(), Authorization: `Bearer ${sbKey()}`, 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
   return { ok: r.ok, status: r.status, datos: await r.json().catch(() => ({})) };
 }
-export async function enviarAcceso(email, base, nombre) {
+export async function enviarAcceso(email, base, nombre) { // base = dirección del panel (panelBase)
   const mail = String(email || '').trim().toLowerCase();
   await authAdmin('users', { email: mail, email_confirm: true }); // si ya existe, Supabase responde 422 y seguimos
   const { ok, datos } = await authAdmin('generate_link', { type: 'magiclink', email: mail });
   const hash = datos?.hashed_token || datos?.properties?.hashed_token;
   if (!ok || !hash) { console.error('[acceso] generate_link', datos?.msg || datos?.error_description || ''); return false; }
-  const enlace = `${base}/app/entrar?t=${encodeURIComponent(hash)}`;
+  const enlace = `${base}/entrar?t=${encodeURIComponent(hash)}`;
   if (!process.env.RESEND_API_KEY) { console.error('[acceso] falta RESEND_API_KEY'); return false; }
   const { Resend } = await import('resend');
   const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({

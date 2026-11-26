@@ -163,3 +163,13 @@ img {
   background-repeat: repeat;
   background-size: 256px 256px;
 }
+
+/* Botón «Continuar con Google» */
+.bg-google { display: grid; gap: 6px; }
+.bg-google__b { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 50px; padding: 0 18px; border-radius: 12px; border: 1px solid #d5d7de; background: #fff; color: #1f1f1f; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.bg-google__b:hover { background: #f6f7f9; border-color: #b9bcc6; }
+.bg-google__b:focus-visible { outline: 3px solid #0047ff; outline-offset: 2px; }
+.bg-google__b:disabled { opacity: .7; cursor: default; }
+.bg-google__e { color: #b42318; }
+.bg-o { display: flex; align-items: center; gap: 12px; color: #8a8fa6; font-size: .85rem; margin: 4px 0; }
+.bg-o::before, .bg-o::after { content: ""; flex: 1; height: 1px; background: #e3e4e8; }

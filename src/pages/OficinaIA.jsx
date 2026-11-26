@@ -1,3 +1,4 @@
+import { urlPanel } from '../lib/panelRuta';
 import { ArrowRight, Check, Bot, CalendarCheck, PenLine, MapPin, Headphones, Share2, LayoutDashboard, Gauge, ChevronDown } from 'lucide-react';
 import Configurador from '../components/oficina/Configurador';
 import { DEPARTAMENTOS, PRECIO_SUELTO, precioOficina, DIAS_PRUEBA, WEB_DESDE } from '../data/oficinaSaas';
@@ -144,7 +145,7 @@ function HeroOficina() {
         <p className="oh-lead">Elige los departamentos que necesita tu negocio: atención al cliente, citas, ventas, redes, Google y contenido. Trabajan cada día, sin horarios ni vacaciones, y tú los ves en directo desde tu panel.</p>
         <div className="ag-actions oh-actions">
           <a href="#precios" className="ag-btn ag-btn--primary">Monta tu oficina · desde {PRECIO_SUELTO} €/mes</a>
-          <a href="/app?demo=1" className="ag-btn oh-btn-ghost">Ver el panel por dentro</a>
+          <a href={urlPanel("", "?demo=1")} className="ag-btn oh-btn-ghost">Ver el panel por dentro</a>
         </div>
         <ul className="oh-trust">
           <li><Check size={16} /> {DIAS_PRUEBA} días gratis</li>
