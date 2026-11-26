@@ -112,27 +112,43 @@ const SUB = {
 };
 
 function Entrar() {
-  const [email, setEmail] = useState(''); const [st, setSt] = useState(''); const [err, setErr] = useState('');
-  async function enviar(e) {
+  const [email, setEmail] = useState(''); const [clave, setClave] = useState(''); const [modo, setModo] = useState('clave'); const [st, setSt] = useState(''); const [err, setErr] = useState('');
+  async function conClave(e) {
+    e.preventDefault(); setErr(''); setSt('enviando');
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: clave });
+    if (error) { setErr(/confirm/i.test(error.message) ? 'Tu cuenta aún no está confirmada. Entra con un enlace a tu correo.' : 'Correo o contraseña incorrectos.'); setSt(''); }
+  }
+  async function conEnlace(e) {
     e.preventDefault(); setErr(''); setSt('enviando');
     const r = await fetch('/api/oficina/acceso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim().toLowerCase() }) }).catch(() => null);
     if (!r?.ok) { setErr('No hemos podido enviarte el enlace. Revisa el correo e inténtalo otra vez.'); setSt(''); } else setSt('enviado');
   }
   return (
     <main className="acceso">
-      <a href={urlWeb("/")} className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
+      <a href={urlWeb('/')} className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
       <div className="acceso__c">
         <h1>Entra en tu oficina</h1>
-        {st === 'enviado' ? <p className="acceso__ok"><Mail size={18} /><span>Si <b>{email}</b> tiene una oficina, te acabamos de enviar el enlace para entrar. Mira también en spam.</span></p> : (
-          <form onSubmit={enviar}>
-            <BotonGoogle texto="Entrar con Google" vuelta={`${window.location.origin}${rutaPanel('')}`} />
-            <p className="bg-o">o con un enlace a tu correo</p>
-            <p className="muted">Te mandamos un enlace a tu correo. Sin contraseñas.</p>
-            <label className="campo"><span>Tu correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
-            <button className="btn btn--pri btn--ancho" disabled={st === 'enviando'}>{st === 'enviando' ? 'Enviando…' : 'Enviarme el enlace'}</button>
-            {err && <p className="error">{err}</p>}
-          </form>
-        )}
+        {st === 'enviado' ? <p className="acceso__ok"><Mail size={18} /><span>Si <b>{email}</b> tiene una oficina, te acabamos de enviar el enlace para entrar. Mira también en spam.</span></p> : (<>
+          <BotonGoogle texto="Entrar con Google" vuelta={`${window.location.origin}${rutaPanel('')}`} />
+          <p className="bg-o">o con tu correo</p>
+          {modo === 'clave' ? (
+            <form onSubmit={conClave}>
+              <label className="campo"><span>Correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
+              <label className="campo"><span>Contraseña</span><input type="password" required value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="current-password" /></label>
+              <button className="btn btn--pri btn--ancho" disabled={st === 'enviando'}>{st === 'enviando' ? 'Entrando…' : 'Entrar'}</button>
+              {err && <p className="error">{err}</p>}
+              <button type="button" className="enlace acceso__alt" onClick={() => { setModo('enlace'); setErr(''); }}>¿No recuerdas tu contraseña? Entra con un enlace a tu correo</button>
+            </form>
+          ) : (
+            <form onSubmit={conEnlace}>
+              <p className="muted">Te mandamos un enlace a tu correo para entrar sin contraseña. Después puedes crear una nueva en tu perfil.</p>
+              <label className="campo"><span>Correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
+              <button className="btn btn--pri btn--ancho" disabled={st === 'enviando'}>{st === 'enviando' ? 'Enviando…' : 'Enviarme el enlace'}</button>
+              {err && <p className="error">{err}</p>}
+              <button type="button" className="enlace acceso__alt" onClick={() => { setModo('clave'); setErr(''); }}>Entrar con mi contraseña</button>
+            </form>
+          )}
+        </>)}
         <p className="acceso__pie">¿Aún no tienes oficina? <a href={urlRegistro()}>Móntala</a> · <a href={`${rutaPanel('')}?demo=1`}>Ver la demo</a></p>
       </div>
     </main>

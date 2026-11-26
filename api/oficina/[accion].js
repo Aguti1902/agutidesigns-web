@@ -4,7 +4,7 @@
 import crypto from 'node:crypto';
 import {
   stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, panelBase, sitio, esUuid, actividad, estadoAgente,
-  negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo, sbUrl,
+  negocioDeSesion, altaDesdeSesion, enviarAcceso, crearCuenta, correoPago, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo, sbUrl,
 } from '../_oficina.js';
 import { responderCliente, generar, llamarIA, leerJson } from '../_agente.js';
 import { cobroCentimos, IVA, IRPF, BOLSA_EXTRA, unidadesBolsa } from '../../src/data/oficinaSaas.js';
@@ -60,6 +60,12 @@ async function alta(req, res) {
 
 // Webhook de Stripe sin secreto compartido: se vuelve a pedir el evento a Stripe por su id, así solo se actúa sobre eventos reales.
 const ESTADO = { active: 'activo', trialing: 'activo', past_due: 'impago', unpaid: 'impago', canceled: 'cancelado', incomplete_expired: 'cancelado', paused: 'pausado' };
+// ¿Es el primer cobro de verdad de esta suscripción? (la factura de 0 € de la prueba no cuenta)
+async function primerCobro(inv) {
+  const sub = inv.subscription || inv.parent?.subscription_details?.subscription; if (!sub) return true;
+  const l = await stripe(`invoices?subscription=${encodeURIComponent(sub)}&status=paid&limit=5`).catch(() => null);
+  return !l || (l.data || []).filter((x) => x.amount_paid > 0).length <= 1;
+}
 async function webhook(req, res) {
   if (req.method !== 'POST' || !configurado()) return json(res, 200, { ok: false });
   const idEv = String(cuerpo(req).id || '');
@@ -80,10 +86,31 @@ async function webhook(req, res) {
     if (ev.type === 'customer.subscription.updated' && o.metadata?.app === 'oficina-saas') {
       await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.id)}`, { metodo: 'PATCH', cuerpo: { cancela_el: o.cancel_at_period_end || o.cancel_at ? new Date((o.cancel_at || o.current_period_end || o.items?.data?.[0]?.current_period_end) * 1000).toISOString() : null } });
     }
-    if (ev.type === 'invoice.paid') await facturaDesdeStripe(o);
+    if (ev.type === 'invoice.paid') {
+      if (hayHolded()) await facturaDesdeStripe(o);
+      else if ((o.amount_paid || 0) > 0) { // sin Holded: el correo de gracias con el recibo de Stripe
+        const neg = await uno(`of_negocios?stripe_customer=eq.${encodeURIComponent(o.customer)}&select=nombre,owner_email&order=created_at.desc&limit=1`);
+        await correoPago({ email: o.customer_email || neg?.owner_email, nombre: neg?.nombre, importe: o.amount_paid / 100, numero: o.number, primero: await primerCobro(o), urlFactura: o.hosted_invoice_url });
+      }
+    }
     if (ev.type === 'invoice.payment_failed' && o.subscription) await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.subscription)}`, { metodo: 'PATCH', cuerpo: { estado: 'impago' } });
     return json(res, 200, { ok: true });
   } catch (e) { console.error('[webhook]', e.message); return json(res, 500, {}); }
+}
+
+// Registro con correo y contraseña (antes de pagar), para quien no usa Google.
+const RITMO_REG = new Map();
+async function registro(req, res) {
+  if (req.method !== 'POST' || !hayBase()) return json(res, 405, {});
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'x'; const ahora = Date.now();
+  const r = (RITMO_REG.get(ip) || []).filter((t) => ahora - t < 10 * 60e3); if (r.length >= 10) return json(res, 429, { error: 'Demasiados intentos. Espera unos minutos.' });
+  r.push(ahora); RITMO_REG.set(ip, r);
+  const { email, password } = cuerpo(req); const mail = String(email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return json(res, 400, { error: 'Revisa tu correo.' });
+  if (String(password || '').length < 8) return json(res, 400, { error: 'La contraseña debe tener al menos 8 caracteres.' });
+  const st = await crearCuenta(mail, String(password));
+  if (st === 'error') return json(res, 502, { error: 'No hemos podido crear tu cuenta. Inténtalo otra vez.' });
+  return json(res, st === 'existe' ? 409 : 200, { estado: st });
 }
 
 // Pedir enlace de acceso: solo se envía si existe una oficina con ese correo (la respuesta es la misma en ambos casos).
@@ -849,7 +876,7 @@ const RITMO_DEMO = new Map();
 async function demoVoz(req, res) {
   if (req.method !== 'POST') return json(res, 405, {});
   const org = String(req.headers.origin || req.headers.referer || '');
-  if (org && !/^https:\/\/(www\.)?agutidesigns\.io|^http:\/\/localhost/.test(org)) return json(res, 403, {});
+  if (org && !/^https:\/\/((www|panel)\.)?agutidesigns\.io|^http:\/\/localhost/.test(org)) return json(res, 403, {});
   const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'x'; const ahora = Date.now();
   const r = (RITMO_DEMO.get(ip) || []).filter((t) => ahora - t < 10 * 60e3); if (r.length >= 60) return json(res, 429, { error: 'Demasiadas pruebas seguidas. Espera unos minutos.' });
   r.push(ahora); RITMO_DEMO.set(ip, r);
@@ -880,7 +907,7 @@ ${String(contexto || '').slice(0, 9000)}`;
   return json(res, 400, {});
 }
 
-const PUBLICAS = { checkout, alta, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada, 'demo-voz': demoVoz };
+const PUBLICAS = { checkout, alta, registro, webhook, chat, whatsapp, oauth, cron, acceso, 'crm-entrada': crmEntrada, 'demo-voz': demoVoz };
 const PRIVADAS = { portal, plan, conectar, desconectar, ayuda, responder, conversacion, tarea, web, cancelar, reactivar, pausar, anual, preferencias, cita, lead, factura, encargo, equipo, video, competencia, informe, bolsa, crm, saber, llamada };
 
 export default async function handler(req, res) {

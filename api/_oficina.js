@@ -105,6 +105,43 @@ async function authAdmin(ruta, cuerpo) {
   const r = await fetch(`${sbUrl()}/auth/v1/admin/${ruta}`, { method: 'POST', headers: { apikey: sbKey(), Authorization: `Bearer ${sbKey()}`, 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
   return { ok: r.ok, status: r.status, datos: await r.json().catch(() => ({})) };
 }
+// Alta de una cuenta con correo y contraseña (para quien no entra con Google). 422 = ya existe.
+export async function crearCuenta(email, password) {
+  const r = await authAdmin('users', { email: String(email).trim().toLowerCase(), password, email_confirm: true });
+  return r.ok ? 'creada' : r.status === 422 || /already|registered|exists/i.test(JSON.stringify(r.datos)) ? 'existe' : 'error';
+}
+
+// Correo cuando se cobra de verdad (no en la prueba gratis): gracias, botón al panel y la factura.
+export async function correoPago({ email, nombre, importe, numero, primero, pdf, urlFactura }) {
+  if (!process.env.RESEND_API_KEY || !email) return false;
+  const panel = PANEL_URL;
+  const eur = (n) => `${Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+  const titulo = primero ? '¡Bienvenido a tu Oficina de IA!' : '¡Gracias por tu pago!';
+  const intro = primero
+    ? `Gracias por confiar en Agutidesigns. ${nombre ? `La oficina de <b>${nombre}</b>` : 'Tu oficina'} ya está en marcha con el cupo completo de cada departamento: tus agentes trabajan para ti cada día.`
+    : `Hemos recibido el pago de ${nombre ? `la oficina de <b>${nombre}</b>` : 'tu oficina de IA'}. Tus agentes siguen trabajando para ti, como siempre.`;
+  const { Resend } = await import('resend');
+  const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+    from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: email, reply_to: 'info@agutidesigns.io',
+    subject: primero ? `Bienvenido a tu Oficina de IA${nombre ? ` · ${nombre}` : ''}` : `Gracias por tu pago${numero ? ` · Factura ${numero}` : ''}`,
+    html: `<div style="background:#f4f5f8;padding:32px 12px"><div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:18px;padding:36px 28px;color:#0d1020">
+      <img src="${panel}/images/logoazul.png" alt="Agutidesigns" height="28" style="height:28px">
+      <h1 style="font-size:24px;line-height:1.2;margin:28px 0 10px">${titulo}</h1>
+      <p style="color:#3b3f52;line-height:1.6;margin:0 0 22px">${intro}</p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 24px;background:#f7f8fb;border-radius:12px"><tr>
+        <td style="padding:14px 16px;color:#6c7086;font-size:14px">Importe cobrado</td><td style="padding:14px 16px;text-align:right;font-weight:700">${eur(importe)}</td></tr>
+        ${numero ? `<tr><td style="padding:0 16px 14px;color:#6c7086;font-size:14px">Factura</td><td style="padding:0 16px 14px;text-align:right;font-weight:600">${numero}</td></tr>` : ''}</table>
+      <a href="${panel}" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:12px">Entrar en mi oficina</a>
+      ${urlFactura ? `<p style="margin:16px 0 0"><a href="${urlFactura}" style="color:#0047ff;font-weight:600">Ver el recibo del pago</a></p>` : ''}
+      <p style="color:#6c7086;font-size:13px;line-height:1.55;margin:28px 0 0">${pdf ? 'Te adjuntamos la factura en PDF. ' : ''}También tienes todas tus facturas en tu panel, en Plan y facturas. ¿Alguna duda? Responde a este correo y te ayudamos.</p>
+    </div></div>`,
+    text: `${titulo}\n\nImporte cobrado: ${eur(importe)}${numero ? `\nFactura: ${numero}` : ''}\n\nEntra en tu oficina: ${panel}${urlFactura ? `\nRecibo: ${urlFactura}` : ''}`,
+    ...(pdf ? { attachments: [{ filename: `Factura ${numero || ''}.pdf`.replace(' .pdf', '.pdf'), content: pdf }] } : {}),
+  });
+  if (error) { console.error('[pago] correo', error.message); return false; }
+  return true;
+}
+
 export async function enviarAcceso(email, base, nombre) { // base = dirección del panel (panelBase)
   const mail = String(email || '').trim().toLowerCase();
   await authAdmin('users', { email: mail, email_confirm: true }); // si ya existe, Supabase responde 422 y seguimos
@@ -154,7 +191,8 @@ export async function altaDesdeSesion(s, base) {
     await actividad(neg.id, ids[0], 'Tu oficina de IA está creada. Cuéntale a tus agentes cómo es tu negocio y conecta tus herramientas para que empiecen a trabajar.', 'sistema');
     if (prueba) await actividad(neg.id, ids[0], `Tienes ${DIAS_PRUEBA} días de prueba gratis, hasta el ${new Date(prueba).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}. Durante la prueba cada departamento tiene el 25 % de su cupo. No se te cobra nada hasta ese día y puedes cancelar cuando quieras.`, 'sistema');
     if (web) await actividad(neg.id, ids[0], 'Tu plan anual incluye el diseño o rediseño de tu web. Cuéntanos qué necesitas desde Ajustes → Tu web y nos ponemos con ella.', 'sistema');
-    await enviarAcceso(email, base, neg.nombre);
+    // La cuenta ya existe (Google o correo y contraseña): no se manda correo en la prueba gratis.
+    void base;
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import('resend');
       await new Resend(process.env.RESEND_API_KEY).emails.send({

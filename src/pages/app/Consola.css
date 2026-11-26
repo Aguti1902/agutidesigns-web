@@ -925,3 +925,7 @@
 .con-demo .snx-lado { top: 37px; height: calc(100vh - 37px); }
 @media (max-width: 600px) { .snx-3d .oc-lienzo { border-radius: 22px !important; } }
 .snx-pag__p > * { min-width: 0; } .snx-pag, .snx-pag__b { min-width: 0; }
+.acceso__alt { display: block; margin: 12px auto 0; font-size: .88rem; }
+.pf__clave { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pf__clave input { flex: 1; min-width: 180px; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--linea); background: var(--carta); color: var(--tinta); font: inherit; }
+.pf__clave small { width: 100%; color: var(--muted); }

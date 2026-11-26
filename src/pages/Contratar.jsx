@@ -36,7 +36,7 @@ export default function Contratar() {
   const [plan, setPlan] = useState(guardado?.plan || (qs.get('plan') === 'anio' ? 'anio' : 'mes'));
   const [paso, setPaso] = useState(guardado ? 3 : 1);
   const [pack, setPack] = useState('');
-  const [nombre, setNombre] = useState(guardado?.nombre || ''); const [email, setEmail] = useState(''); const [acepto, setAcepto] = useState(!!guardado?.acepto);
+  const [nombre, setNombre] = useState(guardado?.nombre || ''); const [email, setEmail] = useState(''); const [clave, setClave] = useState(''); const [acepto, setAcepto] = useState(!!guardado?.acepto);
   const [cuenta, setCuenta] = useState(null); // sesión de Google, si te has registrado con Google
   useEffect(() => {
     try { sessionStorage.removeItem(CLAVE_REGISTRO); } catch { /* sin almacenamiento */ }
@@ -64,6 +64,15 @@ export default function Contratar() {
     if (!acepto) return setEstado({ cargando: false, error: 'Acepta las condiciones para continuar.' });
     setEstado({ cargando: true, error: '' });
     try {
+      // Sin Google: se crea la cuenta con correo y contraseña y se entra ya, antes de pagar.
+      if (!cuenta) {
+        const r0 = await fetch('/api/oficina/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: clave }) });
+        const j0 = await r0.json().catch(() => ({}));
+        if (!r0.ok && r0.status !== 409) throw new Error(j0.error || 'No hemos podido crear tu cuenta.');
+        const { data: ses, error: e0 } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: clave });
+        if (e0 || !ses?.session) throw new Error(r0.status === 409 ? 'Ese correo ya tiene cuenta. Pon su contraseña o entra con Google.' : 'No hemos podido entrar en tu cuenta. Inténtalo otra vez.');
+        setCuenta(ses.session.user);
+      }
       eventoPixel('InitiateCheckout', { content_name: 'Oficina de IA', num_items: sel.length });
       const embebido = !!CLAVE_STRIPE;
       const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email, periodo: plan, embebido }) });
@@ -162,7 +171,8 @@ export default function Contratar() {
                 ) : (<>
                   <BotonGoogle texto="Continuar con Google" antes={recordar} />
                   <p className="bg-o">o con tu correo</p>
-                  <label className="ct-campo"><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegan el acceso a tu panel y las facturas.</small></label>
+                  <label className="ct-campo"><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegan las facturas.</small></label>
+                  <label className="ct-campo"><span>Crea una contraseña</span><input required type="password" minLength={8} value={clave} onChange={(e) => setClave(e.target.value)} placeholder="Mínimo 8 caracteres" autoComplete="new-password" /><small>Con tu correo y esta contraseña entrarás en tu panel.</small></label>
                 </>)}
               </section>
 
