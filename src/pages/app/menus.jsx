@@ -6,6 +6,7 @@ import {
   Monitor, Moon, PlayCircle, Plug, Receipt, Search, Settings, Sun, User, X,
 } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
+import { urlWeb } from '../../lib/panelRuta';
 
 // ---------- tema (claro, oscuro o el del sistema) ----------
 const CLAVE_TEMA = 'oficina-tema';
@@ -100,7 +101,7 @@ export function MenuUsuario({ o, abrirPerfil, ir }) {
         <Item I={BellRing} t="Avisos y notificaciones" onClick={() => { setAb(false); ir('ajustes'); }} />
         <hr />
         {!o.demo && <Item I={LogOut} t="Cerrar sesión" onClick={() => supabase.auth.signOut()} />}
-        {o.demo && <Item I={LogOut} t="Salir de la demo" onClick={() => { window.location.href = '/oficina-ia'; }} />}
+        {o.demo && <Item I={LogOut} t="Salir de la demo" onClick={() => { window.location.href = urlWeb('/oficina-ia'); }} />}
       </Flota>
     </div>
   );

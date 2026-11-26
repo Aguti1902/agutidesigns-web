@@ -1,13 +1,17 @@
 // Compra de la Oficina de IA en 3 pasos (/oficina-ia/contratar): equipo → forma de pago → datos, con el pedido
 // siempre a la vista (base, IVA y lo que se paga hoy). Acepta ?deptos=a,b&plan=anio para llegar preseleccionado.
 import { eventoPixel } from '../utils/metaPixel';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../lib/oficinaSupabase';
+import BotonGoogle from '../components/ui/BotonGoogle';
+import { urlWeb } from '../lib/panelRuta';
 import { ArrowLeft, ArrowRight, Check, Gift, Globe, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { MessageCircle, Headphones, CalendarCheck, Handshake, Megaphone, Star, PenLine } from 'lucide-react';
 import useSeo from '../hooks/useSeo';
 import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_PRUEBA, WEB_DESDE, webIncluida, impuestos, IVA, IRPF } from '../data/oficinaSaas';
 import './Contratar.css';
 
+const CLAVE_REGISTRO = 'oficina-registro';
 const ICONO = { atencion: Headphones, citas: CalendarCheck, ventas: Handshake, redes: Megaphone, google: Star, contenido: PenLine };
 const eur = (n) => `${n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })} €`;
 const PACKS = [
@@ -22,11 +26,21 @@ const PACKS = [
 export default function Contratar() {
   useSeo({ title: 'Monta tu oficina de IA | Agutidesigns', description: `Elige los departamentos de tu oficina de IA y empieza hoy. ${DIAS_PRUEBA} días gratis en el plan mensual.`, path: '/oficina-ia/contratar' });
   const qs = new URLSearchParams(window.location.search);
-  const [sel, setSel] = useState(() => { const d = (qs.get('deptos') || '').split(',').filter((x) => DEPTO[x]); return d.length ? d : ['atencion', 'google']; });
-  const [plan, setPlan] = useState(qs.get('plan') === 'anio' ? 'anio' : 'mes');
-  const [paso, setPaso] = useState(1);
+  // Lo elegido se guarda antes de ir a Google, para seguir donde estabas al volver.
+  const guardado = (() => { try { return JSON.parse(sessionStorage.getItem(CLAVE_REGISTRO) || 'null'); } catch { return null; } })();
+  const [sel, setSel] = useState(() => { if (guardado?.sel?.length) return guardado.sel; const d = (qs.get('deptos') || '').split(',').filter((x) => DEPTO[x]); return d.length ? d : ['atencion', 'google']; });
+  const [plan, setPlan] = useState(guardado?.plan || (qs.get('plan') === 'anio' ? 'anio' : 'mes'));
+  const [paso, setPaso] = useState(guardado ? 3 : 1);
   const [pack, setPack] = useState('');
-  const [nombre, setNombre] = useState(''); const [email, setEmail] = useState(''); const [acepto, setAcepto] = useState(false);
+  const [nombre, setNombre] = useState(guardado?.nombre || ''); const [email, setEmail] = useState(''); const [acepto, setAcepto] = useState(!!guardado?.acepto);
+  const [cuenta, setCuenta] = useState(null); // sesión de Google, si te has registrado con Google
+  useEffect(() => {
+    try { sessionStorage.removeItem(CLAVE_REGISTRO); } catch { /* sin almacenamiento */ }
+    supabase.auth.getSession().then(({ data }) => { const u = data.session?.user; if (u?.email) { setCuenta(u); setEmail(u.email); } });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, ses) => { const u = ses?.user; setCuenta(u?.email ? u : null); if (u?.email) setEmail(u.email); });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+  const recordar = () => { try { sessionStorage.setItem(CLAVE_REGISTRO, JSON.stringify({ sel, plan, nombre, acepto })); } catch { /* sin almacenamiento */ } };
   const [estado, setEstado] = useState({ cargando: false, error: '' });
   const n = sel.length; const anual = plan === 'anio';
   const base = anual ? precioAnual(n) : precioOficina(n);
@@ -55,7 +69,7 @@ export default function Contratar() {
   return (
     <div className="ct">
       <header className="ct-top">
-        <a href="/oficina-ia" className="ct-volver"><ArrowLeft size={16} /> Oficina de IA</a>
+        <a href={urlWeb('/oficina-ia')} className="ct-volver"><ArrowLeft size={16} /> Oficina de IA</a>
         <img src="/images/logoazul.png" alt="Agutidesigns" width="130" height="36" />
         <span className="ct-seguro"><Lock size={14} /> Pago seguro</span>
       </header>
@@ -113,11 +127,13 @@ export default function Contratar() {
           {paso === 3 && (
             <form onSubmit={pagar}>
               <h1>Ya casi está</h1>
-              <p className="ct-lead">Con estos datos creamos tu oficina. En el siguiente paso pagas con tarjeta en Stripe, donde pones el NIF y los datos fiscales de tu empresa para la factura.</p>
+              <p className="ct-lead">{anual ? 'Con estos datos creamos tu oficina. En el siguiente paso pagas con tarjeta en Stripe, donde pones el NIF y los datos fiscales de tu empresa para la factura.' : `Con estos datos creamos tu oficina. En el siguiente paso pones tu tarjeta en Stripe: no se cobra nada hasta que acaben tus ${DIAS_PRUEBA} días gratis, y puedes cancelar antes.`}</p>
               <div className="ct-form">
+                {cuenta ? <p className="ct-cuenta"><Check size={16} /> <span>Te registras con <b>{cuenta.email}</b></span> <button type="button" onClick={() => supabase.auth.signOut().then(() => { setCuenta(null); setEmail(''); })}>Usar otro correo</button></p>
+                  : <><BotonGoogle texto="Registrarme con Google" antes={recordar} /><p className="bg-o">o con tu correo</p></>}
                 <label><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /></label>
-                <label><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegará el acceso a tu panel y las facturas.</small></label>
-                <label className="ct-check"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las condiciones del servicio y la <a href="/privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+                {!cuenta && <label><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegará el acceso a tu panel y las facturas.</small></label>}
+                <label className="ct-check"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las <a href={urlWeb('/condiciones')} target="_blank" rel="noopener">condiciones del servicio</a> y la <a href={urlWeb('/privacidad')} target="_blank" rel="noopener">política de privacidad</a>.</span></label>
               </div>
               {estado.error && <p className="ct-error" role="alert">{estado.error}</p>}
               <div className="ct-nav"><button type="button" className="ct-btn ct-btn--sec" onClick={() => setPaso(2)}><ArrowLeft size={17} /> Atrás</button>

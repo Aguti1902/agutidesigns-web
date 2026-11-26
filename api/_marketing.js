@@ -288,7 +288,7 @@ export async function enviarInforme(neg, periodo = 'semanal', para) {
     <div style="padding:16px 26px"><h2 style="font-size:15px;margin:10px 0 8px">Por departamento</h2><table style="width:100%;border-collapse:collapse;font-size:14px">${filas}</table>
     <h2 style="font-size:15px;margin:22px 0 10px">Lo más destacado</h2><ul style="padding-left:18px;margin:0;font-size:14px;line-height:1.5">${destacados}</ul>
     ${pend ? `<p style="margin:20px 0 0;padding:12px 14px;background:#fff5e6;border-radius:10px;color:#8a4b00;font-size:14px">Tienes <b>${pend}</b> ${pend === 1 ? 'cosa' : 'cosas'} esperándote en «Te necesitan».</p>` : ''}
-    <p style="margin:24px 0 8px"><a href="https://agutidesigns.io/app" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a></p></div>
+    <p style="margin:24px 0 8px"><a href="https://panel.agutidesigns.io" style="display:inline-block;background:#0047ff;color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px">Abrir mi oficina</a></p></div>
     <div style="padding:16px 26px 22px;color:#9a9db0;font-size:12px">Puedes cambiar cada cuánto recibes este informe en tu panel, en Informes.</div></div></div>`;
   const { Resend } = await import('resend');
   await new Resend(process.env.RESEND_API_KEY).emails.send({ from: 'Oficina de IA · Agutidesigns <info@agutidesigns.io>', to: para || neg.preferencias?.email_avisos || neg.owner_email,

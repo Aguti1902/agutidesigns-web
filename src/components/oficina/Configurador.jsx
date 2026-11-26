@@ -1,5 +1,6 @@
 // Configurador de la Oficina de IA (modo SaaS): el negocio elige sus departamentos, ve el precio al momento
 // y paga la suscripción mensual en Stripe. Sin puesta en marcha ni permanencia.
+import { urlPanel, urlRegistro } from '../../lib/panelRuta';
 import { useMemo, useState } from 'react';
 import { ArrowRight, Check, Gift, Globe, Lock } from 'lucide-react';
 import { DEPARTAMENTOS, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_PRUEBA, WEB_DESDE, webIncluida } from '../../data/oficinaSaas';
@@ -18,7 +19,7 @@ export default function Configurador() {
   const elegidos = useMemo(() => DEPARTAMENTOS.filter((d) => sel.includes(d.id)), [sel]);
   const toggle = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  const destino = `/oficina-ia/contratar?deptos=${sel.join(',')}&plan=${periodo}`;
+  const destino = urlRegistro(`?deptos=${sel.join(',')}&plan=${periodo}`);
   function seguir(e) {
     e.preventDefault();
     if (n) window.location.assign(destino);
@@ -69,7 +70,7 @@ export default function Configurador() {
             </div>
             <button className="ag-btn ag-btn--primary cf-pagar" disabled={!n}>{anual ? 'Continuar con el plan anual' : `Empezar ${DIAS_PRUEBA} días gratis`} <ArrowRight size={18} /></button>
             <p className="cf-nota"><Lock size={13} /> {anual ? 'Pago seguro con Stripe. Un solo pago al año. Precios + IVA.' : 'Hoy no pagas nada. Sin permanencia. Precios + IVA.'}</p>
-            <a className="cf-demo" href="/app?demo=1">Ver cómo es el panel por dentro <ArrowRight size={14} /></a>
+            <a className="cf-demo" href={urlPanel("", "?demo=1")}>Ver cómo es el panel por dentro <ArrowRight size={14} /></a>
           </form>
         </div>
         <p className="cf-pie">Cada departamento trae su cupo mensual. Al llegar al 80 % te avisamos, y si se acaba el agente solo te pasa los avisos importantes hasta que amplíes o empiece el mes siguiente. Nunca pagas de más sin saberlo.</p>

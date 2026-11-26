@@ -3,11 +3,14 @@ import { useEffect, useState } from 'react';
 import { Check, Mail } from 'lucide-react';
 import useSeo from '../../hooks/useSeo';
 import { eventoPixel } from '../../utils/metaPixel';
+import { supabase } from '../../lib/oficinaSupabase';
+import { rutaPanel } from '../../lib/panelRuta';
 import './Panel.css';
 
 export default function Bienvenida() {
   useSeo({ title: 'Tu oficina de IA está lista | Agutidesigns', description: 'Alta completada.', path: '/app/bienvenida', noindex: true });
-  const [st, setSt] = useState({ fase: 'cargando' });
+  const [st, setSt] = useState({ fase: 'cargando' }); const [yo, setYo] = useState('');
+  useEffect(() => { supabase.auth.getSession().then(({ data }) => setYo(data.session?.user?.email?.toLowerCase() || '')); }, []);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('session_id');
     if (!id) { setSt({ fase: 'error', msg: 'Falta la referencia del pago.' }); return; }
@@ -29,9 +32,11 @@ export default function Bienvenida() {
         {st.fase === 'ok' && (<>
           <p className="muted">Pago completado</p>
           <h1>¡{st.nombre} ya tiene oficina de IA!</h1>
-          <p className="acceso__ok"><Mail size={18} /> Te hemos enviado un enlace a <b>{st.email}</b>. Ábrelo para entrar en tu panel.</p>
+          {yo && yo === String(st.email || '').toLowerCase()
+            ? <a className="btn btn--pri btn--ancho" href={rutaPanel('')}>Entrar en mi panel</a>
+            : <p className="acceso__ok"><Mail size={18} /> Te hemos enviado un enlace a <b>{st.email}</b>. Ábrelo para entrar en tu panel.</p>}
           <ul className="acceso__lista">
-            <li><Check size={15} /> Entra en tu panel con el enlace del correo</li>
+            {!(yo && yo === String(st.email || '').toLowerCase()) && <li><Check size={15} /> Entra en tu panel con el enlace del correo</li>}
             <li><Check size={15} /> Cuéntales a tus agentes cómo es tu negocio (3 minutos)</li>
             <li><Check size={15} /> Conecta tus cuentas y mira a tus agentes trabajar</li>
             <li><Check size={15} /> Si has elegido el plan mensual, tienes 7 días gratis: no se te cobra nada hasta el día 8</li>

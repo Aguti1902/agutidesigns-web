@@ -61,6 +61,21 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "panel.agutidesigns.io"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     }
   ],
   "functions": {
@@ -72,6 +87,74 @@
     {
       "path": "/api/oficina/cron",
       "schedule": "0 7 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/app",
+      "has": [
+        {
+          "type": "host",
+          "value": "agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/",
+      "permanent": false
+    },
+    {
+      "source": "/app/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/oficina-ia/contratar",
+      "has": [
+        {
+          "type": "host",
+          "value": "agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/registro",
+      "permanent": false
+    },
+    {
+      "source": "/app",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/",
+      "permanent": false
+    },
+    {
+      "source": "/app/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/oficina-ia/contratar",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.agutidesigns.io"
+        }
+      ],
+      "destination": "https://panel.agutidesigns.io/registro",
+      "permanent": false
     }
   ]
 }

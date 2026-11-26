@@ -73,3 +73,5 @@
 @media (max-width: 960px) { .ct-main { grid-template-columns: minmax(0, 1fr); } .ct-pedido { position: static; order: -1; } }
 @media (max-width: 640px) { .ct-deps, .ct-planes { grid-template-columns: minmax(0, 1fr); } .ct-top { grid-template-columns: auto 1fr; } .ct-top img { display: none; } .ct-pasos li + li::before { width: 14px; } .ct-pasos button { font-size: .82rem; } }
 @media (prefers-reduced-motion: reduce) { .ct * { transition: none !important; } }
+.ct-cuenta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; padding: 12px 14px; border-radius: 12px; background: #eef8f1; color: #14532d; }
+.ct-cuenta button { margin-left: auto; border: 0; background: none; color: #0047ff; font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }

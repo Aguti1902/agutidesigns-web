@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Activity, BarChart3, Database, Bell, BookOpen, Box, CalendarCheck, CalendarPlus, Clapperboard, CreditCard, FolderOpen, Handshake, Home, Inbox, LayoutGrid, LogOut, Mail, Megaphone, Menu, MessageCircle, MessagesSquare, PenLine, Plug, Plus, Receipt, Search, Settings, Star, TrendingUp, X, LifeBuoy } from 'lucide-react';
 import { supabase } from '../../lib/oficinaSupabase';
+import { rutaPanel, urlRegistro, urlWeb } from '../../lib/panelRuta';
+import BotonGoogle from '../../components/ui/BotonGoogle';
 import useSeo from '../../hooks/useSeo';
 import { DEPTO } from '../../data/oficinaSaas';
 import { useOficina, estadisticas, pendiente } from './datos';
@@ -118,18 +120,20 @@ function Entrar() {
   }
   return (
     <main className="acceso">
-      <a href="/" className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
+      <a href={urlWeb("/")} className="acceso__logo"><img src="/images/logoazul.png" alt="Agutidesigns" width="132" height="36" /></a>
       <div className="acceso__c">
         <h1>Entra en tu oficina</h1>
         {st === 'enviado' ? <p className="acceso__ok"><Mail size={18} /><span>Si <b>{email}</b> tiene una oficina, te acabamos de enviar el enlace para entrar. Mira también en spam.</span></p> : (
           <form onSubmit={enviar}>
+            <BotonGoogle texto="Entrar con Google" vuelta={`${window.location.origin}${rutaPanel('')}`} />
+            <p className="bg-o">o con un enlace a tu correo</p>
             <p className="muted">Te mandamos un enlace a tu correo. Sin contraseñas.</p>
             <label className="campo"><span>Tu correo</span><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" placeholder="tu@negocio.com" /></label>
             <button className="btn btn--pri btn--ancho" disabled={st === 'enviando'}>{st === 'enviando' ? 'Enviando…' : 'Enviarme el enlace'}</button>
             {err && <p className="error">{err}</p>}
           </form>
         )}
-        <p className="acceso__pie">¿Aún no tienes oficina? <a href="/oficina-ia#precios">Móntala</a> · <a href="/app?demo=1">Ver la demo</a></p>
+        <p className="acceso__pie">¿Aún no tienes oficina? <a href={urlRegistro()}>Móntala</a> · <a href={`${rutaPanel('')}?demo=1`}>Ver la demo</a></p>
       </div>
     </main>
   );
@@ -147,13 +151,13 @@ const SIM = [
 
 // /app/entrar?t=… : valida el enlace del correo y abre el panel.
 function useEnlaceAcceso() {
-  const [st, setSt] = useState(() => (window.location.pathname === '/app/entrar' ? 'validando' : ''));
+  const [st, setSt] = useState(() => (window.location.pathname === rutaPanel('entrar') ? 'validando' : ''));
   useEffect(() => {
     if (st !== 'validando') return;
     const t = new URLSearchParams(window.location.search).get('t');
     if (!t) { setSt('error'); return; } // eslint-disable-line react-hooks/set-state-in-effect
     supabase.auth.verifyOtp({ token_hash: t, type: 'magiclink' }).then(({ error }) => {
-      if (error) setSt('error'); else { window.history.replaceState(null, '', '/app'); setSt(''); }
+      if (error) setSt('error'); else { window.history.replaceState(null, '', rutaPanel('')); setSt(''); }
     });
   }, [st]);
   return st;
@@ -170,7 +174,7 @@ export default function Panel() {
   const [tutoAbierto, setTutoAbierto] = useState(() => qs.has('tutorial'));
   const tema = useTema(); const vistaPanel = useVistaPanel(); const [perfil, setPerfil] = useState(false);
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 15000); return () => clearInterval(t); }, []);
-  const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`/app/${id}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
+  const ir = (id, abrir, filtro) => { setExtra({ abrir, filtro }); setMenu(false); nav(`${rutaPanel(id)}${demo ? '?demo=1' : ''}`); if (filtro === 'probar' || filtro === 'web') setTimeout(() => document.getElementById(filtro)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); };
   useSeo({ title: demo ? 'Demo · Oficina de IA | Agutidesigns' : 'Tu oficina de IA | Agutidesigns', description: 'Panel de tu oficina de IA.', path: '/app', noindex: true });
   const [estado, setEstado] = useOficina(demo);
   const deptoIds = useMemo(() => estado.deptos.map((d) => d.depto), [estado.deptos]);
@@ -193,14 +197,14 @@ export default function Panel() {
 
   const { cargando, sesion, negocio } = estado;
   if (accesoSt === 'validando' || cargando) return <main className="acceso"><span className="spin" /></main>;
-  if (accesoSt === 'error') return <main className="acceso"><div className="acceso__c"><h1>Este enlace ya no vale</h1><p className="muted">Los enlaces caducan en una hora y solo sirven una vez. Pide uno nuevo y entras en un momento.</p><a className="btn btn--pri" href="/app">Pedir un enlace nuevo</a></div></main>;
+  if (accesoSt === 'error') return <main className="acceso"><div className="acceso__c"><h1>Este enlace ya no vale</h1><p className="muted">Los enlaces caducan en una hora y solo sirven una vez. Pide uno nuevo y entras en un momento.</p><a className="btn btn--pri" href={rutaPanel("")}>Pedir un enlace nuevo</a></div></main>;
   if (!demo && !sesion) return <Entrar />;
   if (!demo && !negocio) {
     return (
       <main className="acceso"><div className="acceso__c">
         <h1>No encontramos tu oficina</h1>
         <p className="muted">Has entrado con <b>{sesion.user.email}</b>, pero no hay ninguna oficina con ese correo. Si la contrataste con otro, sal y entra con ese.</p>
-        <div className="fila-btn"><a className="btn btn--pri" href="/oficina-ia#precios">Montar mi oficina</a><button className="btn btn--sec" onClick={() => supabase.auth.signOut()}>Salir</button></div>
+        <div className="fila-btn"><a className="btn btn--pri" href={urlRegistro()}>Montar mi oficina</a><button className="btn btn--sec" onClick={() => supabase.auth.signOut()}>Salir</button></div>
       </div></main>
     );
   }
@@ -237,7 +241,7 @@ export default function Panel() {
   if (vistaPanel.sencilla && vistaReal === 'inicio') {
     return (
       <div className={`app app--pro app--facil ${demo ? 'con-demo' : ''} ${tema.clase}`}>
-        {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
+        {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href={urlWeb("/oficina-ia#precios")}>Monta la tuya →</a></div>}
         <Sencilla o={o} vista={vistaPanel} tema={tema} banners={banners} abrirPerfil={() => setPerfil(true)} />
         {perfilModal}{tutoModal}
       </div>
@@ -245,9 +249,9 @@ export default function Panel() {
   }
   return (
     <div className={`app app--pro ${tema.clase} ${menu ? 'menu-on' : ''}`}>
-      {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href="/oficina-ia#precios">Monta la tuya →</a></div>}
+      {demo && <div className="demo-b">Estás viendo una demo con un negocio de ejemplo. <a href={urlWeb("/oficina-ia#precios")}>Monta la tuya →</a></div>}
       <aside className="lado">
-        <div className="lado__top"><a href="/" className="lado__logo"><img src={tema.oscuro ? '/images/logo-blanco.png' : '/images/logoazul.png'} alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
+        <div className="lado__top"><a href={rutaPanel("")} className="lado__logo"><img src={tema.oscuro ? '/images/logo-blanco.png' : '/images/logoazul.png'} alt="Agutidesigns" width="118" height="32" /></a><span className="lado__tag">Oficina IA</span><button className="ico lado__x" onClick={() => setMenu(false)} aria-label="Cerrar menú"><X size={20} /></button></div>
         <MenuNegocio o={o} ir={ir} faltan={faltanDatos} />
         <nav aria-label="Secciones">
           {GRUPOS.filter((g) => !g.oculto).map((g) => {

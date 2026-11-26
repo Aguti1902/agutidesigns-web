@@ -3,7 +3,7 @@
 // Con sesión del cliente: conectar, desconectar, portal, plan, responder, conversacion, tarea.
 import crypto from 'node:crypto';
 import {
-  stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, esUuid, actividad, estadoAgente,
+  stripe, sb, uno, configurado, hayBase, hayCifrado, limpiaDeptos, precioOficina, precioAnual, webIncluida, cupoDe, DIAS_PRUEBA, DEPTO, origen, panelBase, sitio, esUuid, actividad, estadoAgente,
   negocioDeSesion, altaDesdeSesion, enviarAcceso, cifrar, firmarEstado, leerEstado, PROVEEDORES, HERRAMIENTAS_OAUTH, tokenDe, consumo, sbUrl,
 } from '../_oficina.js';
 import { responderCliente, generar, llamarIA, leerJson } from '../_agente.js';
@@ -25,7 +25,6 @@ async function checkout(req, res) {
   if (!ids.length) return json(res, 400, { error: 'Elige al menos un departamento.' });
   if (!nom) return json(res, 400, { error: 'Falta el nombre de tu negocio.' });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return json(res, 400, { error: 'Revisa tu correo.' });
-  const base = origen(req);
   const datos = {
     mode: 'subscription', locale: 'es', customer_email: mail, billing_address_collection: 'required', 'tax_id_collection[enabled]': 'true', 'tax_id_collection[required]': 'if_supported',
     'line_items[0][quantity]': '1', 'line_items[0][price_data][currency]': 'eur',
@@ -37,7 +36,7 @@ async function checkout(req, res) {
     'subscription_data[metadata][app]': 'oficina-saas', 'subscription_data[metadata][deptos]': ids.join(','), 'subscription_data[metadata][periodo]': anual ? 'anio' : 'mes',
     'subscription_data[description]': ids.map((id) => DEPTO[id].nombre).join(' · '), payment_method_collection: 'always',
     ...(anual ? {} : { 'subscription_data[trial_period_days]': String(DIAS_PRUEBA), 'subscription_data[trial_settings][end_behavior][missing_payment_method]': 'cancel' }),
-    success_url: `${base}/app/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/oficina-ia#precios`,
+    success_url: `${panelBase(req)}/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${sitio(req)}/oficina-ia#precios`,
   };
   try {
     const s = await stripe('checkout/sessions', { metodo: 'POST', datos }); return json(res, 200, { url: s.url }); }
@@ -50,7 +49,7 @@ async function alta(req, res) {
   if (!/^cs_(live|test)_[A-Za-z0-9]+$/.test(id)) return json(res, 400, { error: 'Sesión no válida' });
   try {
     const s = await stripe(`checkout/sessions/${encodeURIComponent(id)}`);
-    const neg = await altaDesdeSesion(s, origen(req));
+    const neg = await altaDesdeSesion(s, panelBase(req));
     if (!neg) return json(res, 402, { error: 'El pago no está completado' });
     return json(res, 200, { email: neg.owner_email, nombre: neg.nombre });
   } catch (e) { console.error('[alta]', e.message); return json(res, 502, { error: 'No hemos podido terminar el alta. Escríbenos y lo revisamos.' }); }
@@ -64,7 +63,7 @@ async function webhook(req, res) {
   if (!/^evt_[A-Za-z0-9]+$/.test(idEv)) return json(res, 400, {});
   try {
     const ev = await stripe(`events/${idEv}`); const o = ev.data?.object || {};
-    if (ev.type === 'checkout.session.completed') await altaDesdeSesion(o, `https://${req.headers.host}`);
+    if (ev.type === 'checkout.session.completed') await altaDesdeSesion(o, panelBase(req));
     if (ev.type.startsWith('customer.subscription.') && o.metadata?.app === 'oficina-saas' && ESTADO[o.status]) {
       await sb(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.id)}`, { metodo: 'PATCH', cuerpo: { estado: o.pause_collection && o.status === 'active' ? 'pausado' : ESTADO[o.status] } });
       const neg = o.status === 'active' && !o.pause_collection && await uno(`of_negocios?stripe_subscription=eq.${encodeURIComponent(o.id)}&prueba_hasta=not.is.null&select=id`);
@@ -90,14 +89,14 @@ async function acceso(req, res) {
   const email = String(cuerpo(req).email || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(res, 400, { error: 'Revisa tu correo.' });
   const neg = await uno(`of_negocios?owner_email=eq.${encodeURIComponent(email)}&estado=neq.cancelado&select=nombre&order=created_at.desc&limit=1`);
-  if (neg) await enviarAcceso(email, origen(req), neg.nombre);
+  if (neg) await enviarAcceso(email, panelBase(req), neg.nombre);
   return json(res, 200, { ok: true });
 }
 
 // ---------------- cuenta del cliente ----------------
 async function portal(req, res, neg) {
   if (!neg.stripe_customer) return json(res, 404, { error: 'Sin suscripción' });
-  const p = await stripe('billing_portal/sessions', { metodo: 'POST', datos: { customer: neg.stripe_customer, return_url: `${origen(req)}/app/ajustes`,
+  const p = await stripe('billing_portal/sessions', { metodo: 'POST', datos: { customer: neg.stripe_customer, return_url: `${panelBase(req)}/ajustes`,
     configuration: process.env.STRIPE_OFICINA_PORTAL || 'bpc_1UfMQwFjBSJ299OpPt1ZdCAO' } });
   return json(res, 200, { url: p.url });
 }
@@ -313,7 +312,7 @@ async function conectar(req, res, neg) {
   const h = HERRAMIENTAS_OAUTH[herramienta]; const p = h && PROVEEDORES[h.p];
   if (!p) return json(res, 400, { error: 'Herramienta desconocida' });
   if (!p.id() || !p.secreto()) return json(res, 503, { error: 'Esta conexión automática se está activando. Pulsa «Pedir ayuda» y te la conectamos nosotros.', ayuda: true });
-  const q = new URLSearchParams({ [p.claveId || 'client_id']: p.id(), redirect_uri: `${origen(req)}/api/oficina/oauth`, response_type: 'code',
+  const q = new URLSearchParams({ [p.claveId || 'client_id']: p.id(), redirect_uri: `${sitio(req)}/api/oficina/oauth`, response_type: 'code',
     scope: h.scopes.join(p.sep || ' '), state: firmarEstado({ n: neg.id, h: herramienta }), ...(p.extra || {}) });
   return json(res, 200, { url: `${p.auth}?${q}` });
 }
@@ -352,14 +351,14 @@ async function cuentaWhatsapp(tok) {
 }
 
 async function oauth(req, res) {
-  const vuelta = (q) => { res.statusCode = 302; res.setHeader('Location', `${origen(req)}/app/conexiones?${q}`); res.end(); };
+  const vuelta = (q) => { res.statusCode = 302; res.setHeader('Location', `${panelBase(req)}/conexiones?${q}`); res.end(); };
   const st = leerEstado(req.query.state);
   if (!st || req.query.error || !req.query.code) return vuelta('error_conexion=1');
   const h = HERRAMIENTAS_OAUTH[st.h]; const p = h && PROVEEDORES[h.p];
   if (!p) return vuelta('error_conexion=1');
   try {
     const r = await fetch(p.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ [p.claveId || 'client_id']: p.id(), client_secret: p.secreto(), code: String(req.query.code), grant_type: 'authorization_code', redirect_uri: `${origen(req)}/api/oficina/oauth` }) });
+      body: new URLSearchParams({ [p.claveId || 'client_id']: p.id(), client_secret: p.secreto(), code: String(req.query.code), grant_type: 'authorization_code', redirect_uri: `${sitio(req)}/api/oficina/oauth` }) });
     const tok = await r.json();
     if (!r.ok || !tok.access_token) throw new Error(`token ${r.status}`);
     let extra = {};

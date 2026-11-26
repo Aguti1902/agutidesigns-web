@@ -29,7 +29,11 @@ const Casos = lazy(() => import('./pages/Casos.jsx'));
 const PanelOficina = lazy(() => import('./pages/app/Panel.jsx'));
 const ContratarOficina = lazy(() => import('./pages/Contratar.jsx'));
 const BienvenidaOficina = lazy(() => import('./pages/app/Bienvenida.jsx'));
+const Privacidad = lazy(() => import('./pages/Legal.jsx').then((m) => ({ default: m.Privacidad })));
+const Condiciones = lazy(() => import('./pages/Legal.jsx').then((m) => ({ default: m.Condiciones })));
+const AvisoLegal = lazy(() => import('./pages/Legal.jsx').then((m) => ({ default: m.AvisoLegal })));
 import { PixelMeta } from './utils/metaPixel';
+import { EN_PANEL } from './lib/panelRuta';
 import './index.css';
 import './styles/site.css';
 
@@ -40,6 +44,16 @@ createRoot(document.getElementById('root')).render(
         <Analytics />
         <PixelMeta />
         <Suspense fallback={<div className="ag" style={{ minHeight: '100vh' }} />}>
+        {EN_PANEL ? (
+        <Routes>
+          {/* panel.agutidesigns.io: el panel de los clientes, el registro y la vuelta del pago */}
+          <Route path="/registro" element={<ContratarOficina />} />
+          <Route path="/bienvenida" element={<BienvenidaOficina />} />
+          <Route path="/" element={<PanelOficina />} />
+          <Route path="/:vista" element={<PanelOficina />} />
+          <Route path="*" element={<PanelOficina />} />
+        </Routes>
+        ) : (
         <Routes>
           {/* Pública */}
           <Route path="/" element={<Home />} />
@@ -52,6 +66,9 @@ createRoot(document.getElementById('root')).render(
           <Route path="/app/:vista" element={<PanelOficina />} />
           <Route path="/clinicas-dentales/consulta" element={<ClinicasConsulta />} />
           <Route path="/casos" element={<Casos />} />
+          <Route path="/privacidad" element={<Privacidad />} />
+          <Route path="/condiciones" element={<Condiciones />} />
+          <Route path="/aviso-legal" element={<AvisoLegal />} />
           <Route path="/casos/spa-organic" element={<CasoSpaOrganic />} />
           <Route path="/casos/vela-segala" element={<CasoVelaSegala />} />
           <Route path="/kit-oficina-ia" element={<KitOficina />} />
@@ -85,6 +102,7 @@ createRoot(document.getElementById('root')).render(
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        )}
         </Suspense>
     </BrowserRouter>
   </StrictMode>,
