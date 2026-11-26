@@ -1,8 +1,9 @@
 // Compra de la Oficina de IA en 3 pasos (/oficina-ia/contratar): equipo → forma de pago → datos, con el pedido
 // siempre a la vista (base, IVA y lo que se paga hoy). Acepta ?deptos=a,b&plan=anio para llegar preseleccionado.
 import { eventoPixel } from '../utils/metaPixel';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/oficinaSupabase';
+import { loadStripe } from '@stripe/stripe-js';
 import BotonGoogle from '../components/ui/BotonGoogle';
 import { urlWeb } from '../lib/panelRuta';
 import { ArrowLeft, ArrowRight, Check, Gift, Globe, Lock, ShieldCheck, Sparkles } from 'lucide-react';
@@ -12,6 +13,9 @@ import { DEPARTAMENTOS, DEPTO, precioOficina, precioAnual, PRECIO_SUELTO, DIAS_P
 import './Contratar.css';
 
 const CLAVE_REGISTRO = 'oficina-registro';
+const CLAVE_STRIPE = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+let stripePromesa = null;
+const cargarStripe = () => (stripePromesa ||= loadStripe(CLAVE_STRIPE));
 const ICONO = { atencion: Headphones, citas: CalendarCheck, ventas: Handshake, redes: Megaphone, google: Star, contenido: PenLine };
 const eur = (n) => `${n.toLocaleString('es-ES', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })} €`;
 const PACKS = [
@@ -42,6 +46,8 @@ export default function Contratar() {
   }, []);
   const recordar = () => { try { sessionStorage.setItem(CLAVE_REGISTRO, JSON.stringify({ sel, plan, nombre, acepto })); } catch { /* sin almacenamiento */ } };
   const [estado, setEstado] = useState({ cargando: false, error: '' });
+  const [pagoEmb, setPagoEmb] = useState(false); const checkoutRef = useRef(null);
+  useEffect(() => () => checkoutRef.current?.destroy(), []);
   const n = sel.length; const anual = plan === 'anio';
   const base = anual ? precioAnual(n) : precioOficina(n);
   const listaMes = n * PRECIO_SUELTO; const lista = anual ? listaMes * 12 : listaMes;
@@ -59,10 +65,16 @@ export default function Contratar() {
     setEstado({ cargando: true, error: '' });
     try {
       eventoPixel('InitiateCheckout', { content_name: 'Oficina de IA', num_items: sel.length });
-      const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email, periodo: plan }) });
+      const embebido = !!CLAVE_STRIPE;
+      const r = await fetch('/api/oficina/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deptos: sel, nombre, email, periodo: plan, embebido }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.url) throw new Error(j.error || 'No hemos podido abrir el pago.');
-      window.location.assign(j.url);
+      if (!embebido) { if (!r.ok || !j.url) throw new Error(j.error || 'No hemos podido abrir el pago.'); window.location.assign(j.url); return; }
+      if (!r.ok || !j.client_secret) throw new Error(j.error || 'No hemos podido abrir el pago.');
+      const st = await cargarStripe(); if (!st) throw new Error('No hemos podido cargar el pago seguro. Recarga la página.');
+      checkoutRef.current?.destroy();
+      setPagoEmb(true); setEstado({ cargando: false, error: '' });
+      const co = await st.initEmbeddedCheckout({ fetchClientSecret: async () => j.client_secret });
+      checkoutRef.current = co; co.mount('#ct-stripe'); window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) { setEstado({ cargando: false, error: err.message }); }
   }
 
@@ -124,20 +136,60 @@ export default function Contratar() {
             {anual && n < WEB_DESDE && <p className="ct-aviso"><Sparkles size={16} /> Añade {WEB_DESDE - n} departamento{WEB_DESDE - n > 1 ? 's' : ''} más y tu web va incluida. <button type="button" onClick={() => setPaso(1)}>Elegir más</button></p>}
             <div className="ct-nav"><button className="ct-btn ct-btn--sec" onClick={() => setPaso(1)}><ArrowLeft size={17} /> Atrás</button><button className="ct-btn" onClick={() => setPaso(3)}>Continuar <ArrowRight size={17} /></button></div>
           </>)}
-          {paso === 3 && (
-            <form onSubmit={pagar}>
-              <h1>Ya casi está</h1>
-              <p className="ct-lead">{anual ? 'Con estos datos creamos tu oficina. En el siguiente paso pagas con tarjeta en Stripe, donde pones el NIF y los datos fiscales de tu empresa para la factura.' : `Con estos datos creamos tu oficina. En el siguiente paso pones tu tarjeta en Stripe: no se cobra nada hasta que acaben tus ${DIAS_PRUEBA} días gratis, y puedes cancelar antes.`}</p>
-              <div className="ct-form">
-                {cuenta ? <p className="ct-cuenta"><Check size={16} /> <span>Te registras con <b>{cuenta.email}</b></span> <button type="button" onClick={() => supabase.auth.signOut().then(() => { setCuenta(null); setEmail(''); })}>Usar otro correo</button></p>
-                  : <><BotonGoogle texto="Registrarme con Google" antes={recordar} /><p className="bg-o">o con tu correo</p></>}
-                <label><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /></label>
-                {!cuenta && <label><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegará el acceso a tu panel y las facturas.</small></label>}
-                <label className="ct-check"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las <a href={urlWeb('/condiciones')} target="_blank" rel="noopener">condiciones del servicio</a> y la <a href={urlWeb('/privacidad')} target="_blank" rel="noopener">política de privacidad</a>.</span></label>
-              </div>
+          {paso === 3 && pagoEmb && (
+            <div className="ct-pago">
+              <h1>Pago seguro</h1>
+              <p className="ct-lead">{anual ? 'Pon tu tarjeta y los datos fiscales de tu empresa para la factura.' : `Pon tu tarjeta y los datos fiscales para la factura. Hoy no se te cobra nada: el primer cobro es el ${finPrueba}.`}</p>
+              <div className="ct-stripe" id="ct-stripe" />
+              <div className="ct-confianza"><span><ShieldCheck size={15} /><span>Pago cifrado con <b>Stripe</b>. Nunca vemos tu tarjeta.</span></span></div>
+              <button type="button" className="ct-atras" onClick={() => { checkoutRef.current?.destroy(); checkoutRef.current = null; setPagoEmb(false); }}><ArrowLeft size={15} /> Cambiar mis datos</button>
+            </div>
+          )}
+          {paso === 3 && !pagoEmb && (
+            <form onSubmit={pagar} className="ct-pago">
+              <h1>{anual ? 'Crea tu oficina' : `Empieza tus ${DIAS_PRUEBA} días gratis`}</h1>
+              <p className="ct-lead">{anual ? 'Dos datos y pasas al pago seguro con Stripe, donde pones los datos fiscales de tu empresa para la factura.' : 'Dos datos y pasas al pago seguro. Hoy no se te cobra nada.'}</p>
+
+              <section className="ct-caja" aria-labelledby="ct-cuenta-t">
+                <header><span className="ct-caja__n">1</span><h2 id="ct-cuenta-t">Tu cuenta</h2></header>
+                {cuenta ? (
+                  <div className="ct-yo">
+                    {cuenta.user_metadata?.avatar_url ? <img src={cuenta.user_metadata.avatar_url} alt="" width="44" height="44" referrerPolicy="no-referrer" /> : <span className="ct-yo__ini">{(cuenta.user_metadata?.full_name || cuenta.email).slice(0, 1).toUpperCase()}</span>}
+                    <div><b>{cuenta.user_metadata?.full_name || cuenta.email.split('@')[0]}</b><small>{cuenta.email}</small></div>
+                    <span className="ct-yo__g"><Check size={14} strokeWidth={3} /> Google</span>
+                    <button type="button" className="ct-yo__c" onClick={() => supabase.auth.signOut().then(() => { setCuenta(null); setEmail(''); })}>Cambiar</button>
+                  </div>
+                ) : (<>
+                  <BotonGoogle texto="Continuar con Google" antes={recordar} />
+                  <p className="bg-o">o con tu correo</p>
+                  <label className="ct-campo"><span>Tu correo</span><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@negocio.com" autoComplete="email" /><small>Aquí te llegan el acceso a tu panel y las facturas.</small></label>
+                </>)}
+              </section>
+
+              <section className="ct-caja" aria-labelledby="ct-neg-t">
+                <header><span className="ct-caja__n">2</span><h2 id="ct-neg-t">Tu negocio</h2></header>
+                <label className="ct-campo"><span>Nombre de tu negocio</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Peluquería Marta" autoComplete="organization" /><small>Sale en tu panel y en la pared de tu oficina 3D.</small></label>
+              </section>
+
+              {!anual && (
+                <section className="ct-caja ct-caja--linea" aria-labelledby="ct-prueba-t">
+                  <header><span className="ct-caja__n">3</span><h2 id="ct-prueba-t">Así funciona tu prueba</h2></header>
+                  <ol className="ct-tl">
+                    <li className="is-hoy"><i /><div><b>Hoy · 0 €</b><span>Pones tu tarjeta y tu oficina empieza a trabajar.</span></div></li>
+                    <li><i /><div><b>Durante {DIAS_PRUEBA} días</b><span>Tus agentes trabajan con una parte de su cupo. Cancelas desde tu panel cuando quieras.</span></div></li>
+                    <li><i /><div><b>{finPrueba} · {eur(total)}</b><span>Primer cobro si sigues. Después, cada mes. Sin permanencia.</span></div></li>
+                  </ol>
+                </section>
+              )}
+
+              <label className="ct-acepto"><input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} /><span>Acepto las <a href={urlWeb('/condiciones')} target="_blank" rel="noopener">condiciones del servicio</a> y la <a href={urlWeb('/privacidad')} target="_blank" rel="noopener">política de privacidad</a>.</span></label>
               {estado.error && <p className="ct-error" role="alert">{estado.error}</p>}
-              <div className="ct-nav"><button type="button" className="ct-btn ct-btn--sec" onClick={() => setPaso(2)}><ArrowLeft size={17} /> Atrás</button>
-                <button className="ct-btn" disabled={estado.cargando}>{estado.cargando ? 'Abriendo el pago…' : anual ? `Pagar ${eur(total)}` : `Empezar mis ${DIAS_PRUEBA} días gratis`} <ArrowRight size={17} /></button></div>
+              <button className="ct-pagar" disabled={estado.cargando}><Lock size={18} /> {estado.cargando ? 'Abriendo el pago seguro…' : anual ? `Pagar ${eur(total)} con tarjeta` : 'Continuar al pago seguro'}</button>
+              <div className="ct-confianza">
+                <span className="ct-tarjetas" aria-label="Tarjetas aceptadas"><em className="visa">VISA</em><em className="mc"><i /><i /></em><em className="amex">AMEX</em></span>
+                <span><ShieldCheck size={15} /><span>Pago cifrado con <b>Stripe</b>. Nunca vemos tu tarjeta.</span></span>
+              </div>
+              <button type="button" className="ct-atras" onClick={() => setPaso(2)}><ArrowLeft size={15} /> Volver a cómo pagas</button>
             </form>
           )}
         </section>

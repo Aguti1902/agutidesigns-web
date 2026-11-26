@@ -20,7 +20,7 @@ const cuerpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '
 async function checkout(req, res) {
   if (req.method !== 'POST') return json(res, 405, {});
   if (!configurado()) return json(res, 503, { error: 'El alta online se está activando. Escríbenos a info@agutidesigns.io y te la activamos hoy.' });
-  const { deptos, nombre, email, periodo: per } = cuerpo(req);
+  const { deptos, nombre, email, periodo: per, embebido } = cuerpo(req);
   const ids = limpiaDeptos(deptos); const anual = per === 'anio'; const nom = String(nombre || '').trim().slice(0, 120); const mail = String(email || '').trim().toLowerCase();
   if (!ids.length) return json(res, 400, { error: 'Elige al menos un departamento.' });
   if (!nom) return json(res, 400, { error: 'Falta el nombre de tu negocio.' });
@@ -36,10 +36,13 @@ async function checkout(req, res) {
     'subscription_data[metadata][app]': 'oficina-saas', 'subscription_data[metadata][deptos]': ids.join(','), 'subscription_data[metadata][periodo]': anual ? 'anio' : 'mes',
     'subscription_data[description]': ids.map((id) => DEPTO[id].nombre).join(' · '), payment_method_collection: 'always',
     ...(anual ? {} : { 'subscription_data[trial_period_days]': String(DIAS_PRUEBA), 'subscription_data[trial_settings][end_behavior][missing_payment_method]': 'cancel' }),
-    success_url: `${panelBase(req)}/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${sitio(req)}/oficina-ia#precios`,
+    // Embebido: el pago se hace dentro de nuestra página (Stripe Embedded Checkout) y vuelve a /bienvenida.
+    ...(embebido ? { ui_mode: 'embedded', return_url: `${panelBase(req)}/bienvenida?session_id={CHECKOUT_SESSION_ID}` }
+      : { success_url: `${panelBase(req)}/bienvenida?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${sitio(req)}/oficina-ia#precios` }),
   };
   try {
-    const s = await stripe('checkout/sessions', { metodo: 'POST', datos }); return json(res, 200, { url: s.url }); }
+    const s = await stripe('checkout/sessions', { metodo: 'POST', datos });
+    return json(res, 200, embebido ? { client_secret: s.client_secret } : { url: s.url }); }
   catch (e) { console.error('[checkout]', e.message); return json(res, 502, { error: 'No hemos podido abrir el pago. Inténtalo de nuevo en un momento.' }); }
 }
 
