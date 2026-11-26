@@ -89,7 +89,9 @@ async function webhook(req, res) {
     if (ev.type === 'invoice.paid') {
       if (hayHolded()) await facturaDesdeStripe(o);
       else if ((o.amount_paid || 0) > 0) { // sin Holded: el correo de gracias con el recibo de Stripe
-        const neg = await uno(`of_negocios?stripe_customer=eq.${encodeURIComponent(o.customer)}&select=nombre,owner_email&order=created_at.desc&limit=1`);
+        const neg = await uno(`of_negocios?stripe_customer=eq.${encodeURIComponent(o.customer)}&select=id,nombre,owner_email&order=created_at.desc&limit=1`);
+        const ya = neg && await uno(`of_facturas?stripe_invoice=eq.${encodeURIComponent(o.id)}&select=id`);
+        if (neg && !ya) await sb('of_facturas', { metodo: 'POST', cuerpo: [{ negocio_id: neg.id, stripe_invoice: o.id, numero: o.number || null, fecha: new Date((o.status_transitions?.paid_at || o.created) * 1000).toISOString().slice(0, 10), concepto: 'Oficina de IA', total: o.amount_paid / 100, estado: 'pagada', stripe_url: o.hosted_invoice_url || null }] }).catch((e) => console.error('[webhook] factura', e.message));
         await correoPago({ email: o.customer_email || neg?.owner_email, nombre: neg?.nombre, importe: o.amount_paid / 100, numero: o.number, primero: await primerCobro(o), urlFactura: o.hosted_invoice_url });
       }
     }
