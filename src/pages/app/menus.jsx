@@ -140,7 +140,7 @@ export function Perfil({ o, tema, cerrar, ir, vista }) {
         <section className="pf__s">
           <h3><Mail size={14} /> Notificaciones</h3>
           <p>Avisos cuando te necesiten tus agentes y el resumen de la semana por correo.</p>
-          <button className="btn btn--sec btn--sm" onClick={() => { cerrar(); ir('ajustes'); }}>Configurar avisos</button>
+          {!vista?.sencilla && <button className="btn btn--sec btn--sm" onClick={() => { cerrar(); ir('ajustes'); }}>Configurar avisos</button>}
         </section>
         <section className="pf__s">
           <h3><User size={14} /> Acceso</h3>
